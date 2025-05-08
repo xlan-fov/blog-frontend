@@ -1,0 +1,288 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+.card {
+  padding: 2em;
+}
+
+#app {
+  max-width: none;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+/* —— Apple 风格美化 —— */
+:root {
+  --bg-color: #f5f5f7;
+  --card-bg: #ffffff;
+  --text-color: #1d1d1f;
+  --secondary-text: #3c3c43;
+  --accent: #007aff;
+  --border: #d2d2d7;
+  --hover-bg: #f2f2f7;
+}
+
+/* 全局字体与背景 */
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, sans-serif;
+  padding: 24px;
+  align-items: flex-start;
+}
+
+/* 文章列表容器 */
+.article-list {
+  width: 90vw;
+  max-width: 1600px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;      /* 新增：子项水平居中 */
+  gap: 16px;
+  margin-top: 24px;
+  padding: 0 24px;
+}
+
+/* 搜索输入 */
+.search-input {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;     /* 搜索框下方间距 */
+}
+.search-input input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  margin-right: 8px;
+  background: var(--card-bg);
+  color: var(--text-color);
+}
+.search-input button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.search-input button:hover {
+  background: #006ae6;
+}
+
+/* 表格风格 */
+.article-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-top: 16px;        /* 表格上方间距 */
+}
+.article-table th {
+  background: var(--bg-color);
+  text-align: left;
+  padding: 12px;
+  font-size: 14px;
+  color: var(--secondary-text);
+}
+.article-table td {
+  padding: 12px;
+  font-size: 15px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-color);
+}
+.article-table tr:last-child td {
+  border-bottom: none;
+}
+.article-table tr:hover td {
+  background: var(--hover-bg);
+}
+
+/* 分页组件 */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;        /* 分页组件与上方内容的间距 */
+}
+.pagination button {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.pagination button:disabled {
+  color: var(--border);
+  cursor: default;
+}
+.pagination span {
+  font-size: 14px;
+  color: var(--secondary-text);
+}
+
+/* 卡片通用风格 */
+.card {
+  background: var(--card-bg);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 16px;
+  color: var(--text-color);
+}
+
+/* 文章详情区域美化 */
+.article-detail {
+  width: 90vw;
+  max-width: 1600px;
+  margin: auto;
+  padding: 16px 24px;
+  background: var(--card-bg);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+.article-detail h2 {
+  margin-bottom: 16px;     /* 标题与内容之间留白 */
+}
+.article-detail .actions {
+  display: flex;
+  gap: 12px;               /* 操作按钮之间间距 */
+  margin-top: 24px;        /* 操作按钮区与文章内容的间距 */
+}
+
+/* 通用弹窗样式 */
+.modal {
+  background: var(--card-bg);
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  max-width: 600px;
+  margin: 40px auto;
+}
+.modal h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+.modal input,
+.modal textarea {
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* —— 响应式布局 —— */
+/* 中等屏时左右留边 */
+@media (max-width: 1024px) {
+  .article-list {
+    padding: 0 16px;
+  }
+}
+/* 小屏优化搜索框、表格滚动及分页布局 */
+@media (max-width: 768px) {
+  .search-input {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .search-input input {
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+  .table-container,
+  .article-table {
+    overflow-x: auto;
+  }
+  .pagination {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .pagination button {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+  .pagination span {
+    margin-bottom: 8px;
+  }
+}
