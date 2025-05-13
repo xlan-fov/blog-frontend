@@ -3,19 +3,23 @@
     <!-- 时间范围筛选 -->
     <div class="filter-section">
       <div class="date-range">
-        <input 
-          type="text" 
-          class="date-input" 
-          placeholder="开始时间"
-          v-model="startDate"
-        />
+        <div class="date-picker-container">
+          <label>开始时间</label>
+          <input 
+            type="date" 
+            class="date-input" 
+            v-model="startDate"
+          />
+        </div>
         <span class="range-separator">至</span>
-        <input 
-          type="text" 
-          class="date-input" 
-          placeholder="结束时间"
-          v-model="endDate"
-        />
+        <div class="date-picker-container">
+          <label>结束时间</label>
+          <input 
+            type="date" 
+            class="date-input" 
+            v-model="endDate"
+          />
+        </div>
       </div>
       <button class="query-btn" @click="queryAnomalies">查询</button>
     </div>
@@ -61,7 +65,7 @@
 <script setup>
 import { ref } from 'vue'
 
-// 时间范围
+// 时间范围 - 使用ISO格式的日期字符串 (YYYY-MM-DD)
 const startDate = ref('')
 const endDate = ref('')
 
@@ -127,6 +131,17 @@ function banUser(user) {
   align-items: center;
 }
 
+.date-picker-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.date-picker-container label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
 .date-input {
   width: 180px;
   height: 40px;
@@ -134,11 +149,15 @@ function banUser(user) {
   border-radius: 4px;
   padding: 0 15px;
   font-size: 14px;
+  cursor: pointer;
+  background-color: white;
 }
 
 .range-separator {
-  margin: 0 10px;
+  margin: 0 15px;
   color: #666;
+  align-self: flex-end;
+  padding-bottom: 10px;
 }
 
 .query-btn {

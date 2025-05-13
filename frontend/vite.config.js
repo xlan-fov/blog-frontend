@@ -19,5 +19,10 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'src'),  // __dirname表示当前文件所在目录
     }
+  },
+  // 开发服务器配置
+  server: {
+    // 配置历史模式回退，确保路由在开发环境正常工作
+    historyApiFallback: true
   }
 })

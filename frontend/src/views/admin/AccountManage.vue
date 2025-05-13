@@ -3,7 +3,13 @@
     <!-- 顶部操作栏 -->
     <div class="top-actions">
       <div class="search-box">
-        <input type="text" placeholder="输入账号搜索" v-model="searchKeyword" />
+        <input 
+          type="text" 
+          placeholder="输入账号搜索" 
+          v-model="searchKeyword"
+          @keyup.enter="searchAccounts" 
+        />
+        <button class="search-btn" @click="searchAccounts">搜索</button>
       </div>
       <button class="create-account-btn" @click="createAccount">创建账号</button>
     </div>
@@ -162,6 +168,13 @@ function unbanAccount(account) {
   // 实际项目中应该调用API解封账号
   account.status = '未登录'
 }
+
+// 添加搜索账号的方法
+function searchAccounts() {
+  // 实际项目中应该调用API根据关键字搜索账号
+  console.log('搜索关键字:', searchKeyword.value)
+  // 直接使用计算属性filteredAccounts进行过滤，无需额外操作
+}
 </script>
 
 <style scoped>
@@ -175,13 +188,34 @@ function unbanAccount(account) {
   margin-bottom: 20px;
 }
 
+.search-box {
+  display: flex;
+  width: 400px;
+  height: 40px; /* 添加固定高度 */
+}
+
 .search-box input {
-  width: 300px;
+  flex: 1;
   height: 40px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 4px 0 0 4px;
   padding: 0 15px;
   font-size: 14px;
+  border-right: none;
+  box-sizing: border-box; /* 确保padding不会增加高度 */
+}
+
+.search-btn {
+  width: 80px;
+  height: 40px;
+  background-color: #4e6ef2;
+  color: white;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  padding: 0 15px;
+  cursor: pointer;
+  font-size: 14px;
+  box-sizing: border-box; /* 确保padding不会增加高度 */
 }
 
 .create-account-btn {

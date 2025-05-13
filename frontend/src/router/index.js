@@ -1,7 +1,7 @@
 // 这是Vue Router的配置文件，用于设置应用的路由(不同URL对应不同页面)
 
-// 从vue-router库导入创建路由器和哈希历史模式的函数
-import { createRouter, createWebHashHistory } from 'vue-router'
+// 从vue-router库导入创建路由器和历史模式的函数
+import { createRouter, createWebHistory } from 'vue-router'
 // 导入各个页面组件
 import ArticleList       from '@/views/ArticleList.vue'
 import ArticleDetail     from '@/views/ArticleDetail.vue'
@@ -21,16 +21,11 @@ import Layout from '../layout/Layout.vue'
 
 // 定义路由配置数组，每个对象对应一个路由
 const routes = [
-  // 根路径根据登录状态判断跳转目标
+  // 根路径直接重定向到登录页
   { 
     path: '/',           
     name: 'Root',
-    redirect: to => {
-      // 如果已登录则跳转到文章列表，否则跳转到登录页
-      return localStorage.getItem('token') 
-        ? { name: 'ArticleList' } 
-        : { name: 'Login' }
-    }
+    redirect: { name: 'Login' }
   },
   {
     path: '/login',
@@ -75,12 +70,12 @@ const routes = [
     ]
   },
   {
-    path: '/',
+    path: '/articles',
     component: Layout,
     redirect: '/articles',
     children: [
       {
-        path: '/articles',
+        path: '',
         name: 'ArticleList',
         component: ArticleList,
         meta: { requiresAuth: true }
@@ -104,7 +99,7 @@ const routes = [
   { path: '/admin/articles', component: AdminArticleAudit, name: 'AdminArticleAudit' },
   // 普通用户路由
   {
-    path: '/',
+    path: '/user',
     component: () => import('../layout/UserLayout.vue'),
     meta: { requiresAuth: true },
     children: [
@@ -142,8 +137,8 @@ const routes = [
 
 // 创建路由器实例
 const router = createRouter({
-  // 使用哈希历史模式
-  history: createWebHashHistory(),
+  // 使用历史模式而不是哈希模式，这样URL中就不会包含#符号
+  history: createWebHistory(),
   // 应用上面定义的路由配置
   routes
 })
@@ -153,15 +148,22 @@ router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   const userRole = localStorage.getItem('userRole')
   
-  if (to.meta.requiresAuth && !token) {
-    // 需要登录但没有token，重定向到登录页
+  // 登录页和注册页不需要验证token
+  if (to.name === 'Login' || to.name === 'Register' || !to.meta.requiresAuth) {
+    next()
+    return
+  }
+  
+  // 其他页面需要验证token
+  if (!token) {
+    // 没有token，重定向到登录页
     next({ name: 'Login' })
   } else if (to.meta.role && to.meta.role !== userRole) {
     // 需要特定角色但角色不匹配
     if (userRole === 'admin') {
       next({ name: 'AdminArticleList' })
     } else {
-      next({ name: 'UserHome' })
+      next({ name: 'UserContentManage' })
     }
   } else {
     // 通过验证

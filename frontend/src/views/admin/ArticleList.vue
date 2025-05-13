@@ -3,7 +3,13 @@
     <!-- 顶部操作栏 -->
     <div class="top-actions">
       <div class="search-box">
-        <input type="text" placeholder="输入标题搜索" v-model="searchKeyword" />
+        <input 
+          type="text" 
+          placeholder="输入标题搜索" 
+          v-model="searchKeyword"
+          @keyup.enter="searchArticles" 
+        />
+        <button class="search-btn" @click="searchArticles">搜索</button>
       </div>
       <button class="new-blog-btn" @click="createNewBlog">新建Blog</button>
     </div>
@@ -61,6 +67,14 @@ const articles = ref([
   }
 ])
 
+// 搜索文章
+function searchArticles() {
+  // 实际项目中应该调用API根据关键字搜索文章
+  console.log('搜索关键字:', searchKeyword.value)
+  // 这里可以添加实际的搜索逻辑，比如调用后端API
+  alert(`搜索关键字: ${searchKeyword.value}`)
+}
+
 // 创建新博客
 function createNewBlog() {
   alert('新建Blog功能将在后续完善')
@@ -78,12 +92,34 @@ function createNewBlog() {
   margin-bottom: 20px;
 }
 
+.search-box {
+  display: flex;
+  width: 400px;
+  height: 40px; /* 添加固定高度 */
+}
+
 .search-box input {
-  width: 300px;
+  flex: 1;
   height: 40px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 4px 0 0 4px;
   padding: 0 15px;
+  font-size: 14px;
+  border-right: none;
+  box-sizing: border-box; /* 确保padding不会增加高度 */
+}
+
+.search-btn {
+  width: 80px;
+  height: 40px;
+  background-color: #4e6ef2;
+  color: white;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  padding: 0 15px;
+  cursor: pointer;
+  font-size: 14px;
+  box-sizing: border-box; /* 确保padding不会增加高度 */
 }
 
 .new-blog-btn {
