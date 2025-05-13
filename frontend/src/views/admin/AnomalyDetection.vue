@@ -9,6 +9,7 @@
             type="date" 
             class="date-input" 
             v-model="startDate"
+            :max="endDate || today"
           />
         </div>
         <span class="range-separator">至</span>
@@ -18,10 +19,17 @@
             type="date" 
             class="date-input" 
             v-model="endDate"
+            :min="startDate"
+            :max="today"
           />
         </div>
       </div>
       <button class="query-btn" @click="queryAnomalies">查询</button>
+    </div>
+    
+    <!-- 错误提示信息 -->
+    <div v-if="errorMessage" class="error-message">
+      {{ errorMessage }}
     </div>
     
     <!-- 异常数据表格 -->
@@ -63,28 +71,57 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 // 时间范围 - 使用ISO格式的日期字符串 (YYYY-MM-DD)
 const startDate = ref('')
 const endDate = ref('')
+const errorMessage = ref('')
 
-// 异常数据列表
-const anomalies = ref([
-  {
-    username: '张三',
-    reason: '从XX至XX期间，进行过X次登录，均因密码错误登录失败',
-    status: '已登录'
-  },
-  {
-    username: '李四',
-    reason: '在XX时间，准备发布一篇带有YY违禁词的Blog',
-    status: '未登录'
-  }
-])
+// 获取今天的日期字符串（YYYY-MM-DD格式）
+const today = computed(() => {
+  const now = new Date()
+  return now.toISOString().split('T')[0]
+})
+
+// 组件挂载时设置默认日期范围（过去7天）
+onMounted(() => {
+  const now = new Date()
+  const sevenDaysAgo = new Date(now)
+  sevenDaysAgo.setDate(now.getDate() - 7)
+  
+  endDate.value = now.toISOString().split('T')[0]
+  startDate.value = sevenDaysAgo.toISOString().split('T')[0]
+})
 
 // 查询异常数据
 function queryAnomalies() {
+  // 清除之前的错误信息
+  errorMessage.value = ''
+  
+  // 验证日期
+  if (!startDate.value || !endDate.value) {
+    errorMessage.value = '请选择完整的时间范围'
+    return
+  }
+  
+  const start = new Date(startDate.value)
+  const end = new Date(endDate.value)
+  const now = new Date()
+  
+  // 设置当天时间为23:59:59，以便进行比较
+  now.setHours(23, 59, 59, 999)
+  
+  if (start > end) {
+    errorMessage.value = '开始时间不能大于结束时间'
+    return
+  }
+  
+  if (end > now) {
+    errorMessage.value = '结束时间不能大于今天'
+    return
+  }
+  
   // 实际项目中应调用API获取指定时间范围的异常数据
   console.log('查询时间范围:', startDate.value, '至', endDate.value)
   
@@ -228,5 +265,16 @@ td:nth-child(2) {
   text-align: center;
   padding: 30px 0;
   color: #999;
+}
+
+/* 错误信息样式 */
+.error-message {
+  color: #ff4d4f;
+  margin-bottom: 15px;
+  font-size: 14px;
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  padding: 8px 12px;
+  border-radius: 4px;
 }
 </style>
