@@ -114,7 +114,7 @@ const routes = [
         meta: { requiresAuth: true }
       },
       {
-        path: 'editor/:id',
+        path: 'editor/:id?',
         name: 'BlogEditor',
         component: () => import('../views/user/BlogEditor.vue'),
         meta: { requiresAuth: true }
@@ -126,6 +126,32 @@ const routes = [
       //   component: () => import('../views/user/BlogDetail.vue'),
       //   meta: { requiresAuth: true }
       // }
+    ]
+  },
+  // 添加新的博客路由，与front-user保持一致
+  {
+    path: '/blog',
+    component: () => import('../layout/UserLayout.vue'),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'blog',
+        component: () => import('../views/user/ContentManage.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'create',
+        name: 'blog-create',
+        component: () => import('../views/user/BlogEditor.vue'),
+        meta: { requiresAuth: true, params: { id: null } }
+      },
+      {
+        path: 'edit/:id',
+        name: 'blog-edit',
+        component: () => import('../views/user/BlogEditor.vue'),
+        meta: { requiresAuth: true }
+      }
     ]
   },
   // 通配符路由，匹配所有未定义的路径，重定向到登录页

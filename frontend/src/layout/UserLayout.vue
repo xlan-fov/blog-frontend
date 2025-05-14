@@ -2,10 +2,13 @@
   <div class="user-container">
     <!-- 左侧导航栏 -->
     <div class="sidebar">
-      <div class="logo">XXX 管理系统</div>
+      <div class="logo">SentiBlog</div>
       <div class="nav-menu">
-        <div class="nav-item active" @click="navigateTo('UserContentManage')">
+        <div class="nav-item active" @click="navigateTo('blog')">
           内容管理
+        </div>
+        <div class="nav-item" @click="navigateTo('profile')">
+          个人空间
         </div>
       </div>
     </div>
@@ -15,7 +18,7 @@
       <!-- 顶部信息栏 -->
       <div class="header">
         <div class="user-info">
-          <span>当前账号信息</span>
+          <span>{{ userInfo.username || '当前账号' }}</span>
           <button class="logout-btn" @click="logout">登出</button>
         </div>
       </div>
@@ -29,13 +32,21 @@
 </template>
 
 <script setup>
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const userInfo = ref({
+  username: localStorage.getItem('username') || '用户'
+})
 
 // 页面导航
 function navigateTo(routeName) {
-  router.push({ name: routeName })
+  if (routeName === 'blog') {
+    router.push('/blog')
+  } else if (routeName === 'profile') {
+    router.push('/profile')
+  }
 }
 
 // 退出登录

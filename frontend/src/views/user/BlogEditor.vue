@@ -1,183 +1,190 @@
 <template>
-  <div class="blog-editor">
-    <div class="editor-header">
-      <h2>{{ isNewBlog ? '新建博客' : '编辑博客' }}</h2>
-      <div class="editor-actions">
-        <button class="cancel-btn" @click="cancelEdit">取消</button>
-        <button class="save-btn" @click="saveDraft">保存草稿</button>
-        <button class="publish-btn" @click="publishBlog">发布</button>
+  <div class="blog-edit">
+    <el-form :model="form" label-width="80px" class="blog-form">
+      <el-form-item label="标题">
+        <el-input v-model="form.title" placeholder="请输入博客标题" />
+      </el-form-item>
+      <el-form-item label="内容" class="editor-wrapper">
+        <div id="editor"></div>
+      </el-form-item>
+      <div class="button-wrapper">
+      <el-form-item>
+        <el-button type="primary" @click="handleSubmit">保存</el-button>
+        <el-button @click="handleCancel">取消</el-button>
+      </el-form-item>
       </div>
-    </div>
-    
-    <div class="editor-body">
-      <div class="form-item">
-        <label>标题</label>
-        <input v-model="blogData.title" placeholder="请输入博客标题" />
-      </div>
-      
-      <div class="form-item">
-        <label>内容</label>
-        <textarea 
-          v-model="blogData.content" 
-          placeholder="请输入博客内容" 
-          rows="15"
-        ></textarea>
-      </div>
-    </div>
+    </el-form>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { reactive, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import E from 'wangeditor'
 
-const route = useRoute()
 const router = useRouter()
-const blogId = route.params.id
+const route = useRoute()
 
-// 是否为新建博客
-const isNewBlog = computed(() => blogId === 'new')
-
-// 博客数据
-const blogData = ref({
+const form = reactive({
   title: '',
-  content: '',
-  status: '未发布'
+  content: ''
 })
 
-// 获取博客数据
+let editor = null
+
 onMounted(() => {
-  if (!isNewBlog.value) {
-    // 实际项目中应该调用API获取博客数据
-    // 这里模拟获取数据
-    blogData.value = {
-      id: blogId,
-      title: '博客标题',
-      content: '博客内容示例',
-      status: '未发布'
-    }
+  // 初始化编辑器
+  editor = new E('#editor')
+  editor.config.height = 350
+  editor.config.placeholder = '请输入博客内容'
+  editor.config.onchange = (html) => {
+    form.content = html
+  }
+  editor.create()
+
+  // 如果有ID参数，说明是编辑模式
+  const articleId = route.params.id
+  if (articleId) {
+    // 获取文章数据并填充表单
+    // 实际项目中应该从API获取数据
+    setTimeout(() => {
+      form.title = '文章标题示例'
+      form.content = '<p>这是文章内容示例...</p>'
+      editor.txt.html(form.content)
+    }, 300)
   }
 })
 
-// 取消编辑
-function cancelEdit() {
-  if (confirm('确定要取消编辑吗？未保存的内容将会丢失')) {
-    router.push({ name: 'UserContentManage' })
+onBeforeUnmount(() => {
+  // 销毁编辑器实例
+  if (editor) {
+    editor.destroy()
+  }
+})
+
+// 表单提交
+const handleSubmit = async () => {
+  if (!form.title || !form.content) {
+    ElMessage.warning('请填写完整信息')
+    return
+  }
+
+  try {
+    // 实际项目中应该调用API保存文章
+    const isEdit = !!route.params.id
+    
+    if (isEdit) {
+      // 更新文章
+      ElMessage.success('更新成功')
+    } else {
+      // 创建新文章
+      ElMessage.success('创建成功')
+    }
+    
+    // 返回到内容管理页面
+    router.push('/user/content')
+  } catch (error) {
+    ElMessage.error('保存失败')
   }
 }
 
-// 保存草稿
-function saveDraft() {
-  if (!blogData.value.title || !blogData.value.content) {
-    alert('标题和内容不能为空')
-    return
-  }
-  
-  // 实际项目中应该调用API保存草稿
-  alert('保存成功')
-  router.push({ name: 'UserContentManage' })
-}
-
-// 发布博客
-function publishBlog() {
-  if (!blogData.value.title || !blogData.value.content) {
-    alert('标题和内容不能为空')
-    return
-  }
-  
-  // 实际项目中应该调用API发布博客
-  blogData.value.status = '已发布'
-  alert('发布成功')
-  router.push({ name: 'UserContentManage' })
+// 取消按钮
+const handleCancel = () => {
+  router.push('/user/content')
 }
 </script>
 
 <style scoped>
-.blog-editor {
-  background-color: white;
-  border-radius: 8px;
+.blog-edit {
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  position: relative;
+  min-height: calc(100vh - 100px);
+  margin: 20px;
 }
 
-.editor-header {
+.blog-form {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.editor-header h2 {
-  margin: 0;
-  font-size: 18px;
-  color: #333;
+.blog-form :deep(.el-form-item__label) {
+  font-weight: 500;
+  color: #303133;
 }
 
-.editor-actions {
+.blog-form :deep(.el-input__wrapper) {
+  box-shadow: 0 0 0 1px #dcdfe6 inset;
+}
+
+.blog-form :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px #409EFF inset;
+}
+
+.editor-wrapper {
+  flex: 1;
+  min-height: 0;
+  margin-bottom: 80px;
+}
+
+.button-wrapper {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  padding: 16px 20px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
   display: flex;
-  gap: 10px;
+  justify-content: center;
+  gap: 16px;
 }
 
-.cancel-btn {
-  padding: 0 15px;
-  height: 36px;
-  background-color: #f5f5f5;
-  border: none;
+.button-wrapper .el-button {
+  min-width: 100px;
+}
+
+:deep(.w-e-text-container) {
+  height: 350px !important;
   border-radius: 4px;
-  cursor: pointer;
+  border: 1px solid #dcdfe6;
 }
 
-.save-btn {
-  padding: 0 15px;
-  height: 36px;
-  background-color: #fff8e6;
-  color: #d48806;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+:deep(.w-e-toolbar) {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: #fff;
+  border-radius: 4px 4px 0 0;
+  border: 1px solid #dcdfe6;
+  border-bottom: none;
 }
 
-.publish-btn {
-  padding: 0 15px;
-  height: 36px;
-  background-color: #4e6ef2;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
+/* 响应式布局调整 */
+@media screen and (max-width: 768px) {
+  .blog-edit {
+    padding: 10px;
+    margin: 10px;
+  }
 
-.form-item {
-  margin-bottom: 20px;
-}
+  .button-wrapper {
+    padding: 10px;
+    flex-direction: column;
+  }
 
-.form-item label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: #666;
-}
+  .button-wrapper .el-button {
+    width: 100%;
+  }
 
-.form-item input {
-  width: 100%;
-  height: 40px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 0 12px;
-  font-size: 16px;
-  box-sizing: border-box;
-}
-
-.form-item textarea {
-  width: 100%;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 12px;
-  font-size: 16px;
-  box-sizing: border-box;
-  resize: vertical;
-  font-family: inherit;
+  :deep(.w-e-text-container) {
+    height: 300px !important;
+  }
 }
 </style>

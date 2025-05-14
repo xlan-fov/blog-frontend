@@ -8,8 +8,16 @@ import './style.css'
 import App from './App.vue'
 // 导入前面定义的路由配置
 import router from './router'
+// 导入FontAwesome图标（保留这个因为可能已经在本地）
+
+import '@fortawesome/fontawesome-free/css/all.min.css'
 
 console.log('main.js 执行了')
 
 // 创建Vue应用实例
-createApp(App).use(router).mount('#app')
+const app = createApp(App)
+
+// 使用路由
+app.use(router)
+// 挂载应用
+app.mount('#app')
