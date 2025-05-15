@@ -10,6 +10,7 @@
             class="date-input" 
             v-model="startDate"
             :max="endDate || today"
+            @change="validateStartDate"
           />
         </div>
         <span class="range-separator">至</span>
@@ -21,15 +22,26 @@
             v-model="endDate"
             :min="startDate"
             :max="today"
+            @change="validateEndDate"
           />
         </div>
       </div>
+      
+      <div class="user-search">
+        <input 
+          type="text" 
+          v-model="searchUsername" 
+          placeholder="搜索用户名" 
+          class="username-input"
+        />
+      </div>
+      
       <button class="query-btn" @click="queryAnomalies">查询</button>
     </div>
     
     <!-- 错误提示信息 -->
     <div v-if="errorMessage" class="error-message">
-      {{ errorMessage }}
+      <i class="error-icon">⚠️</i> {{ errorMessage }}
     </div>
     
     <!-- 异常数据表格 -->
@@ -40,14 +52,16 @@
             <th>账号</th>
             <th>异常原因</th>
             <th>账号状态</th>
+            <th>时间</th>
             <th>操作</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(anomaly, index) in anomalies" :key="index">
+          <tr v-for="anomaly in filteredAnomalies" :key="anomaly.id">
             <td>{{ anomaly.username }}</td>
             <td>{{ anomaly.reason }}</td>
             <td>{{ anomaly.status }}</td>
+            <td>{{ anomaly.timestamp }}</td>
             <td class="actions-cell">
               <button 
                 v-if="anomaly.status === '已登录'" 
@@ -71,17 +85,95 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
 // 时间范围 - 使用ISO格式的日期字符串 (YYYY-MM-DD)
 const startDate = ref('')
 const endDate = ref('')
 const errorMessage = ref('')
+const searchUsername = ref('') // 添加用户名搜索
+
+// 示例异常数据
+const anomalies = ref([
+  {
+    id: 1,
+    username: '张三',
+    reason: '多地异常登录',
+    status: '已登录',
+    timestamp: '2024-05-08 12:30:45'
+  },
+  {
+    id: 2,
+    username: '李四',
+    reason: '密码多次错误',
+    status: '已封禁',
+    timestamp: '2024-05-07 18:22:10'
+  },
+  {
+    id: 3, 
+    username: '王五',
+    reason: '异常操作频率',
+    status: '已登录',
+    timestamp: '2024-05-06 09:15:00'
+  }
+])
 
 // 获取今天的日期字符串（YYYY-MM-DD格式）
 const today = computed(() => {
   const now = new Date()
   return now.toISOString().split('T')[0]
+})
+
+// 添加日期校验的响应式监听
+watch([startDate, endDate], ([newStart, newEnd]) => {
+  // 清除之前的错误信息
+  errorMessage.value = ''
+  
+  if (newStart && newEnd) {
+    const start = new Date(newStart)
+    const end = new Date(newEnd)
+    const now = new Date()
+    now.setHours(23, 59, 59, 999)
+    
+    if (start > end) {
+      errorMessage.value = '开始时间不能晚于结束时间'
+      // 可选：自动纠正日期
+      // endDate.value = newStart
+    }
+    
+    if (end > now) {
+      errorMessage.value = '结束时间不能晚于今天'
+      // 可选：自动纠正日期
+      // endDate.value = today.value
+    }
+  }
+}, { immediate: true })
+
+// 过滤后的异常记录
+const filteredAnomalies = computed(() => {
+  // 首先根据日期范围过滤
+  let result = anomalies.value
+  
+  if (startDate.value && endDate.value) {
+    const start = new Date(startDate.value)
+    const end = new Date(endDate.value)
+    end.setHours(23, 59, 59, 999) // 设置为当天结束时间
+    
+    result = result.filter(item => {
+      const timestamp = new Date(item.timestamp)
+      return timestamp >= start && timestamp <= end
+    })
+  }
+  
+  // 然后根据用户名过滤
+  if (searchUsername.value) {
+    const keyword = searchUsername.value.toLowerCase()
+    result = result.filter(item => 
+      item.username.toLowerCase().includes(keyword)
+    )
+  }
+  
+  return result
 })
 
 // 组件挂载时设置默认日期范围（过去7天）
@@ -113,25 +205,17 @@ function queryAnomalies() {
   now.setHours(23, 59, 59, 999)
   
   if (start > end) {
-    errorMessage.value = '开始时间不能大于结束时间'
+    errorMessage.value = '开始时间不能晚于结束时间'
     return
   }
   
   if (end > now) {
-    errorMessage.value = '结束时间不能大于今天'
+    errorMessage.value = '结束时间不能晚于今天'
     return
   }
   
-  // 实际项目中应调用API获取指定时间范围的异常数据
+  // 前端已通过计算属性完成过滤
   console.log('查询时间范围:', startDate.value, '至', endDate.value)
-  
-  // 模拟API调用结果
-  if (startDate.value && endDate.value) {
-    // 这里可以添加加载状态、调用API等逻辑
-    alert(`查询时间范围: ${startDate.value} 至 ${endDate.value}`)
-  } else {
-    alert('请选择完整的时间范围')
-  }
 }
 
 // 踢出用户
@@ -149,6 +233,32 @@ function banUser(user) {
   // 更新用户状态
   user.status = '已封禁'
 }
+
+// 新增：验证并格式化日期选择
+function validateStartDate(event) {
+  const selectedDate = event.target.value
+  if (selectedDate && endDate.value && new Date(selectedDate) > new Date(endDate.value)) {
+    errorMessage.value = '开始时间不能晚于结束时间'
+  } else {
+    errorMessage.value = ''
+  }
+}
+
+function validateEndDate(event) {
+  const selectedDate = event.target.value
+  const now = new Date()
+  now.setHours(23, 59, 59, 999)
+  
+  if (selectedDate) {
+    if (startDate.value && new Date(selectedDate) < new Date(startDate.value)) {
+      errorMessage.value = '结束时间不能早于开始时间'
+    } else if (new Date(selectedDate) > now) {
+      errorMessage.value = '结束时间不能晚于今天'
+    } else {
+      errorMessage.value = ''
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -160,7 +270,7 @@ function banUser(user) {
   display: flex;
   justify-content: space-between;
   margin-bottom: 20px;
-  align-items: center;
+  align-items: flex-end;
 }
 
 .date-range {
@@ -276,5 +386,32 @@ td:nth-child(2) {
   border: 1px solid #ffccc7;
   padding: 8px 12px;
   border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.error-icon {
+  margin-right: 8px;
+  font-style: normal;
+}
+
+/* 高亮显示有问题的输入框 */
+input.date-input.error {
+  border-color: #ff4d4f;
+  background-color: #fff2f0;
+}
+
+/* 添加用户搜索框样式 */
+.user-search {
+  margin-left: 15px;
+}
+
+.username-input {
+  width: 180px;
+  height: 40px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0 15px;
+  font-size: 14px;
 }
 </style>

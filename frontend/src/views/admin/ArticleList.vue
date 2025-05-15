@@ -27,7 +27,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(article, index) in articles" :key="index">
+          <tr v-for="(article, index) in filteredArticles" :key="index">
             <td>{{ article.title }}</td>
             <td>{{ article.content }}</td>
             <td>{{ article.status }}</td>
@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -67,12 +67,22 @@ const articles = ref([
   }
 ])
 
+// 使用计算属性实现前端搜索过滤
+const filteredArticles = computed(() => {
+  if (!searchKeyword.value) return articles.value
+  
+  const keyword = searchKeyword.value.toLowerCase()
+  return articles.value.filter(article => 
+    article.title.toLowerCase().includes(keyword) ||
+    article.content.toLowerCase().includes(keyword) ||
+    article.author.toLowerCase().includes(keyword)
+  )
+})
+
 // 搜索文章
 function searchArticles() {
-  // 实际项目中应该调用API根据关键字搜索文章
+  // 前端已通过计算属性实现，这里只需用于表单提交时的处理
   console.log('搜索关键字:', searchKeyword.value)
-  // 这里可以添加实际的搜索逻辑，比如调用后端API
-  alert(`搜索关键字: ${searchKeyword.value}`)
 }
 
 // 创建新博客

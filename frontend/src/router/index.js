@@ -2,22 +2,13 @@
 
 // 从vue-router库导入创建路由器和历史模式的函数
 import { createRouter, createWebHistory } from 'vue-router'
-// 导入各个页面组件
-import ArticleList       from '@/views/ArticleList.vue'
-import ArticleDetail     from '@/views/ArticleDetail.vue'
+// 导入各个页面组件 - 移除未使用组件
 import Register          from '@/views/Register.vue'
 import Login             from '@/views/Login.vue'
 import Profile           from '@/views/Profile.vue'
-import Editor            from '@/views/Editor.vue'
-import AdminUserList     from '@/views/AdminUserList.vue'
-import AdminArticleAudit from '@/views/AdminArticleAudit.vue'
 import AdminLayout from '../layout/AdminLayout.vue'
 import UserLayout from '../layout/UserLayout.vue'
 import AdminArticleList from '../views/admin/ArticleList.vue'
-import UserHome from '../views/user/UserHome.vue'
-
-// 导入布局和页面组件
-import Layout from '../layout/Layout.vue'
 
 // 定义路由配置数组，每个对象对应一个路由
 const routes = [
@@ -69,34 +60,9 @@ const routes = [
       }
     ]
   },
-  {
-    path: '/articles',
-    component: Layout,
-    redirect: '/articles',
-    children: [
-      {
-        path: '',
-        name: 'ArticleList',
-        component: ArticleList,
-        meta: { requiresAuth: true }
-      },
-      // 可以添加更多需要布局的路由...
-    ]
-  },
-  // 文章详情路由，:id是动态参数，会根据实际URL中的值变化
-  { path: '/articles/:id', component: ArticleDetail,   name: 'ArticleDetail' },
-  // 注册页面路由
-  { path: '/register',   component: Register,          name: 'Register'      },
-  // 登录页面路由
-  { path: '/login',      component: Login,             name: 'Login'         },
+  // 移除对Layout布局和旧文章组件的引用
   // 个人资料页面路由
   { path: '/profile',    component: Profile,           name: 'Profile'       },
-  // 编辑器路由，:id?表示id参数是可选的
-  { path: '/editor/:id?', component: Editor,           name: 'Editor'        },
-  // 管理员用户列表路由
-  { path: '/admin/users', component: AdminUserList,    name: 'AdminUserList' },
-  // 管理员文章审核路由
-  { path: '/admin/articles', component: AdminArticleAudit, name: 'AdminArticleAudit' },
   // 普通用户路由
   {
     path: '/user',

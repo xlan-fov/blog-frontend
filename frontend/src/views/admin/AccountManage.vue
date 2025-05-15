@@ -111,15 +111,17 @@ const accounts = ref([
   }
 ])
 
-// 过滤后的账号列表
+// 增强的前端搜索过滤 - 支持多个字段搜索
 const filteredAccounts = computed(() => {
-  if (!searchKeyword.value) {
+  if (!searchKeyword.value.trim()) {
     return accounts.value
   }
   
+  const keyword = searchKeyword.value.toLowerCase()
   return accounts.value.filter(account => 
-    account.username.includes(searchKeyword.value) ||
-    account.phone.includes(searchKeyword.value)
+    account.username.toLowerCase().includes(keyword) ||
+    account.phone.toLowerCase().includes(keyword) ||
+    account.status.toLowerCase().includes(keyword)
   )
 })
 
@@ -169,11 +171,11 @@ function unbanAccount(account) {
   account.status = '未登录'
 }
 
-// 添加搜索账号的方法
+// 搜索账号 - 可用于添加前端排序等额外功能
 function searchAccounts() {
-  // 实际项目中应该调用API根据关键字搜索账号
   console.log('搜索关键字:', searchKeyword.value)
-  // 直接使用计算属性filteredAccounts进行过滤，无需额外操作
+  // filteredAccounts 计算属性已自动完成搜索
+  // 这里可以添加其他功能，如切换排序顺序等
 }
 </script>
 

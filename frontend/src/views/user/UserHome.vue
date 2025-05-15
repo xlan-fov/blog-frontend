@@ -42,6 +42,8 @@ const blogs = ref([
     date: '2023-10-25'
   }
 ])
+
+// 此文件目前未在路由中使用，可以考虑删除或保留用于未来功能
 </script>
 
 <style scoped>
