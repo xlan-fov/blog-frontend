@@ -3,10 +3,10 @@
     <el-card class="search-card">
       <el-form :inline="true" :model="searchForm">
         <el-form-item label="账号查询">
-          <el-input v-model="searchForm.username" placeholder="请输入用户名" clearable />
+          <el-input v-model="searchForm.username" placeholder="请输入用户名" clearable style="width: 200px;" />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="选择状态" clearable>
+          <el-select v-model="searchForm.status" placeholder="选择状态" clearable style="width: 120px;">
             <el-option label="全部" value="" />
             <el-option label="正常" value="normal" />
             <el-option label="已封禁" value="banned" />

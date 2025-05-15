@@ -84,10 +84,10 @@
               />
             </el-form-item>
             <el-form-item label="用户名">
-              <el-input v-model="contentSearchForm.username" placeholder="请输入用户名" clearable />
+              <el-input v-model="contentSearchForm.username" placeholder="请输入用户名" clearable style="width: 200px;" />
             </el-form-item>
             <el-form-item label="拒绝原因">
-              <el-select v-model="contentSearchForm.reason" placeholder="选择拒绝原因" clearable>
+              <el-select v-model="contentSearchForm.reason" placeholder="选择拒绝原因" clearable style="width: 200px;">
                 <el-option label="全部" value="" />
                 <el-option label="政治敏感" value="political" />
                 <el-option label="色情低俗" value="pornography" />

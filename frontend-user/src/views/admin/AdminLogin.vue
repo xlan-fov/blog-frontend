@@ -31,7 +31,7 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="handleLogin" :loading="loading" style="width: 100%">
+          <el-button type="primary" @click="handleLoginClick" :loading="loading" style="width: 100%">
             管理员登录
           </el-button>
         </el-form-item>
@@ -48,6 +48,21 @@
         <p class="warning-text">注意：本页面仅供系统管理员使用，未授权访问将被记录</p>
       </div>
     </el-card>
+
+    <!-- 滑块验证弹窗 -->
+    <el-dialog
+      v-model="showSliderDialog"
+      title="安全验证"
+      width="380px"
+      :show-close="false"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
+      <SlideVerify
+        ref="slideVerifyRef"
+        @success="handleSlideSuccess"
+      />
+    </el-dialog>
   </div>
 </template>
 
@@ -57,17 +72,21 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Key } from '@element-plus/icons-vue'
+import SlideVerify from '@/components/SlideVerify.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
 const loading = ref(false)
 const errorMessage = ref('')
 const loginFormRef = ref(null)
+const showSliderDialog = ref(false)
+const slideVerified = ref(false)
+const slideVerifyRef = ref(null)
 
 const loginForm = reactive({
   username: '',
   password: '',
-  authCode: '' // 管理员授权码，提供额外安全层
+  authCode: ''
 })
 
 const rules = {
@@ -76,44 +95,66 @@ const rules = {
   authCode: [{ required: true, message: '请输入管理员授权码', trigger: 'blur' }]
 }
 
-const handleLogin = async () => {
+const handleLoginClick = async () => {
   if (!loginFormRef.value) return
   
   await loginFormRef.value.validate(async (valid) => {
     if (!valid) return
-    
-    loading.value = true
-    errorMessage.value = ''
-    
-    try {
-      // 调用管理员登录接口
-      const result = await userStore.adminLogin(
-        loginForm.username, 
-        loginForm.password,
-        loginForm.authCode
-      )
-      
-      if (result === true) {
-        ElMessage.success('管理员登录成功')
-        router.push('/admin')
-      } else {
-        errorMessage.value = '账号、密码或授权码错误，登录失败'
-        // 记录未授权访问尝试
-        recordUnauthorizedAttempt()
-      }
-    } catch (error) {
-      errorMessage.value = '登录失败，请稍后重试'
-      console.error('Login error:', error)
-    } finally {
-      loading.value = false
+
+    if (userStore.userInfo.loginAttempts >= 3) {
+      showSliderDialog.value = true
+      return
     }
+
+    await handleLogin()
   })
 }
 
-// 记录未授权访问尝试
-const recordUnauthorizedAttempt = () => {
-  // TODO: 替换为实际API请求，记录未授权访问的IP、时间等信息
-  console.log('记录未授权访问:', new Date().toISOString())
+const handleSlideSuccess = () => {
+  showSliderDialog.value = false
+  slideVerified.value = true
+  handleLogin()
+}
+
+const resetSlideVerify = () => {
+  slideVerified.value = false
+  showSliderDialog.value = false
+  if (slideVerifyRef.value) {
+    slideVerifyRef.value.reset()
+  }
+}
+
+const handleLogin = async () => {
+  if (userStore.userInfo.loginAttempts >= 3 && !slideVerified.value) {
+    ElMessage.error('请完成安全验证')
+    showSliderDialog.value = true
+    return
+  }
+
+  loading.value = true
+  try {
+    const result = await userStore.adminLogin(loginForm.username, loginForm.password, loginForm.authCode)
+    
+    if (result === true) {
+      ElMessage.success('登录成功')
+      router.push('/admin/dashboard')
+    } else {
+      ElMessage.error('用户名、密码或授权码错误')
+      if (userStore.userInfo.loginAttempts >= 3) {
+        recordAbnormalLogin(loginForm.username)
+      }
+      resetSlideVerify()
+    }
+  } catch (error) {
+    ElMessage.error('登录失败')
+    resetSlideVerify()
+  } finally {
+    loading.value = false
+  }
+}
+
+const recordAbnormalLogin = (username) => {
+  console.log('记录异常登录:', new Date().toISOString(), '用户名:', username)
 }
 </script>
 
@@ -257,5 +298,19 @@ const recordUnauthorizedAttempt = () => {
   :deep(.el-form-item) {
     margin-bottom: 16px;
   }
+}
+
+:deep(.el-dialog__header) {
+  text-align: center;
+  margin-right: 0;
+  padding: 20px;
+}
+
+:deep(.el-dialog__headerbtn) {
+  display: none;
+}
+
+:deep(.el-dialog__body) {
+  padding: 0 20px 30px;
 }
 </style> 

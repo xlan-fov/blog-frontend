@@ -35,17 +35,8 @@
               </div>
             </el-form-item>
 
-            <el-slider
-              v-if="showSlider"
-              v-model="sliderValue"
-              :min="0"
-              :max="100"
-              :format-tooltip="formatTooltip"
-              @change="handleSliderChange"
-            />
-
             <el-form-item>
-              <el-button type="primary" @click="handleLogin" :loading="loading" style="width: 100%">
+              <el-button type="primary" @click="handleLoginClick" :loading="loading" style="width: 100%">
                 登录
               </el-button>
             </el-form-item>
@@ -75,8 +66,19 @@
               </div>
             </el-form-item>
 
+            <el-form-item prop="captcha">
+              <div class="captcha-wrapper">
+                <el-input v-model="phoneForm.captcha" placeholder="请输入图片验证码">
+                  <template #prefix>
+                    <el-icon><Key /></el-icon>
+                  </template>
+                </el-input>
+                <Captcha v-model="captchaText" ref="captchaRef" />
+              </div>
+            </el-form-item>
+
             <el-form-item>
-              <el-button type="primary" @click="handlePhoneLogin" :loading="loading" style="width: 100%">
+              <el-button type="primary" @click="handlePhoneLoginClick" :loading="loading" style="width: 100%">
                 登录
               </el-button>
             </el-form-item>
@@ -88,6 +90,21 @@
         <router-link to="/register">注册账号</router-link>
       </div>
     </el-card>
+
+    <!-- 滑块验证弹窗 -->
+    <el-dialog
+      v-model="showSliderDialog"
+      title="安全验证"
+      width="380px"
+      :show-close="false"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
+      <SlideVerify
+        ref="slideVerifyRef"
+        @success="handleSlideSuccess"
+      />
+    </el-dialog>
   </div>
 </template>
 
@@ -98,17 +115,20 @@ import { useUserStore } from '../stores/user'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Phone, Message, Key } from '@element-plus/icons-vue'
 import Captcha from '@/components/Captcha.vue'
+import SlideVerify from '@/components/SlideVerify.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
 
 const activeTab = ref('account')
 const loading = ref(false)
-const showSlider = ref(false)
-const sliderValue = ref(0)
+const showSliderDialog = ref(false)
+const slideVerified = ref(false)
 const countdown = ref(0)
 const captchaRef = ref(null)
 const captchaText = ref('')
+const slideVerifyRef = ref(null)
+const pendingLoginAction = ref(null)
 
 const loginForm = reactive({
   username: '',
@@ -118,7 +138,8 @@ const loginForm = reactive({
 
 const phoneForm = reactive({
   phone: '',
-  code: ''
+  code: '',
+  captcha: ''
 })
 
 const rules = {
@@ -131,121 +152,141 @@ const phoneRules = {
     { required: true, message: '请输入手机号', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
   ],
-  code: [{ required: true, message: '请输入验证码', trigger: 'blur' }]
+  code: [{ required: true, message: '请输入验证码', trigger: 'blur' }],
+  captcha: [{ required: true, message: '请输入图片验证码', trigger: 'blur' }]
 }
 
-const formatTooltip = (val) => {
-  return `${val}%`
-}
-
-const handleSliderChange = (val) => {
-  if (val === 100) {
-    handleLogin()
-  }
-}
-
-const handleLogin = async () => {
+const handleLoginClick = async () => {
   if (!loginForm.username || !loginForm.password) {
     ElMessage.warning('请填写完整信息')
     return
   }
 
-  // TODO: 验证码校验功能（测试阶段暂时注释）
-  /*
-  if (!loginForm.captcha) {
-    ElMessage.warning('请输入验证码')
-    return
-  }
-
-  // TODO: 替换为axios请求
-  // 任务：将fetch请求替换为axios请求，统一接口调用方式
-  try {
-    const response = await fetch('/api/verify-captcha', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        captcha: loginForm.captcha
-      })
-    })
-    const data = await response.json()
-    if (!data.success) {
-      ElMessage.error('验证码错误')
-      captchaRef.value?.refreshCaptcha()
-      return
-    }
-  } catch (error) {
-    ElMessage.error('验证码验证失败')
-    return
-  }
-  */
-
   if (userStore.userInfo.loginAttempts >= 3) {
-    showSlider.value = true
-    if (sliderValue.value !== 100) {
-      ElMessage.error('请完成滑块验证')
-      return
-    }
+    pendingLoginAction.value = 'account'
+    showSliderDialog.value = true
+    return
+  }
+
+  await handleLogin()
+}
+
+const handlePhoneLoginClick = async () => {
+  if (!phoneForm.phone || !phoneForm.code || !phoneForm.captcha) {
+    ElMessage.warning('请填写完整信息')
+    return
+  }
+
+  await handlePhoneLogin()
+}
+
+const handleSlideSuccess = () => {
+  showSliderDialog.value = false
+  slideVerified.value = true
+  
+  if (pendingLoginAction.value === 'account') {
+    handleLogin()
+  } else if (pendingLoginAction.value === 'phone') {
+    handlePhoneLogin()
+  }
+}
+
+const resetSlideVerify = () => {
+  slideVerified.value = false
+  showSliderDialog.value = false
+  if (slideVerifyRef.value) {
+    slideVerifyRef.value.reset()
+  }
+}
+
+const handleLogin = async () => {
+  if (userStore.userInfo.loginAttempts >= 3 && !slideVerified.value) {
+    ElMessage.error('请完成安全验证')
+    showSliderDialog.value = true
+    return
   }
 
   loading.value = true
   try {
-    // TODO: 替换为axios请求
-    // 任务：将userStore.login方法内部实现改为使用axios请求
     const result = await userStore.login(loginForm.username, loginForm.password)
     
     if (result === 'banned') {
       ElMessage.error('您的账号已被封禁，请联系管理员')
+      resetSlideVerify()
       loading.value = false
       return
     }
     
     if (result === true) {
       ElMessage.success('登录成功')
-      // 获取重定向路径
       const redirectPath = router.currentRoute.value.query.redirect || '/'
       router.push(redirectPath)
     } else {
       ElMessage.error('用户名或密码错误')
-      // 登录失败，增加失败次数计数
       if (userStore.userInfo.loginAttempts >= 3) {
-        // 记录异常登录信息，供管理员查看
         recordAbnormalLogin(loginForm.username)
       }
-      // TODO: 验证码刷新功能（测试阶段暂时注释）
-      // captchaRef.value?.refreshCaptcha()
+      resetSlideVerify()
     }
   } catch (error) {
     ElMessage.error('登录失败')
-    // TODO: 验证码刷新功能（测试阶段暂时注释）
-    // captchaRef.value?.refreshCaptcha()
+    resetSlideVerify()
   } finally {
     loading.value = false
   }
 }
 
-// 记录异常登录信息
 const recordAbnormalLogin = (username) => {
-  // TODO: 替换为axios请求，向后端发送异常登录记录
   console.log('记录异常登录:', username, new Date().toISOString())
 }
 
-const handlePhoneLogin = () => {
-  // TODO: 替换为axios请求
-  // 任务：实现手机验证码登录的axios接口请求
-  // 模拟手机验证码登录
-  if (phoneForm.phone === '13800138000' && phoneForm.code === '123456') {
-    ElMessage.success('登录成功')
-    router.push('/blog')
-  } else {
-    ElMessage.error('手机号或验证码错误')
+const handlePhoneLogin = async () => {
+  loading.value = true
+  try {
+    // 验证图片验证码
+    if (phoneForm.captcha.toLowerCase() !== captchaText.value.toLowerCase()) {
+      ElMessage.error('图片验证码错误')
+      captchaRef.value.refresh()
+      phoneForm.captcha = ''
+      loading.value = false
+      return
+    }
+
+    if (phoneForm.phone === '13800138000' && phoneForm.code === '123456') {
+      ElMessage.success('登录成功')
+      router.push('/blog')
+    } else {
+      ElMessage.error('手机号或验证码错误')
+      captchaRef.value.refresh()
+      phoneForm.captcha = ''
+    }
+  } catch (error) {
+    ElMessage.error('登录失败')
+  } finally {
+    loading.value = false
   }
 }
 
-const sendCode = () => {
-  // TODO: 替换为axios请求
-  // 任务：实现发送手机验证码的axios接口请求
+const sendCode = async () => {
+  // 验证手机号格式
+  if (!/^1[3-9]\d{9}$/.test(phoneForm.phone)) {
+    ElMessage.error('请输入正确的手机号')
+    return
+  }
+
+  // 验证图片验证码
+  if (!phoneForm.captcha) {
+    ElMessage.error('请输入图片验证码')
+    return
+  }
+
+  if (phoneForm.captcha.toLowerCase() !== captchaText.value.toLowerCase()) {
+    ElMessage.error('图片验证码错误')
+    captchaRef.value.refresh()
+    phoneForm.captcha = ''
+    return
+  }
+
   countdown.value = 60
   const timer = setInterval(() => {
     countdown.value--
@@ -480,5 +521,19 @@ const sendCode = () => {
   :deep(.el-form-item) {
     margin-bottom: 16px;
   }
+}
+
+:deep(.el-dialog__header) {
+  text-align: center;
+  margin-right: 0;
+  padding: 20px;
+}
+
+:deep(.el-dialog__headerbtn) {
+  display: none;
+}
+
+:deep(.el-dialog__body) {
+  padding: 0 20px 30px;
 }
 </style> 
