@@ -1,0 +1,59 @@
+:root {
+    /* 主题色 */
+    --primary-color: #409EFF;
+    --primary-light: #66b1ff;
+    --primary-dark: #337ecc;
+
+    /* 文字颜色 */
+    --text-primary: #303133;
+    --text-regular: #606266;
+    --text-secondary: #909399;
+    --text-placeholder: #C0C4CC;
+
+    /* 背景色 */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f7fa;
+    --bg-navbar: #ffffff;
+    --bg-sidebar: #ffffff;
+
+    /* 边框颜色 */
+    --border-color-base: #DCDFE6;
+    --border-color-light: #E4E7ED;
+    --border-color-lighter: #EBEEF5;
+
+    /* 成功、警告、错误、信息色 */
+    --success-color: #67C23A;
+    --warning-color: #E6A23C;
+    --danger-color: #F56C6C;
+    --info-color: #909399;
+
+    /* 布局尺寸 */
+    --navbar-height: 60px;
+    --sidebar-width: 200px;
+
+    /* 圆角 */
+    --border-radius-small: 2px;
+    --border-radius-base: 4px;
+    --border-radius-large: 8px;
+
+    /* 阴影 */
+    --box-shadow-light: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    --box-shadow-base: 0 2px 4px rgba(0, 0, 0, 0.12), 0 0 6px rgba(0, 0, 0, 0.04);
+    --box-shadow-dark: 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 10px rgba(0, 0, 0, 0.1);
+
+    /* 过渡动画 */
+    --transition-duration: 0.3s;
+
+    /* 字体设置 */
+    --font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+    --font-size-small: 12px;
+    --font-size-base: 14px;
+    --font-size-medium: 16px;
+    --font-size-large: 18px;
+    --font-size-extra-large: 20px;
+
+    /* 行高 */
+    --line-height-compact: 1.2;
+    --line-height-normal: 1.5;
+    --line-height-loose: 2;
+}

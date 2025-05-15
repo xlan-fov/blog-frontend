@@ -1,12 +1,12 @@
 <template>
-  <div class="layout">
+  <div class="admin-layout">
     <!-- 顶部导航栏 -->
     <div class="top-nav">
-      <div class="system-name" @click="goHome">
-        SentiBlog
+      <div class="system-name">
+        SentiBlog 管理系统
       </div>
       <div class="user-info">
-        <el-dropdown v-if="userStore.isLoggedIn" @command="handleCommand">
+        <el-dropdown trigger="click" @command="handleCommand">
           <span class="user-dropdown">
             <el-avatar :size="32" :src="userStore.userInfo.avatar" />
             <span class="username">{{ userStore.userInfo.username }}</span>
@@ -14,12 +14,12 @@
           </span>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="profile">个人空间</el-dropdown-item>
-              <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+              <el-dropdown-item command="profile">个人资料</el-dropdown-item>
+              <el-dropdown-item command="switch">切换到普通视图</el-dropdown-item>
+              <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <el-button v-else @click="login" type="primary">登录</el-button>
       </div>
     </div>
 
@@ -27,29 +27,43 @@
       <!-- PC端左侧菜单栏，移动端隐藏 -->
       <div v-if="!isMobile" class="left-menu">
         <el-menu
-          :default-active="activeMenu"
+          :default-active="activeIndex"
+          router
           class="el-menu-vertical"
-          @select="handleSelect"
         >
-          <el-menu-item index="blog">
+          <el-menu-item index="/admin/blog-management">
             <el-icon><Document /></el-icon>
-            <span>内容管理</span>
+            <span>博客内容管理</span>
           </el-menu-item>
-
-          <el-menu-item index="profile">
+          
+          <el-menu-item index="/admin/account-management">
+            <el-icon><User /></el-icon>
+            <span>账号管理</span>
+          </el-menu-item>
+          
+          <el-menu-item index="/admin/anomaly-detection">
+            <el-icon><Warning /></el-icon>
+            <span>异常感知</span>
+          </el-menu-item>
+          
+          <el-menu-item index="/admin/profile">
             <el-icon><Avatar /></el-icon>
             <span>个人空间</span>
           </el-menu-item>
         </el-menu>
       </div>
+      
       <!-- 移动端顶部下拉菜单 -->
       <div v-if="isMobile" class="mobile-menu">
-        <el-select v-model="activeMenu" placeholder="选择菜单" @change="handleSelect" style="width: 100%">
-          <el-option label="内容管理" value="blog" />
-          <el-option label="个人空间" value="profile" />
+        <el-select v-model="activeRoute" placeholder="选择菜单" @change="handleSelect" style="width: 100%">
+          <el-option label="博客内容管理" value="/admin/blog-management" />
+          <el-option label="账号管理" value="/admin/account-management" />
+          <el-option label="异常感知" value="/admin/anomaly-detection" />
+          <el-option label="个人空间" value="/admin/profile" />
         </el-select>
       </div>
-      <!-- 主要内容区域 -->
+      
+      <!-- 内容区域 -->
       <div class="content">
         <router-view></router-view>
       </div>
@@ -58,14 +72,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { Document, ArrowDown, Avatar} from '@element-plus/icons-vue'
+import { Document, User, Warning, Avatar, ArrowDown } from '@element-plus/icons-vue'
+import { ElMessageBox } from 'element-plus'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
-const activeMenu = ref('blog')
 
 // 响应式判断是否是移动端
 const isMobile = ref(window.innerWidth <= 768)
@@ -79,35 +94,39 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
 })
 
-const goHome = () => {
-  router.push('/')
+// 计算当前激活的菜单项
+const activeIndex = computed(() => route.path)
+const activeRoute = computed({
+  get: () => route.path,
+  set: (value) => value
+})
+
+// 处理移动端菜单选择
+const handleSelect = (path) => {
+  router.push(path)
 }
 
-const handleSelect = (key) => {
-  if (key === 'blog') {
-    router.push('/blog')
-  } else if (key === 'profile') {
-    router.push('/profile')
-  }
-}
-
+// 处理下拉菜单命令
 const handleCommand = (command) => {
-  if (command === 'profile') {
-    router.push('/profile')
-  } 
-  else if (command === 'logout') {
-    userStore.logout()
-    router.push('/login')
+  if (command === 'logout') {
+    ElMessageBox.confirm('确定要退出登录吗?', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(() => {
+      userStore.logout()
+      router.push('/admin-login')
+    }).catch(() => {})
+  } else if (command === 'profile') {
+    router.push('/admin/profile')
+  } else if (command === 'switch') {
+    router.push('/')
   }
-}
-
-const login = () => {
-  router.push('/login')
 }
 </script>
 
 <style scoped>
-.layout {
+.admin-layout {
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -126,14 +145,12 @@ const login = () => {
 .system-name {
   font-size: 20px;
   font-weight: bold;
-  cursor: pointer;
   color: #409EFF;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 10px;
 }
 
 .user-dropdown {
@@ -189,7 +206,7 @@ const login = () => {
   border-bottom: 1px solid #e6e6e6;
 }
 
-/* 添加移动端布局切换 */
+/* 移动端布局切换 */
 @media screen and (max-width: 768px) {
   .main-content {
     flex-direction: column !important;

@@ -1,5 +1,5 @@
 <template>
-  <div class="profile-container">
+  <div class="admin-profile">
     <el-row :gutter="20">
       <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
         <el-card class="profile-card">
@@ -20,7 +20,7 @@
             </div>
             <h2 class="username">{{ userStore.userInfo.username }}</h2>
             <div class="role-tag">
-              <el-tag type="primary">普通用户</el-tag>
+              <el-tag type="danger">超级管理员</el-tag>
             </div>
           </div>
           
@@ -34,8 +34,8 @@
               <div class="value">{{ formatDate(new Date()) }}</div>
             </div>
             <div class="info-item">
-              <div class="label">博客数量</div>
-              <div class="value">{{ userStore.userInfo.blogCount || 0 }}</div>
+              <div class="label">管理权限</div>
+              <div class="value">全部</div>
             </div>
           </div>
         </el-card>
@@ -211,11 +211,9 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
-import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Camera } from '@element-plus/icons-vue'
 
-const router = useRouter()
 const userStore = useUserStore()
 const isEditing = ref(false)
 const submitting = ref(false)
@@ -223,10 +221,10 @@ const countdown = ref(0)
 
 // 个人资料表单
 const profileForm = reactive({
-  username: userStore.userInfo.username || '用户',
-  email: 'user@example.com',
+  username: userStore.userInfo.username || 'admin',
+  email: 'admin@example.com',
   phone: '13800138000',
-  bio: userStore.userInfo.bio || '这是我的个人简介'
+  bio: userStore.userInfo.bio || '这是管理员个人简介'
 })
 
 // 密码表单
@@ -467,11 +465,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.profile-container {
+.admin-profile {
   padding: 16px;
 }
 
-.profile-card, .info-card, .security-card {
+.profile-card {
   margin-bottom: 20px;
 }
 
@@ -500,22 +498,18 @@ onMounted(() => {
   align-items: center;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   cursor: pointer;
-  transition: all 0.3s;
-}
-
-.avatar-upload:hover {
-  transform: scale(1.1);
+  border: 1px solid #e6e6e6;
 }
 
 .upload-icon {
-  font-size: 16px;
-  color: #409EFF;
+  font-size: 18px;
+  color: #606266;
 }
 
 .username {
-  font-size: 20px;
+  margin: 8px 0;
+  font-size: 18px;
   font-weight: bold;
-  margin: 10px 0;
 }
 
 .role-tag {
@@ -523,25 +517,30 @@ onMounted(() => {
 }
 
 .profile-info {
-  width: 100%;
-  border-top: 1px solid #EBEEF5;
-  padding-top: 16px;
+  padding: 0 16px 16px;
 }
 
 .info-item {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
-  font-size: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f2f5;
 }
 
-.info-item .label {
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.label {
   color: #909399;
 }
 
-.info-item .value {
-  color: #303133;
-  font-weight: 500;
+.info-card {
+  margin-bottom: 20px;
+}
+
+.security-card {
+  margin-bottom: 20px;
 }
 
 .card-header {
@@ -551,23 +550,23 @@ onMounted(() => {
 }
 
 .security-items {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  padding: 0 16px;
 }
 
 .security-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.security-item:last-child {
+  border-bottom: none;
 }
 
 .security-item-info .title {
   font-size: 16px;
-  font-weight: 500;
   margin-bottom: 4px;
 }
 

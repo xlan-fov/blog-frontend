@@ -15,4 +15,9 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  define: {
+    // 注入环境变量到前端代码
+    'import.meta.env.ADMIN_PATH': JSON.stringify('senti-admin-auth'), // 隐蔽的管理员路径
+    'import.meta.env.APP_TITLE': JSON.stringify('SentiBlog')
+  },
 })

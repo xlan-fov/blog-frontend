@@ -1,35 +1,76 @@
 @import './base.css';
 
+/* 重置App容器样式，移除限制 */
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100vh;
   font-weight: normal;
+  max-width: none;
 }
 
-a,
-.green {
+/* 统一链接样式 */
+a {
   text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+  color: #409EFF;
+  transition: all 0.3s ease;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
+a:hover {
+  color: #66b1ff;
+}
+
+/* 统一卡片样式 */
+.el-card {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.3s ease;
+}
+
+.el-card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 统一按钮样式 */
+.el-button {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.el-button--primary {
+  background-color: #409EFF;
+}
+
+.el-button--primary:hover {
+  background-color: #66b1ff;
+}
+
+/* 统一表单样式 */
+.el-input__wrapper {
+  border-radius: 4px;
+}
+
+/* 页面切换过渡效果 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 响应式媒体查询 */
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
   }
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
+@media (min-width: 769px) {
+  .show-on-mobile {
+    display: none !important;
   }
 }

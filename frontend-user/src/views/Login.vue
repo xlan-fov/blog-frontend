@@ -193,14 +193,26 @@ const handleLogin = async () => {
   try {
     // TODO: 替换为axios请求
     // 任务：将userStore.login方法内部实现改为使用axios请求
-    const success = await userStore.login(loginForm.username, loginForm.password)
-    if (success) {
+    const result = await userStore.login(loginForm.username, loginForm.password)
+    
+    if (result === 'banned') {
+      ElMessage.error('您的账号已被封禁，请联系管理员')
+      loading.value = false
+      return
+    }
+    
+    if (result === true) {
       ElMessage.success('登录成功')
       // 获取重定向路径
       const redirectPath = router.currentRoute.value.query.redirect || '/'
       router.push(redirectPath)
     } else {
       ElMessage.error('用户名或密码错误')
+      // 登录失败，增加失败次数计数
+      if (userStore.userInfo.loginAttempts >= 3) {
+        // 记录异常登录信息，供管理员查看
+        recordAbnormalLogin(loginForm.username)
+      }
       // TODO: 验证码刷新功能（测试阶段暂时注释）
       // captchaRef.value?.refreshCaptcha()
     }
@@ -211,6 +223,12 @@ const handleLogin = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// 记录异常登录信息
+const recordAbnormalLogin = (username) => {
+  // TODO: 替换为axios请求，向后端发送异常登录记录
+  console.log('记录异常登录:', username, new Date().toISOString())
 }
 
 const handlePhoneLogin = () => {

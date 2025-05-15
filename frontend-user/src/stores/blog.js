@@ -218,6 +218,10 @@ export const useBlogStore = defineStore('blog', () => {
   // 更新博客
   async function updateBlog(id, blogData) {
     try {
+      console.log('更新博客:', id, blogData)
+      setTimeout(() => {
+        console.log('模拟更新博客成功')
+      }, 2000)
       // 这里应该是实际的API调用
       const index = blogs.value.findIndex(blog => blog.id === id)
       if (index !== -1) {
