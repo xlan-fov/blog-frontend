@@ -1,72 +1,49 @@
 <template>
   <div class="captcha-container" @click="refreshCaptcha">
-    <canvas ref="canvasRef" width="120" height="40"></canvas>
+    <img v-if="captchaUrl" :src="captchaUrl" alt="验证码" width="120" height="40" />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { v4 as uuidv4 } from 'uuid'
+import { getCaptcha } from '@/api/captcha'
 
 const props = defineProps({
   modelValue: {
     type: String,
     required: true
+  },
+  onCaptchaChange: {
+    type: Function,
+    default: () => {}
   }
 })
 
 const emit = defineEmits(['update:modelValue'])
 
-const canvasRef = ref(null)
-let captchaText = ''
+const captchaUrl = ref('')
+const captchaId = ref('')
 
-const generateCaptcha = () => {
-  const canvas = canvasRef.value
-  const ctx = canvas.getContext('2d')
-  
-  // 清空画布
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-  
-  // 生成4位随机数字
-  captchaText = Math.random().toString().slice(2, 6)
-  emit('update:modelValue', captchaText)
-  
-  // 设置背景
-  ctx.fillStyle = '#f3f3f3'
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
-  
-  // 绘制文字
-  ctx.fillStyle = '#333'
-  ctx.font = 'bold 24px Arial'
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  
-  // 随机旋转和位置
-  for (let i = 0; i < captchaText.length; i++) {
-    const x = 20 + i * 25
-    const y = 20
-    const rotate = (Math.random() - 0.5) * 0.3
-    ctx.save()
-    ctx.translate(x, y)
-    ctx.rotate(rotate)
-    ctx.fillText(captchaText[i], 0, 0)
-    ctx.restore()
-  }
-  
-  // 添加干扰线
-  for (let i = 0; i < 4; i++) {
-    ctx.beginPath()
-    ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height)
-    ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height)
-    ctx.strokeStyle = `rgba(${Math.random() * 255},${Math.random() * 255},${Math.random() * 255},0.5)`
-    ctx.stroke()
-  }
-  
-  // 添加干扰点
-  for (let i = 0; i < 50; i++) {
-    ctx.beginPath()
-    ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 1, 0, 2 * Math.PI)
-    ctx.fillStyle = `rgba(${Math.random() * 255},${Math.random() * 255},${Math.random() * 255},0.5)`
-    ctx.fill()
+const generateCaptcha = async () => {
+  try {
+    // 生成唯一标识符
+    const timestamp = Date.now()
+    const uuid = uuidv4()
+    const newCaptchaId = `${timestamp}-${uuid}`
+    captchaId.value = newCaptchaId
+
+    const response = await getCaptcha(newCaptchaId)
+    
+    if (response.code === 0) {
+      captchaUrl.value = response.data.img
+      // 通知父组件captchaId发生变化
+      props.onCaptchaChange(newCaptchaId)
+    } else {
+      console.error('获取验证码失败:', response.msg)
+    }
+  } catch (error) {
+    console.error('获取验证码出错:', error)
   }
 }
 
@@ -79,7 +56,8 @@ onMounted(() => {
 })
 
 defineExpose({
-  refreshCaptcha
+  refreshCaptcha,
+  getCaptchaId: () => captchaId.value
 })
 </script>
 
@@ -93,5 +71,12 @@ defineExpose({
 
 .captcha-container:hover {
   opacity: 0.8;
+}
+
+.captcha-container img {
+  display: block;
+  width: 120px;
+  height: 40px;
+  object-fit: cover;
 }
 </style> 

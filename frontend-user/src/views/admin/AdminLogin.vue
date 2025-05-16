@@ -137,7 +137,8 @@ const handleLogin = async () => {
     
     if (result === true) {
       ElMessage.success('登录成功')
-      router.push('/admin/dashboard')
+      const redirectPath = router.currentRoute.value.query.redirect || '/admin/blog-management'
+      router.push(redirectPath)
     } else {
       ElMessage.error('用户名、密码或授权码错误')
       if (userStore.userInfo.loginAttempts >= 3) {

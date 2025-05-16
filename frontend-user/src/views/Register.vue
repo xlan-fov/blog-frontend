@@ -39,7 +39,7 @@
                     <el-icon><Key /></el-icon>
                   </template>
                 </el-input>
-                <Captcha v-model="captchaText" ref="captchaRef" />
+                <Captcha v-model="captchaText" ref="captchaRef" :onCaptchaChange="handleCaptchaChange" />
               </div>
             </el-form-item>
 
@@ -74,12 +74,15 @@
               </div>
             </el-form-item>
 
-            <el-form-item prop="password">
-              <el-input v-model="phoneForm.password" type="password" placeholder="请输入密码" show-password>
-                <template #prefix>
-                  <el-icon><Lock /></el-icon>
-                </template>
-              </el-input>
+            <el-form-item prop="captcha">
+              <div class="captcha-wrapper">
+                <el-input v-model="phoneForm.captcha" placeholder="请输入图片验证码">
+                  <template #prefix>
+                    <el-icon><Key /></el-icon>
+                  </template>
+                </el-input>
+                <Captcha v-model="captchaText" ref="captchaRef" :onCaptchaChange="handleCaptchaChange" />
+              </div>
             </el-form-item>
 
             <el-form-item>
@@ -104,6 +107,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Phone, Message, Key } from '@element-plus/icons-vue'
 import Captcha from '@/components/Captcha.vue'
+import { registerByUsername, registerByPhone, sendPhoneCode } from '@/api/user'
 
 const router = useRouter()
 const activeTab = ref('account')
@@ -113,6 +117,7 @@ const registerFormRef = ref(null)
 const phoneFormRef = ref(null)
 const captchaRef = ref(null)
 const captchaText = ref('')
+const captchaId = ref('')
 
 const registerForm = reactive({
   username: '',
@@ -124,7 +129,7 @@ const registerForm = reactive({
 const phoneForm = reactive({
   phone: '',
   code: '',
-  password: ''
+  captcha: ''
 })
 
 const validatePassword = (rule, value, callback) => {
@@ -170,9 +175,11 @@ const phoneRules = {
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
   ],
   code: [{ required: true, message: '请输入验证码', trigger: 'blur' }],
-  password: [
-    { required: true, validator: validatePassword, trigger: 'blur' }
-  ]
+  captcha: [{ required: true, message: '请输入图片验证码', trigger: 'blur' }]
+}
+
+const handleCaptchaChange = (newCaptchaId) => {
+  captchaId.value = newCaptchaId
 }
 
 const handleRegister = async () => {
@@ -180,51 +187,29 @@ const handleRegister = async () => {
     // 先验证表单
     await registerFormRef.value.validate()
     
-    // TODO: 验证码校验功能（测试阶段暂时注释）
-    /*
     // 验证验证码
     if (!registerForm.captcha) {
       ElMessage.error('请输入验证码')
       return
     }
     
-    // TODO: 替换为axios请求
-    // 任务：将fetch请求替换为axios请求，统一接口调用方式
     try {
-      const response = await fetch('/api/verify-captcha', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          captcha: registerForm.captcha
-        })
+      await registerByUsername({
+        username: registerForm.username,
+        password: registerForm.password,
+        captcha: registerForm.captcha,
+        captchaId: captchaId.value
       })
-      const data = await response.json()
-      if (!data.success) {
-        ElMessage.error('验证码错误')
-        captchaRef.value?.refreshCaptcha()
-        return
-      }
+      
+      ElMessage.success('注册成功')
+      router.push('/login')
     } catch (error) {
-      ElMessage.error('验证码验证失败')
-      return
+      captchaRef.value.refreshCaptcha()
+      registerForm.captcha = ''
     }
-    */
-
-    // TODO: 替换为axios请求
-    // 任务：实现账号密码注册的axios接口请求
-    // 验证通过，继续注册流程
-    if (registerForm.username === 'admin') {
-      ElMessage.error('用户名已存在')
-      return
-    }
-    ElMessage.success('注册成功')
-    router.push('/login')
   } catch (error) {
     ElMessage.error('请检查表单填写是否正确')
-    // TODO: 验证码刷新功能（测试阶段暂时注释）
-    // captchaRef.value?.refreshCaptcha()
+    captchaRef.value.refreshCaptcha()
   }
 }
 
@@ -233,65 +218,47 @@ const handlePhoneRegister = async () => {
     // 先验证表单
     await phoneFormRef.value.validate()
     
-    // TODO: 验证码校验功能（测试阶段暂时注释）
-    /*
-    // 验证验证码
-    if (!phoneForm.captcha) {
-      ElMessage.error('请输入验证码')
-      return
-    }
-    
-    // TODO: 替换为axios请求
-    // 任务：将fetch请求替换为axios请求，统一接口调用方式
     try {
-      const response = await fetch('/api/verify-captcha', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          captcha: phoneForm.captcha
-        })
+      await registerByPhone({
+        phone: phoneForm.phone,
+        code: phoneForm.code,
+        captcha: phoneForm.captcha,
+        captchaId: captchaId.value
       })
-      const data = await response.json()
-      if (!data.success) {
-        ElMessage.error('验证码错误')
-        captchaRef.value?.refreshCaptcha()
-        return
-      }
+      
+      ElMessage.success('注册成功')
+      router.push('/login')
     } catch (error) {
-      ElMessage.error('验证码验证失败')
-      return
+      captchaRef.value.refreshCaptcha()
+      phoneForm.captcha = ''
     }
-    */
-
-    // TODO: 替换为axios请求
-    // 任务：实现手机验证码注册的axios接口请求
-    // 验证通过，继续注册流程
-    if (phoneForm.phone === '13800138000') {
-      ElMessage.error('手机号已被注册')
-      return
-    }
-    ElMessage.success('注册成功')
-    router.push('/login')
   } catch (error) {
     ElMessage.error('请检查表单填写是否正确')
-    // TODO: 验证码刷新功能（测试阶段暂时注释）
-    // captchaRef.value?.refreshCaptcha()
+    captchaRef.value.refreshCaptcha()
   }
 }
 
-const sendCode = () => {
-  // TODO: 替换为axios请求
-  // 任务：实现发送手机验证码的axios接口请求
-  countdown.value = 60
-  const timer = setInterval(() => {
-    countdown.value--
-    if (countdown.value <= 0) {
-      clearInterval(timer)
-    }
-  }, 1000)
-  ElMessage.success('验证码已发送')
+const sendCode = async () => {
+  // 验证手机号格式
+  if (!/^1[3-9]\d{9}$/.test(phoneForm.phone)) {
+    ElMessage.error('请输入正确的手机号')
+    return
+  }
+
+  try {
+    await sendPhoneCode(phoneForm.phone)
+
+    countdown.value = 60
+    const timer = setInterval(() => {
+      countdown.value--
+      if (countdown.value <= 0) {
+        clearInterval(timer)
+      }
+    }, 1000)
+    ElMessage.success('验证码已发送')
+  } catch (error) {
+    // 错误处理已经在API层完成
+  }
 }
 
 const captchaUrl = ref('')

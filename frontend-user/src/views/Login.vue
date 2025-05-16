@@ -31,7 +31,7 @@
                     <el-icon><Key /></el-icon>
                   </template>
                 </el-input>
-                <Captcha v-model="captchaText" ref="captchaRef" />
+                <Captcha v-model="captchaText" ref="captchaRef" :onCaptchaChange="handleCaptchaChange" />
               </div>
             </el-form-item>
 
@@ -73,7 +73,7 @@
                     <el-icon><Key /></el-icon>
                   </template>
                 </el-input>
-                <Captcha v-model="captchaText" ref="captchaRef" />
+                <Captcha v-model="captchaText" ref="captchaRef" :onCaptchaChange="handleCaptchaChange" />
               </div>
             </el-form-item>
 
@@ -116,6 +116,7 @@ import { ElMessage } from 'element-plus'
 import { User, Lock, Phone, Message, Key } from '@element-plus/icons-vue'
 import Captcha from '@/components/Captcha.vue'
 import SlideVerify from '@/components/SlideVerify.vue'
+import { loginByUsername, loginByPhone, sendPhoneCode } from '@/api/user'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -125,10 +126,16 @@ const loading = ref(false)
 const showSliderDialog = ref(false)
 const slideVerified = ref(false)
 const countdown = ref(0)
+const loginFailCount = ref(0)
 const captchaRef = ref(null)
 const captchaText = ref('')
 const slideVerifyRef = ref(null)
 const pendingLoginAction = ref(null)
+const captchaId = ref('')
+const sliderToken = ref('')
+const sliderX = ref(0)
+const loginFormRef = ref(null)
+const phoneFormRef = ref(null)
 
 const loginForm = reactive({
   username: '',
@@ -162,7 +169,8 @@ const handleLoginClick = async () => {
     return
   }
 
-  if (userStore.userInfo.loginAttempts >= 3) {
+  // 如果登录失败次数达到3次且未通过滑块验证，显示滑块验证
+  if (loginFailCount.value >= 3 && !slideVerified.value) {
     pendingLoginAction.value = 'account'
     showSliderDialog.value = true
     return
@@ -180,9 +188,11 @@ const handlePhoneLoginClick = async () => {
   await handlePhoneLogin()
 }
 
-const handleSlideSuccess = () => {
+const handleSlideSuccess = (token, x) => {
   showSliderDialog.value = false
   slideVerified.value = true
+  sliderToken.value = token
+  sliderX.value = x
   
   if (pendingLoginAction.value === 'account') {
     handleLogin()
@@ -194,74 +204,91 @@ const handleSlideSuccess = () => {
 const resetSlideVerify = () => {
   slideVerified.value = false
   showSliderDialog.value = false
+  sliderToken.value = ''
+  sliderX.value = 0
   if (slideVerifyRef.value) {
     slideVerifyRef.value.reset()
   }
 }
 
 const handleLogin = async () => {
-  if (userStore.userInfo.loginAttempts >= 3 && !slideVerified.value) {
-    ElMessage.error('请完成安全验证')
-    showSliderDialog.value = true
-    return
-  }
-
   loading.value = true
   try {
-    const result = await userStore.login(loginForm.username, loginForm.password)
+    // 先验证表单
+    await loginFormRef.value.validate()
     
-    if (result === 'banned') {
-      ElMessage.error('您的账号已被封禁，请联系管理员')
-      resetSlideVerify()
-      loading.value = false
-      return
-    }
-    
-    if (result === true) {
+    try {
+      const loginParams = {
+        username: loginForm.username,
+        password: loginForm.password
+      }
+
+      // 如果存在滑块验证token和坐标，添加到登录参数中
+      if (slideVerified.value) {
+        loginParams.sliderToken = sliderToken.value
+        loginParams.sliderX = sliderX.value
+      }
+
+      const response = await loginByUsername(loginParams)
+      
+      if (response.data.banned) {
+        ElMessage.error('您的账号已被封禁，请联系管理员')
+        resetSlideVerify()
+        return
+      }
+      
+      // 登录成功，重置失败次数
+      loginFailCount.value = 0
+      
+      // 更新用户信息
+      userStore.setUserInfo(response.data)
       ElMessage.success('登录成功')
       const redirectPath = router.currentRoute.value.query.redirect || '/'
       router.push(redirectPath)
-    } else {
-      ElMessage.error('用户名或密码错误')
-      if (userStore.userInfo.loginAttempts >= 3) {
-        recordAbnormalLogin(loginForm.username)
+    } catch (error) {
+      // 登录失败，增加失败次数
+      loginFailCount.value++
+      
+      // 如果是滑块验证错误，显示滑块验证弹窗
+      if (error.response?.data?.code === 401 && error.response?.data?.msg?.includes('滑块验证')) {
+        pendingLoginAction.value = 'account'
+        showSliderDialog.value = true
       }
-      resetSlideVerify()
+      // 清空密码
+      loginForm.password = ''
     }
   } catch (error) {
-    ElMessage.error('登录失败')
-    resetSlideVerify()
+    console.log('表单验证失败', error)
+    ElMessage.error('请检查表单填写是否正确')
   } finally {
     loading.value = false
   }
 }
 
-const recordAbnormalLogin = (username) => {
-  console.log('记录异常登录:', username, new Date().toISOString())
+const handleCaptchaChange = (newCaptchaId) => {
+  captchaId.value = newCaptchaId
 }
 
 const handlePhoneLogin = async () => {
   loading.value = true
   try {
-    // 验证图片验证码
-    if (phoneForm.captcha.toLowerCase() !== captchaText.value.toLowerCase()) {
-      ElMessage.error('图片验证码错误')
-      captchaRef.value.refresh()
-      phoneForm.captcha = ''
-      loading.value = false
+    const response = await loginByPhone({
+      phone: phoneForm.phone,
+      code: phoneForm.code
+    })
+    
+    if (response.data.banned) {
+      ElMessage.error('您的账号已被封禁，请联系管理员')
       return
     }
-
-    if (phoneForm.phone === '13800138000' && phoneForm.code === '123456') {
-      ElMessage.success('登录成功')
-      router.push('/blog')
-    } else {
-      ElMessage.error('手机号或验证码错误')
-      captchaRef.value.refresh()
-      phoneForm.captcha = ''
-    }
+    
+    // 更新用户信息
+    userStore.setUserInfo(response.data)
+    ElMessage.success('登录成功')
+    router.push('/blog')
   } catch (error) {
-    ElMessage.error('登录失败')
+    captchaRef.value.refreshCaptcha()
+    phoneForm.captcha = ''
   } finally {
     loading.value = false
   }
@@ -274,27 +301,20 @@ const sendCode = async () => {
     return
   }
 
-  // 验证图片验证码
-  if (!phoneForm.captcha) {
-    ElMessage.error('请输入图片验证码')
-    return
-  }
+  try {
+    await sendPhoneCode(phoneForm.phone)
 
-  if (phoneForm.captcha.toLowerCase() !== captchaText.value.toLowerCase()) {
-    ElMessage.error('图片验证码错误')
-    captchaRef.value.refresh()
-    phoneForm.captcha = ''
-    return
+    countdown.value = 60
+    const timer = setInterval(() => {
+      countdown.value--
+      if (countdown.value <= 0) {
+        clearInterval(timer)
+      }
+    }, 1000)
+    ElMessage.success('验证码已发送')
+  } catch (error) {
+    // 错误处理已经在API层完成
   }
-
-  countdown.value = 60
-  const timer = setInterval(() => {
-    countdown.value--
-    if (countdown.value <= 0) {
-      clearInterval(timer)
-    }
-  }, 1000)
-  ElMessage.success('验证码已发送')
 }
 </script>
 
