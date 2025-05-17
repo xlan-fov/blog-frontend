@@ -94,6 +94,7 @@ const errorMessage = ref('')
 const searchUsername = ref('') // 添加用户名搜索
 
 // 示例异常数据
+// TODO: 实际项目中应通过API接口获取，使用 /api/admin/anomaly/logins 接口
 const anomalies = ref([
   {
     id: 1,
@@ -187,6 +188,11 @@ onMounted(() => {
 })
 
 // 查询异常数据
+// 调用接口: GET /api/admin/anomaly/logins
+// 参数说明: 
+// - startDate: 开始日期，格式 YYYY-MM-DD
+// - endDate: 结束日期，格式 YYYY-MM-DD
+// - username: 可选的用户名搜索关键词
 function queryAnomalies() {
   // 清除之前的错误信息
   errorMessage.value = ''
@@ -215,20 +221,57 @@ function queryAnomalies() {
   }
   
   // 前端已通过计算属性完成过滤
+  // TODO: 实际项目中应该调用接口
+  // 接口示例:
+  // const params = {
+  //   startDate: startDate.value,
+  //   endDate: endDate.value,
+  //   username: searchUsername.value || undefined
+  // }
+  // const { data } = await getAnomalyLogins(params)
+  // anomalies.value = data.list
   console.log('查询时间范围:', startDate.value, '至', endDate.value)
 }
 
 // 踢出用户
+// 调用接口: POST /api/admin/users/{username}/kick
+// 参数说明:
+// - username: 用户名 (路径参数)
 function kickUser(user) {
   // 实际项目中应调用API踢出用户
+  // TODO: 实际项目中应该调用接口
+  // 接口示例:
+  // try {
+  //   await kickUserById(user.username)
+  //   user.status = '未登录'
+  //   ElMessage.success('已踢出用户')
+  // } catch (error) {
+  //   ElMessage.error('踢出用户失败')
+  // }
   alert(`已踢出用户: ${user.username}`)
   // 更新用户状态
   user.status = '未登录'
 }
 
 // 封禁用户
+// 调用接口: POST /api/admin/users/{username}/ban
+// 参数说明:
+// - username: 用户名 (路径参数)
+// - reason: 封禁原因
 function banUser(user) {
   // 实际项目中应调用API封禁用户
+  // TODO: 实际项目中应该调用接口
+  // 接口示例:
+  // try {
+  //   await banUser({
+  //     username: user.username,
+  //     reason: `检测到异常行为：${user.reason}`
+  //   })
+  //   user.status = '已封禁'
+  //   ElMessage.success('已封禁用户')
+  // } catch (error) {
+  //   ElMessage.error('封禁用户失败')
+  // }
   alert(`已封禁用户: ${user.username}`)
   // 更新用户状态
   user.status = '已封禁'

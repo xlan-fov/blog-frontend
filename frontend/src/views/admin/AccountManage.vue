@@ -9,6 +9,7 @@
           v-model="searchKeyword"
           @keyup.enter="searchAccounts" 
         />
+        <!-- 调用接口: GET /api/admin/users -->
         <button class="search-btn" @click="searchAccounts">搜索</button>
       </div>
       <button class="create-account-btn" @click="createAccount">创建账号</button>
@@ -33,13 +34,16 @@
             <td>{{ account.phone }}</td>
             <td>{{ account.status }}</td>
             <td class="actions-cell">
+              <!-- 调用接口: GET /api/admin/users/{username} -->
               <button class="action-btn detail-btn" @click="viewDetail(account)">详情</button>
               
               <template v-if="account.status === '已登录' || account.status === '未登录'">
+                <!-- 调用接口: POST /api/admin/users/{username}/ban -->
                 <button class="action-btn ban-btn" @click="banAccount(account)">封禁</button>
               </template>
               
               <template v-else-if="account.status === '已封禁'">
+                <!-- 调用接口: POST /api/admin/users/{username}/unban -->
                 <button class="action-btn unban-btn" @click="unbanAccount(account)">解封</button>
               </template>
             </td>
@@ -52,6 +56,7 @@
     <div v-if="showCreateDialog" class="dialog-overlay">
       <div class="dialog-content">
         <h3>创建账号</h3>
+        <!-- 表单内容 -->
         <div class="form-item">
           <label>账号名称</label>
           <input v-model="newAccount.username" placeholder="请输入账号名称" />
@@ -66,6 +71,7 @@
         </div>
         <div class="dialog-actions">
           <button class="cancel-btn" @click="showCreateDialog = false">取消</button>
+          <!-- 调用接口: POST /api/admin/users -->
           <button class="confirm-btn" @click="confirmCreate">确定</button>
         </div>
       </div>
@@ -90,6 +96,7 @@ const newAccount = ref({
 })
 
 // 账号数据
+// TODO: 实际项目中应通过API接口获取，使用 /api/admin/users 接口
 const accounts = ref([
   {
     username: '张三',
@@ -136,6 +143,11 @@ function createAccount() {
 }
 
 // 确认创建账号
+// 调用接口: POST /api/admin/users
+// 参数说明:
+// - username: 用户名
+// - password: 密码
+// - phone: 手机号
 function confirmCreate() {
   if (!newAccount.value.username || !newAccount.value.password || !newAccount.value.phone) {
     alert('请填写完整信息')
@@ -143,6 +155,27 @@ function confirmCreate() {
   }
   
   // 实际项目中应该调用API创建账号
+  // TODO: 实际项目中应该调用接口
+  // 接口示例:
+  // try {
+  //   await createUser({
+  //     username: newAccount.value.username,
+  //     password: newAccount.value.password,
+  //     phone: newAccount.value.phone
+  //   })
+  //   accounts.value.push({
+  //     username: newAccount.value.username,
+  //     password: '******',
+  //     phone: newAccount.value.phone.substring(0, 3) + '****' + newAccount.value.phone.substring(7),
+  //     status: '未登录'
+  //   })
+  //   showCreateDialog.value = false
+  //   ElMessage.success('创建成功')
+  // } catch (error) {
+  //   ElMessage.error('创建失败')
+  // }
+  
+  // 模拟添加数据
   accounts.value.push({
     username: newAccount.value.username,
     password: '******', // 显示为星号
@@ -154,28 +187,79 @@ function confirmCreate() {
 }
 
 // 查看账号详情
+// 调用接口: GET /api/admin/users/{username}
+// 参数说明:
+// - username: 用户名 (路径参数)
 function viewDetail(account) {
+  // TODO: 实际项目中应该调用接口获取详情
+  // 接口示例:
+  // try {
+  //   const { data } = await getUserDetail(account.username)
+  //   // 显示详情
+  // } catch (error) {
+  //   ElMessage.error('获取详情失败')
+  // }
   alert(`账号详情：${account.username}`)
   // 实际项目中应该跳转到详情页或打开详情对话框
 }
 
 // 封禁账号
+// 调用接口: POST /api/admin/users/{username}/ban
+// 参数说明:
+// - username: 用户名 (路径参数)
+// - reason: 封禁原因
 function banAccount(account) {
   // 实际项目中应该调用API封禁账号
+  // TODO: 实际项目中应该调用接口
+  // 接口示例:
+  // try {
+  //   await banUser({
+  //     username: account.username,
+  //     reason: '管理员手动封禁'
+  //   })
+  //   account.status = '已封禁'
+  //   ElMessage.success('封禁成功')
+  // } catch (error) {
+  //   ElMessage.error('封禁失败')
+  // }
   account.status = '已封禁'
 }
 
 // 解封账号
+// 调用接口: POST /api/admin/users/{username}/unban
+// 参数说明:
+// - username: 用户名 (路径参数)
 function unbanAccount(account) {
   // 实际项目中应该调用API解封账号
+  // TODO: 实际项目中应该调用接口
+  // 接口示例:
+  // try {
+  //   await unbanUser(account.username)
+  //   account.status = '未登录'
+  //   ElMessage.success('解封成功')
+  // } catch (error) {
+  //   ElMessage.error('解封失败')
+  // }
   account.status = '未登录'
 }
 
-// 搜索账号 - 可用于添加前端排序等额外功能
+// 搜索账号
+// 调用接口: GET /api/admin/users
+// 参数说明:
+// - keyword: 搜索关键词
+// - status: 账号状态 (可选)
 function searchAccounts() {
-  console.log('搜索关键字:', searchKeyword.value)
   // filteredAccounts 计算属性已自动完成搜索
-  // 这里可以添加其他功能，如切换排序顺序等
+  // TODO: 实际项目中应该调用接口
+  // 接口示例:
+  // const params = {
+  //   keyword: searchKeyword.value,
+  //   page: 1,
+  //   pageSize: 10
+  // }
+  // const { data } = await getUsers(params)
+  // accounts.value = data.list
+  console.log('搜索关键字:', searchKeyword.value)
 }
 </script>
 

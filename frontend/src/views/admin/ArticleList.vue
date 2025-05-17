@@ -9,6 +9,7 @@
           v-model="searchKeyword"
           @keyup.enter="searchArticles" 
         />
+        <!-- 调用接口: GET /api/admin/articles -->
         <button class="search-btn" @click="searchArticles">搜索</button>
       </div>
       <button class="new-blog-btn" @click="createNewBlog">新建Blog</button>
@@ -33,8 +34,10 @@
             <td>{{ article.status }}</td>
             <td>{{ article.author }}</td>
             <td class="actions-cell">
+              <!-- 调用接口: POST /api/admin/articles/{id}/publish -->
               <button v-if="article.status === '未发布'" class="action-btn publish-btn">发布</button>
               <button class="action-btn edit-btn" v-if="article.status === '未发布'">编辑</button>
+              <!-- 调用接口: DELETE /api/admin/articles/{id} -->
               <button class="action-btn delete-btn">删除</button>
             </td>
           </tr>
@@ -52,6 +55,7 @@ const router = useRouter()
 const searchKeyword = ref('')
 
 // 模拟文章数据
+// TODO: 实际项目中应通过API接口获取，使用 /api/admin/articles 接口
 const articles = ref([
   {
     title: 'XXX',
@@ -80,8 +84,22 @@ const filteredArticles = computed(() => {
 })
 
 // 搜索文章
+// 调用接口: GET /api/admin/articles
+// 参数说明: 
+// - keyword: 搜索关键词
+// - status: 文章状态 (可选)
+// - author: 作者用户名 (可选)
 function searchArticles() {
   // 前端已通过计算属性实现，这里只需用于表单提交时的处理
+  // TODO: 实际项目中应该调用接口
+  // 接口示例:
+  // const params = {
+  //   keyword: searchKeyword.value,
+  //   page: 1,
+  //   pageSize: 10
+  // }
+  // const { data } = await getArticles(params)
+  // articles.value = data.list
   console.log('搜索关键字:', searchKeyword.value)
 }
 
@@ -89,6 +107,11 @@ function searchArticles() {
 function createNewBlog() {
   alert('新建Blog功能将在后续完善')
 }
+
+// TODO: 添加以下功能和接口调用
+// 1. 发布文章: POST /api/admin/articles/{id}/publish
+// 2. al: POST /api/admin/articles/{id}/withdraw
+// 3. 删除文章: DELETE /api/admin/articles/{id}
 </script>
 
 <style scoped>

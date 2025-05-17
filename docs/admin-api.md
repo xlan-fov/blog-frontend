@@ -1,6 +1,6 @@
-# 管理员界面 API 文档
+# 管理员界面 API 文档与前端组件对应关系
 
-本文档详细说明博客系统管理员界面需要的所有后端接口。
+本文档详细说明博客系统管理员界面需要的所有后端接口及其与前端组件的对应关系。
 
 ## 1. 异常感知接口
 
@@ -56,6 +56,11 @@ GET /api/admin/anomaly/logins
 }
 ```
 
+**对应前端组件：**
+- **文件路径**：`d:\blog\frontend\src\views\admin\AnomalyDetection.vue`
+- **组件位置**：`filter-section` 区域的日期筛选和用户名搜索
+- **函数调用**：`queryAnomalies()` 函数中应调用此接口
+
 ### 1.2 违禁内容记录查询
 
 ```
@@ -100,17 +105,39 @@ GET /api/admin/anomaly/contents
 }
 ```
 
-### 1.3 封禁账号
+**对应前端组件：**
+- **文件路径**：`d:\blog\frontend-user\src\views\admin\AnomalyDetection.vue`
+- **组件位置**：`el-tab-pane name="prohibitedContent"` 标签页
+- **函数调用**：`searchProhibitedContent()` 函数中应调用此接口
+
+### 1.3 踢出用户
 
 ```
-POST /api/admin/users/ban
+POST /api/admin/users/{username}/kick
 ```
 
 **请求参数：**
 
 | 参数名      | 类型     | 必填 | 描述                  |
 |------------|---------|-----|----------------------|
-| username   | String  | 是  | 要封禁的用户名           |
+| username   | String  | 是  | 用户名 (路径参数)        |
+
+**对应前端组件：**
+- **文件路径**：`d:\blog\frontend\src\views\admin\AnomalyDetection.vue`
+- **组件位置**：异常数据表格的操作列
+- **函数调用**：`kickUser(user)` 函数中应调用此接口
+
+### 1.4 封禁用户
+
+```
+POST /api/admin/users/{username}/ban
+```
+
+**请求参数：**
+
+| 参数名      | 类型     | 必填 | 描述                  |
+|------------|---------|-----|----------------------|
+| username   | String  | 是  | 用户名 (路径参数)        |
 | reason     | String  | 是  | 封禁原因                |
 
 **响应示例：**
@@ -126,6 +153,15 @@ POST /api/admin/users/ban
   }
 }
 ```
+
+**对应前端组件：**
+- **文件路径1**：`d:\blog\frontend\src\views\admin\AnomalyDetection.vue`
+- **组件位置**：异常数据表格的操作列
+- **函数调用**：`banUser(user)` 函数中应调用此接口
+
+- **文件路径2**：`d:\blog\frontend-user\src\views\admin\AnomalyDetection.vue`
+- **组件位置**：封禁对话框
+- **函数调用**：`confirmBan()` 函数中应调用此接口
 
 ## 2. 文章管理接口
 
@@ -168,6 +204,11 @@ GET /api/admin/articles
 }
 ```
 
+**对应前端组件：**
+- **文件路径**：`d:\blog\frontend\src\views\admin\ArticleList.vue`
+- **组件位置**：文章列表上方的搜索框
+- **函数调用**：`searchArticles()` 函数中应调用此接口
+
 ### 2.2 发布文章
 
 ```
@@ -193,6 +234,11 @@ POST /api/admin/articles/{id}/publish
   }
 }
 ```
+
+**对应前端组件：**
+- **文件路径**：`d:\blog\frontend\src\views\admin\ArticleList.vue`
+- **组件位置**：文章表格的操作列
+- **函数调用**：文章状态为"未发布"时的发布按钮点击事件
 
 ### 2.3 下架文章
 
@@ -220,6 +266,11 @@ POST /api/admin/articles/{id}/withdraw
 }
 ```
 
+**对应前端组件：**
+- **文件路径**：`d:\blog\frontend\src\views\admin\ArticleList.vue`
+- **组件位置**：文章表格的操作列
+- **函数调用**：下架或撤回功能，当前界面可能未明确实现
+
 ### 2.4 删除文章
 
 ```
@@ -241,6 +292,11 @@ DELETE /api/admin/articles/{id}
   "data": null
 }
 ```
+
+**对应前端组件：**
+- **文件路径**：`d:\blog\frontend\src\views\admin\ArticleList.vue`
+- **组件位置**：文章表格的操作列
+- **函数调用**：删除按钮点击事件
 
 ## 3. 账号管理接口
 
@@ -281,6 +337,11 @@ GET /api/admin/users
 }
 ```
 
+**对应前端组件：**
+- **文件路径**：`d:\blog\frontend\src\views\admin\AccountManage.vue`
+- **组件位置**：顶部搜索框
+- **函数调用**：`searchAccounts()` 函数中应调用此接口
+
 ### 3.2 创建账号
 
 ```
@@ -310,6 +371,11 @@ POST /api/admin/users
 }
 ```
 
+**对应前端组件：**
+- **文件路径**：`d:\blog\frontend\src\views\admin\AccountManage.vue`
+- **组件位置**：创建账号对话框
+- **函数调用**：`confirmCreate()` 函数中应调用此接口
+
 ### 3.3 封禁账号
 
 ```
@@ -337,6 +403,11 @@ POST /api/admin/users/{username}/ban
 }
 ```
 
+**对应前端组件：**
+- **文件路径**：`d:\blog\frontend\src\views\admin\AccountManage.vue`
+- **组件位置**：账号表格的操作列
+- **函数调用**：`banAccount(account)` 函数中应调用此接口
+
 ### 3.4 解封账号
 
 ```
@@ -362,6 +433,11 @@ POST /api/admin/users/{username}/unban
   }
 }
 ```
+
+**对应前端组件：**
+- **文件路径**：`d:\blog\frontend\src\views\admin\AccountManage.vue`
+- **组件位置**：账号表格的操作列，状态为"已封禁"的账号
+- **函数调用**：`unbanAccount(account)` 函数中应调用此接口
 
 ### 3.5 账号详情查询
 
@@ -401,6 +477,11 @@ GET /api/admin/users/{username}
   }
 }
 ```
+
+**对应前端组件：**
+- **文件路径**：`d:\blog\frontend\src\views\admin\AccountManage.vue`
+- **组件位置**：查看账号详情功能
+- **函数调用**：`viewDetail(account)` 函数中应调用此接口
 
 ## 4. 统计分析接口
 
