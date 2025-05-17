@@ -22,6 +22,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBlogStore } from '@/stores/blog'
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const blogStore = useBlogStore()
@@ -32,11 +33,10 @@ const fetchBlog = async () => {
   loading.value = true
   try {
     const blogId = route.params.id
-    // TODO: 替换为axios请求
-    // 任务：实现获取博客详情的axios接口请求
     blog.value = await blogStore.getBlogById(blogId)
   } catch (error) {
     console.error('获取博客失败:', error)
+    ElMessage.error('获取博客详情失败')
   } finally {
     loading.value = false
   }
@@ -130,4 +130,4 @@ onMounted(() => {
     gap: 8px;
   }
 }
-</style> 
+</style>

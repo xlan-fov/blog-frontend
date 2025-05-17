@@ -4,7 +4,7 @@
 import axios from 'axios';
 
 // 从环境变量获取API基础URL，如果没有则使用默认地址
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
 
 // 获取文章列表
 export function fetchArticles(params) {

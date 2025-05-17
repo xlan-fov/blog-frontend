@@ -12,7 +12,7 @@
       </el-form>
     </el-card>
     
-    <el-tabs v-model="activeTab" class="blog-tabs">
+    <el-tabs v-model="activeTab" class="blog-tabs" @tab-change="handleTabChange">
       <el-tab-pane label="我的博客" name="myBlogs">
         <div class="table-actions">
           <el-button type="primary" @click="createBlog">新建博客</el-button>
@@ -103,6 +103,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import adminApi from '@/api/admin'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -124,26 +125,55 @@ const activeTab = ref('myBlogs')
 const currentPage = ref(1)
 const pageSize = ref(10)
 
+// 检查后端连接状态
+const checkBackendConnection = async () => {
+  try {
+    // 使用相对路径，通过代理访问后端
+    await fetch('/api/health', { 
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      // 设置较短的超时时间
+      signal: AbortSignal.timeout(2000) 
+    })
+    backendAvailable.value = true
+    return true
+  } catch (error) {
+    console.warn('后端服务器未连接:', error)
+    backendAvailable.value = false
+    ElMessage.warning({
+      message: '后端服务未启动，显示模拟数据',
+      duration: 5000,
+      showClose: true
+    })
+    return false
+  }
+}
+
 // 获取当前管理员的博客列表
 const fetchMyBlogs = async () => {
   loading.value = true
   try {
-    // TODO: 替换为axios请求
-    // 模拟数据
-    setTimeout(() => {
-      myBlogs.value = Array(15).fill().map((_, index) => ({
-        id: index + 1,
-        title: `管理员博客标题 ${index + 1}`,
-        content: '这是博客内容...',
-        category: '管理公告',
-        createTime: new Date().toLocaleString(),
-        status: index % 3 === 0 ? 'draft' : 'published'
-      }))
-      totalMyBlogs.value = myBlogs.value.length
-      loading.value = false
-    }, 500)
+    // 调用后端API获取数据
+    const res = await adminApi.getArticles({
+      author: userStore.userInfo.username,
+      page: currentPage.value,
+      pageSize: pageSize.value
+    })
+    
+    if (res.code === 200 && res.data) {
+      myBlogs.value = res.data.list || []
+      totalMyBlogs.value = res.data.total || 0
+    } else {
+      ElMessage.error(res.message || '获取博客列表失败')
+      myBlogs.value = []
+      totalMyBlogs.value = 0
+    }
   } catch (error) {
+    console.error('获取博客列表失败:', error)
     ElMessage.error('获取博客列表失败')
+    myBlogs.value = []
+    totalMyBlogs.value = 0
+  } finally {
     loading.value = false
   }
 }
@@ -152,23 +182,27 @@ const fetchMyBlogs = async () => {
 const searchUserBlogs = async () => {
   loading.value = true
   try {
-    // TODO: 替换为axios请求
-    // 模拟数据
-    setTimeout(() => {
-      userBlogs.value = Array(20).fill().map((_, index) => ({
-        id: index + 1,
-        username: searchForm.value.username || `user${index + 1}`,
-        title: `用户博客标题 ${index + 1}`,
-        content: '这是博客内容...',
-        category: '生活随笔',
-        createTime: new Date().toLocaleString(),
-        status: index % 4 === 0 ? 'draft' : 'published'
-      }))
-      totalUserBlogs.value = userBlogs.value.length
-      loading.value = false
-    }, 500)
+    // 调用后端API获取数据
+    const res = await adminApi.getArticles({
+      author: searchForm.value.username || undefined,
+      page: currentPage.value,
+      pageSize: pageSize.value
+    })
+    
+    if (res.code === 200 && res.data) {
+      userBlogs.value = res.data.list || []
+      totalUserBlogs.value = res.data.total || 0
+    } else {
+      ElMessage.error(res.message || '获取用户博客列表失败')
+      userBlogs.value = []
+      totalUserBlogs.value = 0
+    }
   } catch (error) {
+    console.error('获取用户博客列表失败:', error)
     ElMessage.error('获取用户博客列表失败')
+    userBlogs.value = []
+    totalUserBlogs.value = 0
+  } finally {
     loading.value = false
   }
 }
@@ -202,17 +236,22 @@ const deleteBlog = (blog) => {
     type: 'warning'
   }).then(async () => {
     try {
-      // TODO: 替换为axios请求
-      // 模拟删除
-      if (activeTab.value === 'myBlogs') {
-        myBlogs.value = myBlogs.value.filter(item => item.id !== blog.id)
-        totalMyBlogs.value--
+      // 调用后端API删除博客
+      const res = await adminApi.deleteArticle(blog.id, { reason: '管理员删除' })
+      
+      if (res.code === 200) {
+        ElMessage.success('删除成功')
+        // 重新加载数据
+        if (activeTab.value === 'myBlogs') {
+          fetchMyBlogs()
+        } else {
+          searchUserBlogs()
+        }
       } else {
-        userBlogs.value = userBlogs.value.filter(item => item.id !== blog.id)
-        totalUserBlogs.value--
+        ElMessage.error(res.message || '删除失败')
       }
-      ElMessage.success('删除成功')
     } catch (error) {
+      console.error('删除失败:', error)
       ElMessage.error('删除失败')
     }
   }).catch(() => {})
@@ -226,11 +265,18 @@ const publishBlog = (blog) => {
     type: 'info'
   }).then(async () => {
     try {
-      // TODO: 替换为axios请求
-      // 模拟发布
-      blog.status = 'published'
-      ElMessage.success('发布成功')
+      // 调用后端API发布博客
+      const res = await adminApi.publishArticle(blog.id)
+      
+      if (res.code === 200) {
+        ElMessage.success('发布成功')
+        // 更新本地博客状态
+        blog.status = 'published'
+      } else {
+        ElMessage.error(res.message || '发布失败')
+      }
     } catch (error) {
+      console.error('发布失败:', error)
       ElMessage.error('发布失败')
     }
   }).catch(() => {})
@@ -255,10 +301,22 @@ const handleCurrentChange = (page) => {
   }
 }
 
+// 监听标签页切换
+const handleTabChange = (tab) => {
+  // 切换标签页时重置分页
+  currentPage.value = 1
+  if (tab === 'myBlogs') {
+    fetchMyBlogs()
+  } else {
+    searchUserBlogs()
+  }
+}
+
 // 初始化
 onMounted(() => {
   fetchMyBlogs()
   searchUserBlogs()
+  checkBackendConnection()
 })
 </script>
 
@@ -288,4 +346,4 @@ onMounted(() => {
   margin-top: 16px;
   text-align: right;
 }
-</style> 
+</style>

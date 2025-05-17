@@ -1,0 +1,25 @@
+package com.blog.utils;
+
+import com.blog.dto.UserDTO;
+
+/*
+ * @Author: guoyuran
+ * @Date: 2025-5-6
+ * @Description: threadlocal封装
+ */
+
+public class UserHolder {
+    private static final ThreadLocal<UserDTO> tl = new ThreadLocal<>();
+
+    public static void saveUser(UserDTO user){
+        tl.set(user);
+    }
+
+    public static UserDTO getUser(){
+        return tl.get();
+    }
+
+    public static void removeUser(){
+        tl.remove();
+    }
+}

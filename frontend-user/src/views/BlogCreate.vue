@@ -57,8 +57,6 @@ const handleSubmit = async () => {
   }
 
   try {
-    // TODO: 替换为axios请求
-    // 任务：实现创建博客的axios接口请求
     await blogStore.createBlog({
       title: form.title,
       content: form.content
@@ -66,7 +64,7 @@ const handleSubmit = async () => {
     ElMessage.success('创建成功')
     router.push('/blog')
   } catch (error) {
-    ElMessage.error('创建失败')
+    ElMessage.error('创建失败: ' + (error.message || '未知错误'))
   }
 }
 
@@ -162,4 +160,4 @@ const handleCancel = () => {
     margin-bottom: 10px;
   }
 }
-</style> 
+</style>

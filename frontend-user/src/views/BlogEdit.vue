@@ -69,8 +69,6 @@ const handleSubmit = async () => {
   }
 
   try {
-    // TODO: 替换为axios请求
-    // 任务：实现更新博客的axios接口请求
     await blogStore.updateBlog(route.params.id, {
       title: form.title,
       content: form.content
@@ -78,7 +76,7 @@ const handleSubmit = async () => {
     ElMessage.success('更新成功')
     router.push('/blog')
   } catch (error) {
-    ElMessage.error('更新失败')
+    ElMessage.error('更新失败: ' + (error.message || '未知错误'))
   }
 }
 
@@ -215,4 +213,4 @@ const handleCancel = () => {
     height: 300px !important;
   }
 }
-</style> 
+</style>

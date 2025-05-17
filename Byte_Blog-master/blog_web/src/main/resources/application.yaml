@@ -1,0 +1,28 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: Byte_blog
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    #    url: jdbc:mysql://localhost:3306/blogdb?useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://wajorrr.mysql.polardb.rds.aliyuncs.com:3306/blogdb?useSSL=true&useUnicode=true&characterEncoding=UTF-8
+    username: wajorrr
+    password: Wangzijian1130
+  redis:
+    host: r-n4ashfl7yq0ol5iy5npd.redis.cn-wuhan-lr.rds.aliyuncs.com
+    port: 6379
+    password: Wangzijian1130
+    lettuce:
+      pool:
+        max-active: 10
+        max-idle: 10
+        min-idle: 1
+        time-between-eviction-runs: 10s
+  jackson:
+    default-property-inclusion: non_null # JSON处理时忽略非空字段
+mybatis-plus:
+  type-aliases-package: com.blog.entity # 别名扫描包
+logging:
+  level:
+    com.blog: debug

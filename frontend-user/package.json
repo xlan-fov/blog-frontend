@@ -11,6 +11,7 @@
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
     "@fortawesome/fontawesome-free": "^6.7.2",
+    "@rollup/pluginutils": "^5.1.4",
     "axios": "^1.9.0",
     "element-plus": "^2.5.1",
     "pinia": "^3.0.2",

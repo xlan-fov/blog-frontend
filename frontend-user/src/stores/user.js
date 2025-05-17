@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import userApi from '@/api/user'
+import { ElMessage } from 'element-plus'
 
 // 模拟的超管账号列表（实际应用中应该从后端获取）
 const ADMIN_ACCOUNTS = [
@@ -33,6 +35,7 @@ export const useUserStore = defineStore('user', () => {
   })
 
   const isLoggedIn = ref(false)
+  const token = ref('')
 
   // 从localStorage恢复状态
   function restoreState() {
@@ -41,6 +44,7 @@ export const useUserStore = defineStore('user', () => {
       const state = JSON.parse(savedState)
       userInfo.value = state.userInfo
       isLoggedIn.value = state.isLoggedIn
+      token.value = localStorage.getItem('token') || ''
     }
   }
 
@@ -50,10 +54,15 @@ export const useUserStore = defineStore('user', () => {
       userInfo: userInfo.value,
       isLoggedIn: isLoggedIn.value
     }))
+
+    if (token.value) {
+      localStorage.setItem('token', token.value)
+    }
   }
 
   // 普通用户登录
-  function login(username, password) {
+  async function login(username, password) {
+    console.log('开始登录流程', { username })
     // 如果尝试使用超管账号在普通入口登录，直接返回失败
     const isAdminAccount = ADMIN_ACCOUNTS.some(admin => admin.username === username)
     if (isAdminAccount) {
@@ -61,71 +70,116 @@ export const useUserStore = defineStore('user', () => {
       return false
     }
 
-    // TODO: 替换为实际的API请求
-    // 模拟普通用户登录逻辑
-    if (username === 'user' && password === '123456') {
-      userInfo.value.username = username
-      userInfo.value.avatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
-      userInfo.value.bio = '这是一个普通用户'
-      userInfo.value.registerTime = new Date().toISOString()
-      userInfo.value.role = 'user' // 设置为普通用户角色
-      userInfo.value.status = 'normal'
-      isLoggedIn.value = true
-      userInfo.value.loginAttempts = 0
-      saveState() // 保存状态
-      return true
-    } else if (username === 'banned' && password === '123456') {
-      // 模拟被封禁的账号
-      userInfo.value.username = username
-      userInfo.value.status = 'banned'
-      userInfo.value.loginAttempts = 0
-      return 'banned'
+    try {
+      const res = await userApi.loginByUsername({ username, password })
+      console.log('登录响应详情:', res) // 添加详细日志
+      
+      if (res.code === 200 && res.data) {
+        userInfo.value.username = res.data.username || username
+        userInfo.value.avatar = res.data.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+        userInfo.value.bio = res.data.bio || '这是一个普通用户'
+        userInfo.value.registerTime = res.data.registerTime || new Date().toISOString()
+        userInfo.value.role = res.data.role || 'user'
+        userInfo.value.status = res.data.status || 'normal'
+        
+        // 确保正确保存token
+        if (res.data.token) {
+          token.value = res.data.token
+          // 保存到localStorage
+          localStorage.setItem('token', res.data.token)
+          console.log('成功保存token:', res.data.token)
+        } else {
+          console.warn('响应中没有token')
+        }
+        
+        isLoggedIn.value = true
+        userInfo.value.loginAttempts = 0
+        saveState() // 保存状态
+        
+        // 打印当前认证状态
+        console.log('登录成功，用户状态:', {
+          isLoggedIn: isLoggedIn.value,
+          username: userInfo.value.username,
+          role: userInfo.value.role,
+          token: token.value.substring(0, 10) + '...'  // 截断，避免打印完整token
+        })
+        
+        // 如果用户被封禁，返回封禁状态
+        if (userInfo.value.status === 'banned') {
+          return 'banned'
+        }
+        
+        return true
+      } else {
+        ElMessage.error(res.message || '登录失败')
+        userInfo.value.loginAttempts++
+        return false
+      }
+    } catch (error) {
+      console.error('登录失败:', error)
+      userInfo.value.loginAttempts++
+      return false
     }
-    userInfo.value.loginAttempts++
-    return false
   }
 
   // 超管登录（需提供授权码）
-  function adminLogin(username, password, authCode) {
-    // 查找管理员账号
-    const adminAccount = ADMIN_ACCOUNTS.find(
-      admin => admin.username === username &&
-        admin.password === password &&
-        admin.authCode === authCode
-    )
+  async function adminLogin(username, password, authCode) {
+    try {
+      // 在实际应用中，这里应该是一个API调用
+      // 暂时使用本地验证
+      const adminAccount = ADMIN_ACCOUNTS.find(
+        admin => admin.username === username &&
+          admin.password === password &&
+          admin.authCode === authCode
+      )
 
-    if (adminAccount) {
-      userInfo.value.username = adminAccount.username
-      userInfo.value.avatar = adminAccount.avatar
-      userInfo.value.bio = adminAccount.bio
-      userInfo.value.registerTime = adminAccount.registerTime
-      userInfo.value.role = 'admin' // 设置为超级管理员角色
-      userInfo.value.status = 'normal'
-      isLoggedIn.value = true
-      userInfo.value.loginAttempts = 0
-      saveState() // 保存状态
+      if (adminAccount) {
+        userInfo.value.username = adminAccount.username
+        userInfo.value.avatar = adminAccount.avatar
+        userInfo.value.bio = adminAccount.bio
+        userInfo.value.registerTime = adminAccount.registerTime
+        userInfo.value.role = 'admin' // 设置为超级管理员角色
+        userInfo.value.status = 'normal'
+        token.value = 'admin-token' // 实际应该从API返回
+        isLoggedIn.value = true
+        userInfo.value.loginAttempts = 0
+        saveState() // 保存状态
 
-      // 记录管理员登录日志
-      logAdminLogin()
+        // 记录管理员登录日志
+        logAdminLogin()
 
-      return true
+        return true
+      }
+
+      // 记录失败的管理员登录尝试
+      logFailedAdminLogin(username)
+      return false
+    } catch (error) {
+      console.error('管理员登录失败:', error)
+      logFailedAdminLogin(username)
+      return false
     }
-
-    // 记录失败的管理员登录尝试
-    logFailedAdminLogin(username)
-    return false
   }
 
   // 记录管理员登录日志
-  function logAdminLogin() {
-    // TODO: 替换为实际API请求，记录管理员登录操作
-    console.log('管理员登录:', userInfo.value.username, new Date().toISOString())
+  async function logAdminLogin() {
+    try {
+      // 实际API请求，记录管理员登录操作
+      // 可能需要调用管理员日志API
+      console.log('管理员登录:', userInfo.value.username, new Date().toISOString())
+    } catch (error) {
+      console.error('记录管理员登录日志失败:', error)
+    }
   }
 
   // 记录失败的管理员登录尝试
-  function logFailedAdminLogin(username) {
-    // TODO: 替换为实际API请求，记录失败的管理员登录尝试
-    console.log('失败的管理员登录尝试:', username, new Date().toISOString())
+  async function logFailedAdminLogin(username) {
+    try {
+      // 实际API请求，记录失败的管理员登录尝试
+      console.log('失败的管理员登录尝试:', username, new Date().toISOString())
+    } catch (error) {
+      console.error('记录失败的管理员登录尝试失败:', error)
+    }
   }
 
   function logout() {
@@ -144,19 +198,59 @@ export const useUserStore = defineStore('user', () => {
       status: 'normal'
     }
     isLoggedIn.value = false
+    token.value = ''
     localStorage.removeItem('userState') // 清除状态
+    localStorage.removeItem('token') // 清除token
   }
 
   // 记录管理员登出日志
-  function logAdminLogout() {
-    // TODO: 替换为实际API请求，记录管理员登出操作
-    console.log('管理员登出:', userInfo.value.username, new Date().toISOString())
+  async function logAdminLogout() {
+    try {
+      // 实际API请求，记录管理员登出操作
+      console.log('管理员登出:', userInfo.value.username, new Date().toISOString())
+    } catch (error) {
+      console.error('记录管理员登出日志失败:', error)
+    }
   }
 
-  function updateProfile(avatar, bio) {
-    userInfo.value.avatar = avatar
-    userInfo.value.bio = bio
-    saveState() // 保存状态
+  // 获取用户个人资料
+  async function fetchProfile() {
+    try {
+      const res = await userApi.getProfile()
+      if (res.code === 200 && res.data) {
+        userInfo.value = {
+          ...userInfo.value,
+          ...res.data
+        }
+        saveState()
+        return true
+      } else {
+        ElMessage.error(res.message || '获取个人资料失败')
+        return false
+      }
+    } catch (error) {
+      console.error('获取个人资料失败:', error)
+      return false
+    }
+  }
+
+  // 更新用户个人资料
+  async function updateProfile(avatar, bio) {
+    try {
+      const res = await userApi.updateProfile({ avatar, bio })
+      if (res.code === 200) {
+        userInfo.value.avatar = avatar
+        userInfo.value.bio = bio
+        saveState()
+        return true
+      } else {
+        ElMessage.error(res.message || '更新个人资料失败')
+        return false
+      }
+    } catch (error) {
+      console.error('更新个人资料失败:', error)
+      return false
+    }
   }
 
   // 判断是否为超级管理员
@@ -170,27 +264,57 @@ export const useUserStore = defineStore('user', () => {
   }
 
   // 封禁账号
-  function banUser(username, reason) {
-    // TODO: 替换为实际的API请求
-    // 模拟封禁逻辑
-    if (userInfo.value.username === username) {
-      userInfo.value.status = 'banned'
-      saveState()
-      return true
+  async function banUser(username, reason) {
+    try {
+      // 要求管理员权限
+      if (!isAdmin()) {
+        ElMessage.error('权限不足')
+        return false
+      }
+      
+      const res = await adminApi.banUser(username, { reason })
+      if (res.code === 200) {
+        // 如果是当前用户，更新用户状态
+        if (userInfo.value.username === username) {
+          userInfo.value.status = 'banned'
+          saveState()
+        }
+        return true
+      } else {
+        ElMessage.error(res.message || '封禁用户失败')
+        return false
+      }
+    } catch (error) {
+      console.error('封禁用户失败:', error)
+      return false
     }
-    return false
   }
 
   // 解封账号
-  function unbanUser(username) {
-    // TODO: 替换为实际的API请求
-    // 模拟解封逻辑
-    if (userInfo.value.username === username) {
-      userInfo.value.status = 'normal'
-      saveState()
-      return true
+  async function unbanUser(username) {
+    try {
+      // 要求管理员权限
+      if (!isAdmin()) {
+        ElMessage.error('权限不足')
+        return false
+      }
+      
+      const res = await adminApi.unbanUser(username, {})
+      if (res.code === 200) {
+        // 如果是当前用户，更新用户状态
+        if (userInfo.value.username === username) {
+          userInfo.value.status = 'normal'
+          saveState()
+        }
+        return true
+      } else {
+        ElMessage.error(res.message || '解封用户失败')
+        return false
+      }
+    } catch (error) {
+      console.error('解封用户失败:', error)
+      return false
     }
-    return false
   }
 
   // 初始化时恢复状态
@@ -202,10 +326,11 @@ export const useUserStore = defineStore('user', () => {
     login,
     adminLogin,
     logout,
+    fetchProfile,
     updateProfile,
     isAdmin,
     isBanned,
     banUser,
     unbanUser
   }
-}) 
+})

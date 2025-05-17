@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.blog.mapper.BlogsMapper">
+
+    <insert id="addBlog">
+        insert into blogs (user_id,title,content,image,category,tags,status,is_deleted,deleted_by,created_at,updated_at,published_at)
+        values (#{userId},#{title},#{content},#{image},#{category},#{tags},#{status},#{isDeleted},#{deletedBy},#{createdAt},#{updatedAt},#{publishedAt})
+    </insert>
+</mapper>

@@ -20,4 +20,14 @@ export default defineConfig({
     'import.meta.env.ADMIN_PATH': JSON.stringify('senti-admin-auth'), // 隐蔽的管理员路径
     'import.meta.env.APP_TITLE': JSON.stringify('SentiBlog')
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+        ws: true,
+        secure: false
+      }
+    }
+  }
 })

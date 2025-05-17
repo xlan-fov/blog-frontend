@@ -154,8 +154,6 @@ const handlePublish = async (row) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    // TODO: 替换为axios请求
-    // 任务：实现发布博客的axios接口请求
     await blogStore.publishBlog(row.id)
     ElMessage.success('发布成功')
   } catch (error) {
@@ -172,8 +170,6 @@ const handleWithdraw = async (row) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    // TODO: 替换为axios请求
-    // 任务：实现撤回博客的axios接口请求
     await blogStore.withdrawBlog(row.id)
     ElMessage.success('撤回成功')
   } catch (error) {
@@ -190,8 +186,6 @@ const handleDelete = async (row) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    // TODO: 替换为axios请求
-    // 任务：实现删除博客的axios接口请求
     await blogStore.deleteBlog(row.id)
     ElMessage.success('删除成功')
   } catch (error) {
@@ -336,4 +330,4 @@ onMounted(() => {
     gap: 8px;
   }
 }
-</style> 
+</style>

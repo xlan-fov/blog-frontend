@@ -1,4 +1,4 @@
-import request from './request'
+import request, { get, post } from './request'
 import { API_PATHS } from './config'
 import { ElMessage } from 'element-plus'
 
@@ -106,4 +106,38 @@ export const sendPhoneCode = async (phone) => {
         ElMessage.error(error.response?.data?.msg || '发送验证码失败')
         throw error
     }
-} 
+}
+
+/**
+ * 获取验证码
+ */
+export const getCaptcha = () => {
+    return get(API_PATHS.USERS.CAPTCHA)
+}
+
+/**
+ * 获取用户个人资料
+ */
+export const getProfile = () => {
+    return get(API_PATHS.USERS.PROFILE)
+}
+
+/**
+ * 更新用户个人资料
+ * @param {Object} data - 个人资料数据
+ */
+export const updateProfile = (data) => {
+    return post(API_PATHS.USERS.UPDATE_PROFILE, data)
+}
+
+// 添加默认导出，收集所有命名导出
+export default {
+  registerByUsername,
+  registerByPhone,
+  loginByUsername,
+  loginByPhone,
+  sendPhoneCode,
+  getCaptcha,
+  getProfile,
+  updateProfile
+}

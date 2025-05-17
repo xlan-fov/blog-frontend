@@ -4,7 +4,7 @@
 import axios from 'axios'
 
 // 从环境变量获取API基础URL，如果没有则使用默认地址
-const BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
+const BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api'
 
 // 检查用户名是否可用
 export function checkUsername(name) {

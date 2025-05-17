@@ -21,6 +21,9 @@ const AdminProfile = () => import('@/views/admin/AdminProfile.vue')
 // 获取管理员路径（从环境变量中读取，增加安全性）
 const ADMIN_AUTH_PATH = import.meta.env.ADMIN_PATH || 'senti-admin-auth'
 
+// 添加测试路由
+const TestLogin = () => import('@/views/TestLogin.vue')
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -127,6 +130,13 @@ const router = createRouter({
         }
       ]
     },
+    // 添加测试登录路由
+    {
+      path: '/test-login',
+      name: 'test-login',
+      component: TestLogin,
+      meta: { requiresAuth: false }
+    },
     // 通配符路由，匹配所有未定义的路由
     {
       path: '/:pathMatch(.*)*',
@@ -197,4 +207,4 @@ router.beforeEach((to, from, next) => {
   }
 })
 
-export default router 
+export default router

@@ -147,16 +147,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
+import adminApi from '@/api/admin'
 
-// 搜索表单
+// 表单和表格数据
 const searchForm = ref({
   username: '',
   status: ''
 })
-
-// 表格数据
 const accounts = ref([])
 const total = ref(0)
 const loading = ref(false)
@@ -170,7 +169,7 @@ const selectedAccount = ref({})
 // 封禁对话框
 const banDialogVisible = ref(false)
 const banLoading = ref(false)
-const banForm = reactive({
+const banForm = ref({
   reason: '',
   accountId: null
 })
@@ -179,26 +178,27 @@ const banForm = reactive({
 const fetchAccounts = async () => {
   loading.value = true
   try {
-    // TODO: 替换为axios请求
-    // 模拟数据
-    setTimeout(() => {
-      accounts.value = Array(20).fill().map((_, index) => ({
-        id: index + 1,
-        username: `user${index + 1}`,
-        email: `user${index + 1}@example.com`,
-        phone: `1380013${index.toString().padStart(4, '0')}`,
-        registerTime: new Date(Date.now() - Math.random() * 10000000000).toLocaleString(),
-        lastLoginTime: new Date(Date.now() - Math.random() * 1000000000).toLocaleString(),
-        lastLoginIp: `192.168.1.${Math.floor(Math.random() * 255)}`,
-        loginStatus: Math.random() > 0.7,
-        status: Math.random() > 0.8 ? 'banned' : 'normal',
-        banReason: Math.random() > 0.8 ? '多次发布违规内容，予以封禁' : ''
-      }))
-      total.value = 100 // 模拟总数
-      loading.value = false
-    }, 500)
+    const res = await adminApi.getUsers({
+      keyword: searchForm.value.username || undefined,
+      status: searchForm.value.status || undefined,
+      page: currentPage.value,
+      pageSize: pageSize.value
+    })
+    
+    if (res.code === 200 && res.data) {
+      accounts.value = res.data.list || []
+      total.value = res.data.total || 0
+    } else {
+      ElMessage.error(res.message || '获取用户列表失败')
+      accounts.value = []
+      total.value = 0
+    }
   } catch (error) {
-    ElMessage.error('获取账号列表失败')
+    console.error('获取用户列表失败:', error)
+    ElMessage.error('获取用户列表失败')
+    accounts.value = []
+    total.value = 0
+  } finally {
     loading.value = false
   }
 }
@@ -236,35 +236,35 @@ const kickAccount = (account) => {
 
 // 封禁账号
 const banAccount = (account) => {
-  banForm.accountId = account.id
-  banForm.reason = ''
+  banForm.value.accountId = account.id
+  banForm.value.reason = ''
   banDialogVisible.value = true
 }
 
 // 确认封禁
 const confirmBan = async () => {
-  if (!banForm.reason.trim()) {
+  if (!banForm.value.reason.trim()) {
     ElMessage.warning('请输入封禁原因')
     return
   }
   
   banLoading.value = true
   try {
-    // TODO: 替换为axios请求
-    // 模拟操作
-    const account = accounts.value.find(item => item.id === banForm.accountId)
-    if (account) {
-      account.status = 'banned'
-      account.banReason = banForm.reason
-      account.loginStatus = false
-    }
+    const res = await adminApi.banUser(selectedAccount.value.username, { reason: banForm.value.reason })
     
-    banDialogVisible.value = false
-    ElMessage.success('账号已封禁')
+    if (res.code === 200) {
+      ElMessage.success('封禁成功')
+      // 刷新用户列表
+      fetchAccounts()
+    } else {
+      ElMessage.error(res.message || '封禁失败')
+    }
   } catch (error) {
-    ElMessage.error('操作失败')
+    console.error('封禁用户失败:', error)
+    ElMessage.error('封禁操作失败')
   } finally {
     banLoading.value = false
+    banDialogVisible.value = false
   }
 }
 
@@ -276,21 +276,48 @@ const unbanAccount = (account) => {
     type: 'info'
   }).then(async () => {
     try {
-      // TODO: 替换为axios请求
-      // 模拟操作
-      account.status = 'normal'
-      account.banReason = ''
-      ElMessage.success('账号已解封')
+      const res = await adminApi.unbanUser(account.username, {})
+      
+      if (res.code === 200) {
+        ElMessage.success('解封成功')
+        // 刷新用户列表
+        fetchAccounts()
+      } else {
+        ElMessage.error(res.message || '解封失败')
+      }
     } catch (error) {
-      ElMessage.error('操作失败')
+      console.error('解封用户失败:', error)
+      ElMessage.error('解封操作失败')
     }
   }).catch(() => {})
 }
 
 // 查看账号详情
-const viewAccountDetail = (account) => {
-  selectedAccount.value = { ...account }
-  dialogVisible.value = true
+const viewAccountDetail = async (account) => {
+  try {
+    const res = await adminApi.getUserInfo(account.username)
+    
+    if (res.code === 200 && res.data) {
+      ElMessageBox.alert(
+        `
+        <p><strong>用户名:</strong> ${res.data.username}</p>
+        <p><strong>注册时间:</strong> ${res.data.registerTime}</p>
+        <p><strong>用户状态:</strong> ${res.data.status === 'banned' ? '已封禁' : '正常'}</p>
+        <p><strong>简介:</strong> ${res.data.bio || '暂无'}</p>
+        `,
+        '用户详情',
+        {
+          dangerouslyUseHTMLString: true,
+          confirmButtonText: '关闭'
+        }
+      )
+    } else {
+      ElMessage.error(res.message || '获取用户详情失败')
+    }
+  } catch (error) {
+    console.error('获取用户详情失败:', error)
+    ElMessage.error('获取用户详情失败')
+  }
 }
 
 // 获取状态类型
@@ -359,4 +386,4 @@ onMounted(() => {
   color: #606266;
   line-height: 1.5;
 }
-</style> 
+</style>

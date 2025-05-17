@@ -1,0 +1,26 @@
+# === Maven ===
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# === IntelliJ IDEA ===
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# === Logs ===
+*.log
+
+# === OS Files ===
+.DS_Store
+Thumbs.db
+
+# === Java Compiled Classes ===
+*.class
+
+# === Temporary/Backup Files ===
+*.tmp
+*.bak
+*.swp
+*.swo

@@ -243,6 +243,7 @@
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
+import adminApi from '@/api/admin'
 
 // 活动选项卡
 const activeTab = ref('abnormalLogin')
@@ -324,29 +325,28 @@ const banForm = reactive({
 const fetchAbnormalLogins = async () => {
   loading.value = true
   try {
-    // TODO: 替换为axios请求
-    // 模拟数据
-    setTimeout(() => {
-      abnormalLogins.value = Array(15).fill().map((_, index) => ({
-        id: index + 1,
-        username: `user${index + 1}`,
-        ip: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-        location: ['北京', '上海', '广州', '深圳', '武汉'][Math.floor(Math.random() * 5)],
-        time: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toLocaleString(),
-        attemptCount: Math.floor(Math.random() * 5) + 3,
-        status: Math.random() > 0.7 ? 'banned' : 'normal',
-        device: ['Windows Chrome', 'Android', 'iOS', 'Mac Safari'][Math.floor(Math.random() * 4)],
-        attempts: Array(Math.floor(Math.random() * 5) + 3).fill().map((_, i) => ({
-          time: new Date(Date.now() - (3 - i) * 60000).toLocaleString(),
-          status: i === 2 ? 'success' : 'failed',
-          message: i === 2 ? '登录成功' : ['密码错误', '验证码错误', '账号不存在'][Math.floor(Math.random() * 3)]
-        }))
-      }))
-      totalAbnormalLogins.value = 56 // 模拟总数
-      loading.value = false
-    }, 500)
+    const res = await adminApi.getAnomalyLogins({
+      username: searchForm.value.username || undefined,
+      startDate: searchForm.value.dateRange[0] ? new Date(searchForm.value.dateRange[0]).toISOString() : undefined,
+      endDate: searchForm.value.dateRange[1] ? new Date(searchForm.value.dateRange[1]).toISOString() : undefined,
+      page: currentPage.value,
+      pageSize: pageSize.value
+    })
+    
+    if (res.code === 200 && res.data) {
+      abnormalLogins.value = res.data.list || []
+      totalAbnormalLogins.value = res.data.total || 0
+    } else {
+      ElMessage.error(res.message || '获取异常登录记录失败')
+      abnormalLogins.value = []
+      totalAbnormalLogins.value = 0
+    }
   } catch (error) {
+    console.error('获取异常登录记录失败:', error)
     ElMessage.error('获取异常登录记录失败')
+    abnormalLogins.value = []
+    totalAbnormalLogins.value = 0
+  } finally {
     loading.value = false
   }
 }
@@ -355,29 +355,29 @@ const fetchAbnormalLogins = async () => {
 const fetchProhibitedContents = async () => {
   contentLoading.value = true
   try {
-    // TODO: 替换为axios请求
-    // 模拟数据
-    setTimeout(() => {
-      prohibitedContents.value = Array(18).fill().map((_, index) => ({
-        id: index + 1,
-        username: `user${index + 1}`,
-        title: `被拒绝的博客标题 ${index + 1}`,
-        type: '博客文章',
-        createTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleString(),
-        rejectTime: new Date(Date.now() - Math.random() * 29 * 24 * 60 * 60 * 1000).toLocaleString(),
-        rejectReason: ['political', 'pornography', 'violence', 'fake_news', 'privacy', 'other'][Math.floor(Math.random() * 6)],
-        userStatus: Math.random() > 0.8 ? 'banned' : 'normal',
-        content: `<p>这是被拒绝的内容，包含了一些违禁内容...</p>
-                 <p>由于违反了平台规定，该内容无法通过审核。</p>
-                 <p>具体原因是：包含敏感内容。</p>`,
-        reviewer: `admin${Math.floor(Math.random() * 5) + 1}`,
-        reviewComment: '内容包含敏感词，多次警告未改正'
-      }))
-      totalProhibitedContents.value = 78 // 模拟总数
-      contentLoading.value = false
-    }, 500)
+    const res = await adminApi.getAnomalyContents({
+      username: contentSearchForm.value.username || undefined,
+      reason: contentSearchForm.value.reason || undefined,
+      startDate: contentSearchForm.value.dateRange[0] ? new Date(contentSearchForm.value.dateRange[0]).toISOString() : undefined,
+      endDate: contentSearchForm.value.dateRange[1] ? new Date(contentSearchForm.value.dateRange[1]).toISOString() : undefined,
+      page: contentCurrentPage.value,
+      pageSize: contentPageSize.value
+    })
+    
+    if (res.code === 200 && res.data) {
+      prohibitedContents.value = res.data.list || []
+      totalProhibitedContents.value = res.data.total || 0
+    } else {
+      ElMessage.error(res.message || '获取违禁内容记录失败')
+      prohibitedContents.value = []
+      totalProhibitedContents.value = 0
+    }
   } catch (error) {
+    console.error('获取违禁内容记录失败:', error)
     ElMessage.error('获取违禁内容记录失败')
+    prohibitedContents.value = []
+    totalProhibitedContents.value = 0
+  } finally {
     contentLoading.value = false
   }
 }
@@ -611,4 +611,4 @@ onMounted(() => {
 .reject-info div {
   margin-bottom: 8px;
 }
-</style> 
+</style>
