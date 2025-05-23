@@ -11,6 +11,7 @@
       <el-form-item>
         <el-button type="primary" @click="handleSubmit">保存</el-button>
         <el-button @click="handleCancel">取消</el-button>
+        <el-button type="success" @click="handlePublish">发布</el-button>
       </el-form-item>
       </div>
     </el-form>
@@ -20,7 +21,7 @@
 <script setup>
 import { reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useBlogStore } from '@/stores/blog'
 import E from 'wangeditor'
 
@@ -77,12 +78,41 @@ const handleSubmit = async () => {
   try {
     await blogStore.updateBlog(route.params.id, {
       title: form.title,
-      content: form.content
+      content: form.content,
+      status: 'draft' // 编辑时默认保存为草稿
     })
     ElMessage.success('更新成功')
     router.push('/dashboard/blog')
   } catch (error) {
     ElMessage.error('更新失败: ' + (error.message || '未知错误'))
+  }
+}
+
+// 添加发布功能
+const handlePublish = async () => {
+  if (!form.title || !form.content) {
+    ElMessage.warning('请填写完整信息')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm('确定要发布这篇博客吗？', '确认发布', {
+      confirmButtonText: '确定发布',
+      cancelButtonText: '取消',
+      type: 'info'
+    })
+
+    await blogStore.updateBlog(route.params.id, {
+      title: form.title,
+      content: form.content,
+      status: 'published'
+    })
+    ElMessage.success('发布成功')
+    router.push('/dashboard/blog')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('发布失败: ' + (error.message || '未知错误'))
+    }
   }
 }
 

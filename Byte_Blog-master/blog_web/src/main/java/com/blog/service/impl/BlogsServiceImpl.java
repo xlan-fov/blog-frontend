@@ -15,12 +15,11 @@ import com.blog.utils.UserHolder;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import org.jsoup.Jsoup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
 
-import javax.xml.crypto.Data;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,6 +32,9 @@ import java.util.List;
  */
 @Service
 public class BlogsServiceImpl extends ServiceImpl<BlogsMapper, Blogs> implements IBlogsService {
+    
+    private static final Logger log = LoggerFactory.getLogger(BlogsServiceImpl.class);
+    
     @Autowired
     private BlogsMapper blogsMapper;
     @Autowired
@@ -47,11 +49,13 @@ public class BlogsServiceImpl extends ServiceImpl<BlogsMapper, Blogs> implements
      */
     @Override
     public Result<?> addBlog(Blogs blogs) {
+        log.debug("开始创建博客，接收到的数据: {}", blogs);
+        
         // 判断标题是否为空
-        if(blogs.getTitle() == null) {
+        if(blogs.getTitle() == null || blogs.getTitle().trim().isEmpty()) {
             return Result.error("文章标题不能为空");
         }
-        if(blogs.getContent() == null) {
+        if(blogs.getContent() == null || blogs.getContent().trim().isEmpty()) {
             return Result.error("文章内容不能为空");
         }
         
@@ -62,13 +66,23 @@ public class BlogsServiceImpl extends ServiceImpl<BlogsMapper, Blogs> implements
         
         // 从当前登录用户上下文中获取用户ID
         UserDTO currentUser = UserHolder.getUser();
+        log.debug("当前用户信息: {}", currentUser);
+        
         if (currentUser == null) {
+            log.warn("UserHolder中没有用户信息");
             return Result.error("用户未登录，请先登录");
+        }
+        
+        if (currentUser.getId() == null) {
+            log.warn("当前用户ID为空: {}", currentUser);
+            return Result.error("用户信息异常，请重新登录");
         }
         
         // 设置用户ID和用户名
         blogs.setUserId(currentUser.getId());
         blogs.setUsername(currentUser.getUsername());
+        
+        log.debug("设置博客用户信息: userId={}, username={}", blogs.getUserId(), blogs.getUsername());
         
         // 如果是要发布，需要对内容进行检测
         if("published".equals(blogs.getStatus())) {
@@ -85,6 +99,7 @@ public class BlogsServiceImpl extends ServiceImpl<BlogsMapper, Blogs> implements
                 }
             } catch (Exception e) {
                 // 记录日志或返回错误信息
+                log.warn("内容检测异常: {}", e.getMessage());
                 return Result.error("内容检测失败，请稍后重试");
             }
         }
@@ -93,11 +108,16 @@ public class BlogsServiceImpl extends ServiceImpl<BlogsMapper, Blogs> implements
         blogs.setCreatedAt(DateTime.now());
         blogs.setPublishedAt(DateTime.now());
         blogs.setIsDeleted(0);
+        
+        log.debug("准备保存博客到数据库: {}", blogs);
         int id = blogsMapper.addBlog(blogs);
+        
         BlogsSucessVO blogsSucessVO = new BlogsSucessVO();
         blogsSucessVO.setId(id);
         blogsSucessVO.setTitle(blogs.getTitle());
         blogsSucessVO.setCreateTime(blogs.getCreatedAt());
+        
+        log.debug("博客创建成功，返回结果: {}", blogsSucessVO);
         return Result.success(blogsSucessVO);
     }
 

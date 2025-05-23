@@ -2,7 +2,6 @@ package com.blog.config;
 
 import com.blog.utils.JwtInterceptor;
 import com.blog.utils.LoginInterceptor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -10,13 +9,6 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.annotation.Resource;
-
-
-/*
- * @Author: guoyuran
- * @Date: 2025-5-6
- * @Description: 注册拦截器
- */
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -37,16 +29,19 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/users/code",
                         "/api/users/slider-image",
                         "/api/users/slider-validate",
-                        "/api/health"
+                        "/api/health",
+                        "/error"
                 ).order(0);
 
         // 登录拦截器后执行，检查是否需要登录
         registry.addInterceptor(new LoginInterceptor())
-                .addPathPatterns("/api/blogs/**")
-                .excludePathPatterns(
+                .addPathPatterns(
+                        "/api/blogs/**"
+                ).excludePathPatterns(
                         "/api/users/**",
                         "/api/health",
-                        "/api/common/upload"
+                        "/api/common/upload",
+                        "/error"
                 ).order(1);
     }
 

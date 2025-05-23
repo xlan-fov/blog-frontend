@@ -123,7 +123,11 @@ export const useUserStore = defineStore('user', () => {
       });
       
       if (res.code === 200 && res.data) {
+        // 从JWT token中解析用户ID，或者从响应中获取
+        const userId = res.data.userId || res.data.id
+        
         // 处理登录成功逻辑
+        userInfo.value.id = userId // 确保设置用户ID
         userInfo.value.username = res.data.username || username
         userInfo.value.avatar = res.data.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
         userInfo.value.bio = res.data.bio || '管理员'
@@ -135,6 +139,16 @@ export const useUserStore = defineStore('user', () => {
         if (res.data.token) {
           token.value = res.data.token;
           localStorage.setItem('token', res.data.token);
+          
+          // 如果响应中没有用户ID，尝试从token中解析
+          if (!userId) {
+            try {
+              const tokenPayload = JSON.parse(atob(res.data.token.split('.')[1]))
+              userInfo.value.id = tokenPayload.id || tokenPayload.userId
+            } catch (e) {
+              console.warn('无法从token中解析用户ID:', e)
+            }
+          }
         } else {
           // 如果没有token但登录成功，生成固定测试token用于开发
           const fixedTestToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OTk5LCJ1c2VyTmFtZSI6ImFkbWluIiwiZXhwIjoyNTM0MDIzMDA4MDAsImlhdCI6MTY4NDc3NjAwMH0.H3rmvTpIKTjDCGPjgqJLKNmwfVHqYvlNL1uR17JxMHs';
@@ -145,6 +159,8 @@ export const useUserStore = defineStore('user', () => {
         
         isLoggedIn.value = true
         saveState() // 保存状态
+        
+        console.log('管理员登录成功，用户ID:', userInfo.value.id)
         return true
       } else {
         ElMessage.error(res.message || '管理员登录失败')

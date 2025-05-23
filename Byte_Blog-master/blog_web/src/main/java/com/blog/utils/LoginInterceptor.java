@@ -1,22 +1,32 @@
 package com.blog.utils;
 
+import com.blog.dto.UserDTO;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+@Slf4j
+@Component
 public class LoginInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        //1.判断是否需要拦截(ThreadLocal中是否有用户)
-        if(UserHolder.getUser() == null){
-            //    没有，需要拦截，设置状态码
+        log.debug("登录拦截器检查请求: {}", request.getRequestURI());
+        
+        // 获取用户信息
+        UserDTO user = UserHolder.getUser();
+        if (user == null) {
+            log.warn("用户未登录，拒绝访问: {}", request.getRequestURI());
             response.setStatus(401);
+            response.setContentType("application/json;charset=utf-8");
+            response.getWriter().write("{\"code\":401,\"msg\":\"用户未登录，请先登录\",\"data\":null}");
             return false;
         }
-
-        //有用户，放行
+        
+        log.debug("用户已登录: {}", user.getUsername());
         return true;
     }
 }

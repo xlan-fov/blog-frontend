@@ -76,12 +76,8 @@ public class JwtUtil {
         try {
             JWTVerifier verifier = JWT.require(Algorithm.HMAC256(SECRET)).build();
             jwt = verifier.verify(token);
-
-            //decodedJWT.getClaim("属性").asString()  获取负载中的属性值
-
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            logger.error("token解码异常");
+            logger.error("token解码异常: {}", e.getMessage());
             //解码异常则抛出异常
             return null;
         }

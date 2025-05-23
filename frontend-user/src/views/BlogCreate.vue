@@ -9,7 +9,8 @@
       </el-form-item>
       <div class="button-wrapper">
       <el-form-item>
-        <el-button type="primary" @click="handleSubmit">保存</el-button>
+        <el-button type="info" @click="handleSaveDraft">保存草稿</el-button>
+        <el-button type="primary" @click="handlePublish">发布</el-button>
         <el-button @click="handleCancel">取消</el-button>
       </el-form-item>
       </div>
@@ -20,14 +21,14 @@
 <script setup>
 import { reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useBlogStore } from '@/stores/blog'
-import { useUserStore } from '@/stores/user' // 添加用户存储
+import { useUserStore } from '@/stores/user'
 import E from 'wangeditor'
 
 const router = useRouter()
 const blogStore = useBlogStore()
-const userStore = useUserStore() // 实例化用户存储
+const userStore = useUserStore()
 
 const form = reactive({
   title: '',
@@ -52,7 +53,8 @@ onBeforeUnmount(() => {
   }
 })
 
-const handleSubmit = async () => {
+// 保存草稿
+const handleSaveDraft = async () => {
   if (!form.title || !form.content) {
     ElMessage.warning('请填写完整信息')
     return
@@ -66,16 +68,50 @@ const handleSubmit = async () => {
   }
 
   try {
-    // 不再手动传递userId，让后端从登录上下文中获取
     await blogStore.createBlog({
       title: form.title,
       content: form.content,
       status: 'draft'
     })
-    ElMessage.success('创建成功')
+    ElMessage.success('草稿保存成功')
     router.push('/dashboard/blog')
   } catch (error) {
-    ElMessage.error('创建失败: ' + (error.message || '未知错误'))
+    ElMessage.error('保存失败: ' + (error.message || '未知错误'))
+  }
+}
+
+// 发布博客
+const handlePublish = async () => {
+  if (!form.title || !form.content) {
+    ElMessage.warning('请填写完整信息')
+    return
+  }
+
+  // 检查用户是否已登录
+  if (!userStore.userInfo || !userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    router.push('/login')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm('确定要发布这篇博客吗？', '确认发布', {
+      confirmButtonText: '确定发布',
+      cancelButtonText: '取消',
+      type: 'info'
+    })
+
+    await blogStore.createBlog({
+      title: form.title,
+      content: form.content,
+      status: 'published'
+    })
+    ElMessage.success('发布成功')
+    router.push('/dashboard/blog')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('发布失败: ' + (error.message || '未知错误'))
+    }
   }
 }
 
