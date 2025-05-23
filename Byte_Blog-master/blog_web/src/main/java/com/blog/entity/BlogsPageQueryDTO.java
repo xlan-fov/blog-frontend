@@ -21,4 +21,86 @@ public class BlogsPageQueryDTO implements Serializable {
     private String username;
     private String status;
     private Integer userId;
+
+    /**
+     * 关键词搜索
+     */
+    private String keyword;
+
+    /**
+     * 开始日期
+     */
+    private String startDate;
+
+    /**
+     * 结束日期
+     */
+    private String endDate;
+
+    // 如果使用了Lombok的@Data注解，以下getter/setter方法会自动生成
+    // 如果没有使用Lombok，需要手动添加以下方法：
+
+    public String getKeyword() {
+        return keyword;
+    }
+
+    public void setKeyword(String keyword) {
+        this.keyword = keyword;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getAuthor() {
+        return username;
+    }
+
+    public void setAuthor(String author) {
+        this.username = author;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
+
+    public Integer getPage() {
+        return page;
+    }
+
+    public void setPage(Integer page) {
+        this.page = page;
+    }
+
+    public Integer getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageSize(Integer pageSize) {
+        this.pageSize = pageSize;
+    }
+
+    public String getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(String startDate) {
+        this.startDate = startDate;
+    }
+
+    public String getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(String endDate) {
+        this.endDate = endDate;
+    }
 }

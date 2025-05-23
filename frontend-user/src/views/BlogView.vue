@@ -34,6 +34,11 @@ const fetchBlog = async () => {
   try {
     const blogId = route.params.id
     blog.value = await blogStore.getBlogById(blogId)
+
+    // 如果没有获取到博客，显示错误信息
+    if (!blog.value) {
+      ElMessage.error('博客不存在或已被删除')
+    }
   } catch (error) {
     console.error('获取博客失败:', error)
     ElMessage.error('获取博客详情失败')

@@ -6,8 +6,6 @@ package com.blog.utils;
  * @Description:
  */
 
-import org.apache.catalina.connector.Request;
-import org.apache.catalina.connector.Response;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -37,16 +35,6 @@ public class TextCheck {
                     '}';
         }
     }
-    /*
-     * @Author: kai.hu
-     * @Date: 2025-5-20
-     * @Description: 测试接口
-     */
-//    public static void main(String[] args) throws Exception {
-//        String text = "到底谁是谁的爹和娘啊？！ //@古长宏:爱疯女，逼疯爹和娘。[泪]";
-//        String res = textTag(text);
-//        System.out.println(res);
-//    }
 
     public static String textTag(String text) throws Exception {
         String apiUrl = "http://localhost:8000/predict";
@@ -69,8 +57,7 @@ public class TextCheck {
                     String body = new Scanner(response.getEntity().getContent())
                             .useDelimiter("\\A").next();
                     ApiResponse result = mapper.readValue(body, ApiResponse.class);
-//                    System.out.println("Input: " + result.input); // 输出
-//                    System.out.println("Cleaned: " + result.cleaned); // 清洗后的输出
+                    
                     // 返回的标签
                     String maxKey = null;
                     double maxValue = Double.MIN_VALUE;

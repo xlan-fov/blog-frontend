@@ -38,7 +38,7 @@ import java.nio.file.*;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api") // 这里已经有/api前缀
 public class BlogsController {
     @Autowired
     private IBlogsService blogsService;
@@ -52,7 +52,7 @@ public class BlogsController {
      * @Date: 2025-5-5
      * @Description: 创建Blog(包括发布,或者存为草稿)
      */
-    @PostMapping("blogs/addBlog")
+    @PostMapping("/blogs/addBlog") // 修复：去掉多余的blogs前缀
     public Result<?> addBlog(@RequestBody Blogs blogs){
         log.info("添加Blog：{}" , blogs);
         Result<?> result = blogsService.addBlog(blogs);
@@ -189,10 +189,20 @@ public class BlogsController {
      * @Date: 2025-5-19
      * @Description: 用户获取自己的博客列表
      */
-    @GetMapping("/blogs")
-    public Result<?> getBlogs(@RequestBody BlogsPageQueryDTO blogsPageQueryDTO) {
+    @GetMapping("/blogs") // 修复：路径应该是 /api/blogs
+    public Result<?> getBlogs(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status, 
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
         log.info("获取用户博客列表");
-        // 查询当前用户是否有未发布的草稿
+        
+        BlogsPageQueryDTO blogsPageQueryDTO = new BlogsPageQueryDTO();
+        blogsPageQueryDTO.setKeyword(keyword);
+        blogsPageQueryDTO.setStatus(status);
+        blogsPageQueryDTO.setPage(page);
+        blogsPageQueryDTO.setPageSize(pageSize);
+        
         PageResult pageResult = blogsService.pageQuery(blogsPageQueryDTO);
         return Result.success(pageResult);
     }

@@ -89,6 +89,13 @@
             <version>8.0.28</version>
         </dependency>
 
+        <!-- 确保Lombok依赖存在 -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
     </dependencies>
 
 </project>

@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 @Slf4j
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users") // 添加/api前缀，与前端路径匹配
 public class UsersController {
     /*
      * @Author: guoyuran

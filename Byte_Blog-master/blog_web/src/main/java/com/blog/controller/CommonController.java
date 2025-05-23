@@ -20,7 +20,7 @@ import java.util.UUID;
  */
 @Slf4j
 @RestController
-@RequestMapping("/common")
+@RequestMapping("/api/common") // 添加/api前缀
 public class CommonController {
     @Autowired
     private AliOssUtil aliOssUtil;

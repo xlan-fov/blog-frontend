@@ -22,7 +22,7 @@
     <el-table :data="displayBlogs" style="width: 100%" v-loading="blogStore.loading">
       <el-table-column prop="title" label="内容标题" :min-width="isMobile ? 120 : 200">
         <template #default="{ row }">
-          <router-link :to="`/blog/view/${row.id}`" class="blog-title-link">
+          <router-link :to="`/dashboard/blog/view/${row.id}`" class="blog-title-link">
             {{ row.title }}
           </router-link>
         </template>
@@ -96,11 +96,11 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useBlogStore } from '@/stores/blog'
 import { Search, Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { useBlogStore } from '@/stores/blog'
 
 const router = useRouter()
 const blogStore = useBlogStore()
@@ -108,31 +108,34 @@ const blogStore = useBlogStore()
 // 分页相关
 const currentPage = ref(1)
 const pageSize = ref(10)
-const totalBlogs = computed(() => blogStore.blogs.length)
-
-// 计算当前页显示的博客
-const displayBlogs = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return blogStore.blogs.slice(start, end)
+const totalBlogs = computed(() => {
+  const blogs = Array.isArray(blogStore.blogs) ? blogStore.blogs : []
+  return blogs.length
 })
-
-// 处理页码改变
-const handleCurrentChange = (val) => {
-  currentPage.value = val
-}
-
-// 处理每页条数改变
-const handleSizeChange = (val) => {
-  pageSize.value = val
-  currentPage.value = 1
-}
 
 // 响应式判断是否为移动端
 const isMobile = ref(window.innerWidth <= 768)
 const handleResize = () => { isMobile.value = window.innerWidth <= 768 }
-onMounted(() => { window.addEventListener('resize', handleResize) })
-onBeforeUnmount(() => { window.removeEventListener('resize', handleResize) })
+
+onMounted(() => { 
+  window.addEventListener('resize', handleResize)
+  // 确保博客数据被正确加载
+  loadBlogsData()
+})
+
+onBeforeUnmount(() => { 
+  window.removeEventListener('resize', handleResize) 
+})
+
+// 加载博客数据的函数
+const loadBlogsData = async () => {
+  try {
+    await blogStore.loadBlogs()
+  } catch (error) {
+    console.error('加载博客列表失败:', error)
+    ElMessage.error('加载博客列表失败')
+  }
+}
 
 const handleSearch = () => {
   blogStore.searchBlogs(blogStore.searchKeyword)
@@ -140,11 +143,11 @@ const handleSearch = () => {
 }
 
 const handleCreate = () => {
-  router.push('/blog/create')
+  router.push('/dashboard/blog/create')
 }
 
 const handleEdit = (row) => {
-  router.push(`/blog/edit/${row.id}`)
+  router.push(`/dashboard/blog/edit/${row.id}`)
 }
 
 const handlePublish = async (row) => {
@@ -195,8 +198,38 @@ const handleDelete = async (row) => {
   }
 }
 
-onMounted(() => {
-  blogStore.fetchBlogs()
+// 分页处理函数
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1 // 重置到第一页
+}
+
+const handleCurrentChange = (page) => {
+  currentPage.value = page
+}
+
+// 计算属性 - 修复数组检查和分页
+const displayBlogs = computed(() => {
+  // 确保 blogs 是数组
+  const blogs = Array.isArray(blogStore.blogs) ? blogStore.blogs : []
+  
+  let filteredBlogs = blogs
+  
+  // 如果有搜索关键词，进行过滤
+  if (blogStore.searchKeyword && blogStore.searchKeyword.trim() !== '') {
+    const keyword = blogStore.searchKeyword.toLowerCase()
+    filteredBlogs = blogs.filter(blog => {
+      if (!blog) return false
+      const title = blog.title ? blog.title.toLowerCase() : ''
+      const content = blog.content ? blog.content.toLowerCase() : ''
+      return title.includes(keyword) || content.includes(keyword)
+    })
+  }
+  
+  // 分页处理
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredBlogs.slice(start, end)
 })
 </script>
 

@@ -35,7 +35,7 @@ const form = reactive({
 
 let editor = null
 
-onMounted(() => {
+onMounted(async () => {
   editor = new E('#editor')
   editor.config.height = 350
   editor.config.placeholder = '请输入博客内容'
@@ -45,14 +45,20 @@ onMounted(() => {
   editor.create()
 
   const blogId = route.params.id
-  const blog = blogStore.blogs.find(blog => blog.id === blogId)
-  if (blog) {
-    form.title = blog.title
-    form.content = blog.content
-    editor.txt.html(blog.content)
-  } else {
-    ElMessage.error('博客不存在')
-    router.push('/blog')
+  try {
+    const blog = await blogStore.getBlogById(blogId)
+    if (blog) {
+      form.title = blog.title
+      form.content = blog.content
+      editor.txt.html(blog.content)
+    } else {
+      ElMessage.error('博客不存在')
+      router.push('/dashboard/blog')
+    }
+  } catch (error) {
+    console.error('获取博客失败:', error)
+    ElMessage.error('获取博客失败')
+    router.push('/dashboard/blog')
   }
 })
 

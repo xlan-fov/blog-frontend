@@ -52,11 +52,13 @@ onBeforeUnmount(() => {
 
 const handleSubmit = async () => {
   if (!form.title || !form.content) {
+    ElMessage.warning('请填写完整信息')
     return
   }
 
   try {
     await blogStore.createBlog({
+      title: form.title,
       content: form.content
     })
     ElMessage.success('创建成功')

@@ -15,16 +15,15 @@ service.interceptors.request.use(
     console.log(`DEBUG: 请求URL: ${config.url}, 方法: ${config.method}, 数据:`, config.data || config.params);
     
     // 对于验证码等公开接口，不需要token验证
-    const publicPaths = ['/users/captcha', '/users/registerByname', '/users/loginByname']
+    const publicPaths = ['/api/users/captcha', '/api/users/registerByname', '/api/users/loginByname']
     const isPublicPath = publicPaths.some(path => config.url.includes(path))
     
     if (!isPublicPath) {
       // 从localStorage获取token并添加到请求头
       const token = localStorage.getItem('token')
       
-      // 增加token验证逻辑
       if (token) {
-        // 验证token是否是有效的JWT格式(应该包含两个点)
+        // 验证token是否是有效的JWT格式
         const tokenParts = token.split('.');
         if (tokenParts.length === 3) {
           console.log('Token验证通过: 包含3个部分');
@@ -37,14 +36,11 @@ service.interceptors.request.use(
           localStorage.removeItem('userState');
         }
         
-        // 记录详细日志便于调试
         console.log('Authorization头的值:', config.headers['Authorization']);
-        console.log('Token长度:', token.length);
-        
-        // 确保携带cookies
         config.withCredentials = true;
       } else {
-        console.log('未找到token');
+        console.log('未找到token - 这可能会导致401错误');
+        // 对于需要认证的接口，可以在这里重定向到登录页
       }
     } else {
       console.log('公开接口，跳过token验证:', config.url);

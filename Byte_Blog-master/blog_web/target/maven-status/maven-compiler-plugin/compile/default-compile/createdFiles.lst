@@ -14,7 +14,6 @@ com\blog\config\DataSourceConfig.class
 com\blog\controller\LoginLogsController.class
 com\blog\service\IFailedLoginAttemptsService.class
 com\blog\utils\ImageCheck.class
-com\blog\utils\HttpUtil$1.class
 com\blog\mapper\SensitiveWordsMapper.class
 com\blog\config\WebConfig.class
 com\blog\controller\BlogsController.class

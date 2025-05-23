@@ -26,7 +26,7 @@ mvn spring-boot:run
 或者在IDE中运行主应用类
 
 ### 连接配置
-前端默认连接到 `http://localhost:8081`，如需修改，请更新 `src/api/config.js` 中的 `BASE_URL` 配置。
+前端默认连接到 `http://localhost:5174`，如需修改，请更新 `src/api/config.js` 中的 `BASE_URL` 配置。
 
 ## 开发说明
 
