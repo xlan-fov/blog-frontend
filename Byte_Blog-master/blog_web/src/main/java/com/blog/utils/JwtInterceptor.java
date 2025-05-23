@@ -60,22 +60,22 @@ public class JwtInterceptor implements HandlerInterceptor {
         Map<Object, Object> userMap = stringRedisTemplate.opsForHash().entries(key);
 
         if (userMap.isEmpty()) {
-            log.warn("Redis中未找到用户信息，key: {}", key);
-            
-            // 如果Redis中没有用户信息，尝试从JWT claims中构建用户信息
-            UserDTO userDTO = new UserDTO();
-            if (claims.containsKey("id")) {
-                userDTO.setId(claims.get("id").asInt());
-            }
-            if (claims.containsKey("userName")) {
-                userDTO.setUsername(claims.get("userName").asString());
-            }
-            if (claims.containsKey("phone")) {
-                userDTO.setPhone(claims.get("phone").asString());
-            }
-            
-            log.debug("从JWT claims构建用户信息: {}", userDTO);
-            UserHolder.saveUser(userDTO);
+            //log.warn("Redis中未找到用户信息，key: {}", key);
+            //
+            //// 如果Redis中没有用户信息，尝试从JWT claims中构建用户信息
+            //UserDTO userDTO = new UserDTO();
+            //if (claims.containsKey("id")) {
+            //    userDTO.setId(claims.get("id").asInt());
+            //}
+            //if (claims.containsKey("userName")) {
+            //    userDTO.setUsername(claims.get("userName").asString());
+            //}
+            //if (claims.containsKey("phone")) {
+            //    userDTO.setPhone(claims.get("phone").asString());
+            //}
+            //
+            //log.debug("从JWT claims构建用户信息: {}", userDTO);
+            //UserHolder.saveUser(userDTO);
             return true;
         }
 

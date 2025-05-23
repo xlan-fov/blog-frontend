@@ -47,7 +47,7 @@ public class JwtUtil {
         //过期时间
         Date expireDate = new Date(System.currentTimeMillis() + EXPIRATION * 1000);
         // 当前时间戳，确保token唯一性
-        long currentTimeMillis = System.currentTimeMillis();
+        //long currentTimeMillis = System.currentTimeMillis();
         
         Map<String, Object> map = new HashMap<>();
         map.put("alg", "HS256");
@@ -59,12 +59,13 @@ public class JwtUtil {
                 .withClaim("id", user.getId()) //id
                 .withClaim("userName", user.getUsername())//username
                 .withClaim("phone", user.getPhone())
-                .withClaim("iat_ms", currentTimeMillis) // 添加毫秒级时间戳确保唯一性
+                //.withClaim("iat_ms", currentTimeMillis) // 添加毫秒级时间戳确保唯一性
                 .withExpiresAt(expireDate) //超时设置,设置过期的日期
                 .withIssuedAt(new Date()) //签发时间
                 .sign(Algorithm.HMAC256(SECRET)); //SECRET加密
                 
-        logger.info("生成token成功，用户: {}, 时间戳: {}", user.getUsername(), currentTimeMillis);
+        //logger.info("生成token成功，用户: {}, 时间戳: {}", user.getUsername(), currentTimeMillis);
+        logger.info("生成token成功，用户: {}", user.getUsername());
         return token;
     }
 
@@ -77,6 +78,7 @@ public class JwtUtil {
             JWTVerifier verifier = JWT.require(Algorithm.HMAC256(SECRET)).build();
             jwt = verifier.verify(token);
         } catch (Exception e) {
+            logger.error(e.getMessage());
             logger.error("token解码异常: {}", e.getMessage());
             //解码异常则抛出异常
             return null;

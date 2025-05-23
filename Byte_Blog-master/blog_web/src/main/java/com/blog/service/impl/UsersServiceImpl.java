@@ -209,19 +209,6 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         String token = JwtUtil.generateToken(user);
         log.info("为用户 {} 生成新token: {}", username, token.substring(0, 20) + "...");
 
-        // 清理该用户之前的所有token（可选）
-        String userTokenPattern = LOGIN_USER_KEY + "*";
-        Set<String> existingTokens = stringRedisTemplate.keys(userTokenPattern);
-        if (existingTokens != null) {
-            for (String existingTokenKey : existingTokens) {
-                Map<Object, Object> existingUserMap = stringRedisTemplate.opsForHash().entries(existingTokenKey);
-                String existingUsername = (String) existingUserMap.get("username");
-                if (username.equals(existingUsername)) {
-                    stringRedisTemplate.delete(existingTokenKey);
-                    log.info("清理用户 {} 的旧token", username);
-                }
-            }
-        }
 
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
         Map<String, Object> userMap = BeanUtil.beanToMap(userDTO, new HashMap<>(),
