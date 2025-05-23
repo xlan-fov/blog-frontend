@@ -210,7 +210,18 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         log.info("为用户 {} 生成新token: {}", username, token.substring(0, 20) + "...");
 
 
-        UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(user.getId());
+        userDTO.setUsername(user.getUsername());
+        userDTO.setPhone(user.getPhone());
+        userDTO.setAvatarUrl(user.getAvatarUrl());
+        userDTO.setBio(user.getBio());
+        userDTO.setRole(user.getRole());
+        userDTO.setIsBanned(user.getIsBanned());
+        userDTO.setIsLoggedIn(user.getIsLoggedIn());
+        userDTO.setLastLoginTime(user.getLastLoginTime());
+        userDTO.setCreatedAt(user.getCreatedAt());
+
         Map<String, Object> userMap = BeanUtil.beanToMap(userDTO, new HashMap<>(),
                 CopyOptions.create()
                         .setIgnoreNullValue(true)
