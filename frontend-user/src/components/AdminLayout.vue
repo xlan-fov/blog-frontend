@@ -107,16 +107,22 @@ const handleSelect = (path) => {
 }
 
 // 处理下拉菜单命令
-const handleCommand = (command) => {
+const handleCommand = async (command) => {
   if (command === 'logout') {
-    ElMessageBox.confirm('确定要退出登录吗?', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }).then(() => {
-      userStore.logout()
-      router.push('/admin-login')
-    }).catch(() => {})
+    try {
+      await ElMessageBox.confirm('确定要退出登录吗?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      });
+      
+      // 调用 store 中的 logout 方法，它会自动处理页面跳转
+      await userStore.logout();
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('退出登录失败:', error);
+      }
+    }
   } else if (command === 'profile') {
     router.push('/admin/profile')
   } else if (command === 'switch') {
@@ -216,4 +222,4 @@ const handleCommand = (command) => {
     padding: 10px !important;
   }
 }
-</style> 
+</style>

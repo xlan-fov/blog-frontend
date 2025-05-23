@@ -97,6 +97,13 @@ const router = createRouter({
       component: AdminLogin,
       meta: { requiresAuth: false }
     },
+    // 添加管理员登录的别名路由
+    {
+      path: '/admin/login',
+      name: 'admin-login-alias',
+      component: AdminLogin,
+      meta: { requiresAuth: false }
+    },
     // 超管路由
     {
       path: '/admin',

@@ -201,44 +201,53 @@ export const useUserStore = defineStore('user', () => {
     saveState()
   }
 
-  // 退出登录 - 添加参数控制是否调用后端API
-  function logout(callApi = false) {
-    console.log('开始退出登录流程')
-    
-    // 保存旧token用于API调用
-    const oldToken = token.value
-    
-    // 清理用户信息
-    userInfo.value = {
-      id: '', // 清理用户ID
-      username: '',
-      avatar: '',
-      bio: '',
-      registerTime: '',
-      role: 'user',
-      status: 'normal'
-    }
-    
-    // 清理token
-    token.value = ''
-    
-    // 清理localStorage
-    localStorage.removeItem('token')
-    localStorage.removeItem('userState')
-    localStorage.removeItem('captchaId')
-    
-    // 清理sessionStorage（如果有使用）
-    sessionStorage.clear()
-    
-    isLoggedIn.value = false
-    
-    console.log('用户退出完成，已清理token:', oldToken ? oldToken.substring(0, 20) + '...' : '无')
-    
-    // 可选：调用后端退出接口
-    if (callApi && oldToken) {
-      userApi.logout().catch(error => {
-        console.warn('调用后端退出接口失败:', error)
-      })
+  /**
+   * 退出登录
+   */
+  async function logout() {
+    try {
+      // 判断当前是否在管理员页面
+      const isAdmin = window.location.pathname.includes('/admin');
+      
+      // 调用后端登出API（如果需要）
+      try {
+        await userApi.logout();
+      } catch (error) {
+        console.warn('调用后端登出接口失败:', error);
+      }
+      
+      // 清除本地存储的用户信息和token
+      localStorage.removeItem('token');
+      localStorage.removeItem('userState');
+      
+      // 重置userInfo状态
+      userInfo.value = {
+        id: null,
+        username: '',
+        avatar: '',
+        role: '',
+        token: '',
+        bio: '',
+        loginAttempts: 0,
+        isLoggedIn: false
+      };
+      
+      isLoggedIn.value = false;
+      token.value = '';
+      
+      // 根据当前路径决定重定向到哪个登录页
+      if (isAdmin) {
+        // 管理员用户退出后跳转到普通用户登录页
+        window.location.href = '/login';
+      } else {
+        // 普通用户退出后也跳转到普通登录页
+        window.location.href = '/login';
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('登出失败:', error);
+      throw error;
     }
   }
 
