@@ -102,11 +102,14 @@ const handlePublish = async () => {
       type: 'info'
     })
 
-    await blogStore.updateBlog(route.params.id, {
+    // 使用专门的发布方法
+    await blogStore.publishBlog({
+      id: route.params.id,
       title: form.title,
-      content: form.content,
-      status: 'published'
+      content: form.content
+      // status会在publishBlog方法中自动设置为'published'
     })
+    
     ElMessage.success('发布成功')
     router.push('/dashboard/blog')
   } catch (error) {

@@ -178,28 +178,33 @@ const banForm = ref({
 const fetchAccounts = async () => {
   loading.value = true
   try {
-    const res = await adminApi.getUsers({
-      keyword: searchForm.value.username || undefined,
+    // 确保参数名称与后端一致
+    const params = {
+      keyword: searchForm.value.username || undefined, // username 在后端对应 keyword
       status: searchForm.value.status || undefined,
       page: currentPage.value,
       pageSize: pageSize.value
-    })
+    };
+    
+    console.log('发送获取用户列表请求，参数:', params);
+    
+    const res = await adminApi.getUsers(params);
     
     if (res.code === 200 && res.data) {
-      accounts.value = res.data.list || []
-      total.value = res.data.total || 0
+      accounts.value = res.data.list || [];
+      total.value = res.data.total || 0;
     } else {
-      ElMessage.error(res.message || '获取用户列表失败')
-      accounts.value = []
-      total.value = 0
+      ElMessage.error(res.message || '获取用户列表失败');
+      accounts.value = [];
+      total.value = 0;
     }
   } catch (error) {
-    console.error('获取用户列表失败:', error)
-    ElMessage.error('获取用户列表失败')
-    accounts.value = []
-    total.value = 0
+    console.error('获取用户列表失败:', error);
+    ElMessage.error('获取用户列表失败');
+    accounts.value = [];
+    total.value = 0;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 

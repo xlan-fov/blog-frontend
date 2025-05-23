@@ -19,7 +19,7 @@
       </el-button>
     </div>
 
-    <el-table :data="displayBlogs" style="width: 100%" v-loading="blogStore.loading">
+    <el-table :data="displayBlogs" style="width: 100%" v-loading="loading">
       <el-table-column prop="title" label="内容标题" :min-width="isMobile ? 120 : 200">
         <template #default="{ row }">
           <router-link :to="`/dashboard/blog/view/${row.id}`" class="blog-title-link">
@@ -96,7 +96,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBlogStore } from '@/stores/blog'
 import { Search, Plus } from '@element-plus/icons-vue'
@@ -105,12 +105,21 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 const router = useRouter()
 const blogStore = useBlogStore()
 
+// 添加 loading 响应式变量
+const loading = ref(false)
+
 // 分页相关
 const currentPage = ref(1)
 const pageSize = ref(10)
 const totalBlogs = computed(() => {
   const blogs = Array.isArray(blogStore.blogs) ? blogStore.blogs : []
   return blogs.length
+})
+
+// 搜索表单
+const searchForm = reactive({
+  title: '',
+  status: ''
 })
 
 // 响应式判断是否为移动端
@@ -127,15 +136,33 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize) 
 })
 
-// 加载博客数据的函数
+// 加载博客列表数据
 const loadBlogsData = async () => {
   try {
-    await blogStore.loadBlogs()
+    loading.value = true // 现在可以使用 loading 变量
+    await blogStore.getBlogs({
+      page: currentPage.value,
+      pageSize: pageSize.value,
+      title: searchForm.title,
+      status: searchForm.status
+    })
+    loading.value = false // 加载完成后设置为 false
   } catch (error) {
     console.error('加载博客列表失败:', error)
-    ElMessage.error('加载博客列表失败')
+    ElMessage.error('获取博客列表失败')
+    loading.value = false // 确保错误情况下也设置为 false
   }
 }
+
+// 刷新列表数据
+const loadBlogs = () => {
+  loadBlogsData()
+}
+
+// 初始加载
+onMounted(() => {
+  loadBlogsData()
+})
 
 const handleSearch = () => {
   blogStore.searchBlogs(blogStore.searchKeyword)
@@ -150,18 +177,26 @@ const handleEdit = (row) => {
   router.push(`/dashboard/blog/edit/${row.id}`)
 }
 
+// 添加发布博客功能
 const handlePublish = async (row) => {
   try {
-    await ElMessageBox.confirm('确定要发布这篇博客吗？', '提示', {
-      confirmButtonText: '确定',
+    await ElMessageBox.confirm('确定要发布这篇博客吗？', '确认发布', {
+      confirmButtonText: '确定发布',
       cancelButtonText: '取消',
-      type: 'warning'
+      type: 'info'
     })
-    await blogStore.publishBlog(row.id)
+
+    await blogStore.publishBlog({
+      id: row.id,
+      title: row.title,
+      content: row.content
+    })
+    
     ElMessage.success('发布成功')
+    loadBlogsData() // 使用正确的方法名刷新列表
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('发布失败')
+      ElMessage.error('发布失败: ' + (error.message || '未知错误'))
     }
   }
 }

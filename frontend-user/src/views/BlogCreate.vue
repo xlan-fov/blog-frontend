@@ -101,15 +101,23 @@ const handlePublish = async () => {
       type: 'info'
     })
 
-    await blogStore.createBlog({
+    console.log('准备发布博客:', {
       title: form.title,
-      content: form.content,
-      status: 'published'
+      content: form.content
     })
+    
+    // 使用统一的发布方法
+    await blogStore.publishBlog({
+      title: form.title.trim(),
+      content: form.content
+      // status会在publishBlog方法中自动设置为'published'
+    })
+    
     ElMessage.success('发布成功')
     router.push('/dashboard/blog')
   } catch (error) {
     if (error !== 'cancel') {
+      console.error('发布失败:', error)
       ElMessage.error('发布失败: ' + (error.message || '未知错误'))
     }
   }

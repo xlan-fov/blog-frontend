@@ -17,6 +17,7 @@ com\blog\utils\ImageCheck.class
 com\blog\mapper\SensitiveWordsMapper.class
 com\blog\config\WebConfig.class
 com\blog\controller\BlogsController.class
+com\blog\service\IAdminService.class
 com\blog\entity\FailedLoginAttempts.class
 com\blog\utils\UserHolder.class
 com\blog\entity\AdminActions.class
@@ -50,6 +51,7 @@ com\blog\utils\RedisConstants.class
 com\blog\config\SecurityConfig.class
 com\blog\entity\SensitiveWords.class
 com\blog\entity\VerificationCodes.class
+com\blog\service\impl\AdminServiceImpl.class
 com\blog\result\PageResult.class
 com\blog\service\IAdminActionsService.class
 com\blog\entity\Anomalies.class
@@ -76,6 +78,7 @@ com\blog\utils\HttpUtil.class
 com\blog\entity\AliOssProperties.class
 com\blog\result\Result.class
 com\blog\mapper\BlogsDraftMapper.class
+com\blog\controller\AdminController.class
 com\blog\dto\UserDTO.class
 com\blog\controller\AnomaliesController.class
 com\blog\utils\SMSUtil.class

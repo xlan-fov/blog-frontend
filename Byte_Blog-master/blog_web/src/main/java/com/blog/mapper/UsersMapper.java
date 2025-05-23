@@ -2,6 +2,7 @@ package com.blog.mapper;
 
 import com.blog.entity.Users;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.github.pagehelper.Page;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -107,4 +108,27 @@ public interface UsersMapper extends BaseMapper<Users> {
             "GROUP BY time " +
             "ORDER BY time DESC")
     List<Map<String, Object>> getNewUsersByPeriod(String period);
+
+    /**
+     * 分页查询用户列表
+     */
+    Page<Users> pageQueryUsers(Map<String, Object> params);
+
+    /**
+     * 按ID查询用户
+     */
+    @Select("SELECT * FROM users WHERE id = #{id} AND is_deleted = 0")
+    Users selectById(@Param("id") Integer id);
+
+    /**
+     * 更新用户状态
+     */
+    @Update("UPDATE users SET is_banned = #{status} WHERE id = #{userId}")
+    int updateUserStatus(@Param("userId") Integer userId, @Param("status") Integer status);
+
+    /**
+     * 标记用户删除
+     */
+    @Update("UPDATE users SET is_deleted = 1 WHERE id = #{userId}")
+    int markUserDeleted(@Param("userId") Integer userId);
 }

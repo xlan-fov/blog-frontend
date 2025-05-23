@@ -104,18 +104,28 @@ export default {
   },
 
   /**
-   * 发布博客
-   * @param {string|number} id - 博客ID
+   * 发布博客 - 单独的接口方法
+   * @param {Object} blogData - 博客数据，包含status='published'
    */
-  async publishBlog(id) {
+  async publishBlog(blogData) {
     try {
-      const response = await post(API_PATHS.BLOGS.PUBLISH, {
-        id,
-        status: 'published'
-      })
-      return response
+      console.log('API层 - 发布博客请求数据:', blogData)
+      // 确保状态为已发布
+      const data = {
+        ...blogData,
+        status: 'published' 
+      }
+      
+      // 对于新博客使用创建接口
+      if (!data.id) {
+        return await post(API_PATHS.BLOGS.CREATE, data)
+      } 
+      // 对于现有博客使用更新接口
+      else {
+        return await put(API_PATHS.BLOGS.UPDATE, data)
+      }
     } catch (error) {
-      console.error('发布博客失败:', error)
+      console.error('API层 - 发布博客失败:', error)
       throw error
     }
   },

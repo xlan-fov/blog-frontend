@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.blog.mapper.UsersMapper">
+    
+    <!-- 分页查询用户列表 -->
+    <select id="pageQueryUsers" resultType="com.blog.entity.Users">
+        SELECT * FROM users
+        WHERE is_deleted = 0
+        <if test="username != null and username != ''">
+            AND username LIKE CONCAT('%', #{username}, '%')
+        </if>
+        <if test="isBanned != null">
+            AND is_banned = #{isBanned}
+        </if>
+        ORDER BY id DESC
+    </select>
+    
+</mapper>

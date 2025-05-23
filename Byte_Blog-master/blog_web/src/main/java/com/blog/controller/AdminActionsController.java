@@ -33,15 +33,16 @@ public class AdminActionsController {
     private IAdminActionsService adminActionsService;
 
     @GetMapping("/users")
-    public Result<?> getUserList(@RequestBody Map<String, Object> requestBody) {
-        String keyword = (String) requestBody.get("keyword");
-        String status = (String) requestBody.get("status");
-        String pageStr = (String) requestBody.get("page");
-        String pageSizeStr = (String) requestBody.get("pageSize");
-        Integer page = pageStr == null ? 1 : Integer.parseInt(pageStr);
-        Integer pageSize = pageSizeStr == null ? 10 : Integer.parseInt(pageSizeStr);
+    public Result<?> getUserList(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
+        
         log.info("获取用户列表：keyword={}, status={}, page={}, pageSize={}", keyword, status, page, pageSize);
-        return adminActionsService.getUserList(keyword, status, page-1, pageSize);
+        
+        // 页码从前端是从1开始的，但数据库通常是从0开始
+        return adminActionsService.getUserList(keyword, status, page - 1, pageSize);
     }
 
     @GetMapping("/users/{username}")
