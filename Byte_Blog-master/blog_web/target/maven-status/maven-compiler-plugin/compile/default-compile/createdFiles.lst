@@ -10,7 +10,6 @@ com\blog\utils\TextCheck.class
 com\blog\ByteBlogApplication.class
 com\blog\generator\CodeGenerator.class
 com\blog\controller\CommonController.class
-com\blog\config\DataSourceConfig.class
 com\blog\controller\LoginLogsController.class
 com\blog\service\IFailedLoginAttemptsService.class
 com\blog\utils\ImageCheck.class
