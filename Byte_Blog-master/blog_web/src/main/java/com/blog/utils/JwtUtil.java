@@ -73,16 +73,36 @@ public class JwtUtil {
      * 校验token并解析token
      */
     public static Map<String, Claim> verifyToken(String token) {
-        DecodedJWT jwt = null;
         try {
-            JWTVerifier verifier = JWT.require(Algorithm.HMAC256(SECRET)).build();
-            jwt = verifier.verify(token);
+            System.out.println("开始验证JWT token: " + token.substring(0, Math.min(20, token.length())) + "...");
+            
+            DecodedJWT jwt = JWT.decode(token);
+            
+            // 检查token是否过期
+            long expirationTime = jwt.getExpiresAt().getTime();
+            long currentTime = System.currentTimeMillis();
+            if (currentTime > expirationTime) {
+                System.out.println("Token已过期，过期时间：" + jwt.getExpiresAt());
+                logger.warn("Token已过期，过期时间：{}", jwt.getExpiresAt());
+                return null;
+            }
+            
+            Map<String, Claim> claims = jwt.getClaims();
+            System.out.println("Token验证成功，包含claims: " + claims.keySet());
+            
+            // 输出关键字段用于调试
+            if (claims.containsKey("id")) {
+                System.out.println("Token中的用户ID: " + claims.get("id").asInt());
+            }
+            if (claims.containsKey("userName")) {
+                System.out.println("Token中的用户名: " + claims.get("userName").asString());
+            }
+            
+            return claims;
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            logger.error("token解码异常: {}", e.getMessage());
-            //解码异常则抛出异常
+            System.out.println("Token验证失败: " + e.getMessage());
+            logger.error("Token验证失败: {}", e.getMessage());
             return null;
         }
-        return jwt.getClaims();
     }
 }

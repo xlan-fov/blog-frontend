@@ -69,6 +69,7 @@ com\blog\utils\JwtInterceptor.class
 com\blog\service\IUsersService.class
 com\blog\utils\LoginInterceptor.class
 com\blog\entity\BlogsDraft.class
+com\blog\filter\JwtAuthenticationFilter.class
 com\blog\utils\JwtUtil.class
 com\blog\controller\HealthController.class
 com\blog\service\IAdminSecretService.class

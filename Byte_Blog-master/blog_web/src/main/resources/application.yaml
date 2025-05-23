@@ -37,10 +37,12 @@ mybatis-plus:
 logging:
   level:
     com.blog: debug # 增加日志级别
+    com.blog.filter: debug # 特别关注过滤器层
+    com.blog.utils: debug # 特别关注工具类层
     org.springframework.web: debug # 增加Spring Web日志
     org.springframework.security: debug # 增加Security日志
     org.springframework.data.redis: debug # 增加Redis日志
-    com.blog.controller: debug  # 控制器层详细日志
+    com.blog.controller: debug # 控制器层详细日志
     com.blog.service: debug     # 服务层详细日志
 blog:
   alioss:
