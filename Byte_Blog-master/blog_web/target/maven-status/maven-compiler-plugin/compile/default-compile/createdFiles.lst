@@ -65,7 +65,6 @@ com\blog\mapper\UsersMapper.class
 com\blog\config\ThymeleafConfig.class
 com\blog\mapper\LoginLogsMapper.class
 com\blog\mapper\BanLogsMapper.class
-com\blog\utils\JwtInterceptor.class
 com\blog\service\IUsersService.class
 com\blog\utils\LoginInterceptor.class
 com\blog\entity\BlogsDraft.class
