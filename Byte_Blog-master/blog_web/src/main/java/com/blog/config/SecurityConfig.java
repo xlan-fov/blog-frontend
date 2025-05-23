@@ -27,7 +27,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .cors().and() // 启用CORS支持
                 .csrf().disable() // 关闭 CSRF，前后端分离项目必须关
                 .authorizeRequests()
-                .antMatchers("/**").permitAll(); // 放行所有接口
+                .anyRequest().permitAll(); // 放行所有接口
+
+        // 关闭 Spring Security 自带的 session 管理，避免影响 JWT 拦截器
+        http.sessionManagement().disable();
     }
 
     @Bean
