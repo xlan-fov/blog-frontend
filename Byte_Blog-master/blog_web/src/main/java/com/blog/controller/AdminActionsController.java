@@ -187,15 +187,16 @@ public class AdminActionsController {
     }
 
     @GetMapping("/anomaly/logins")
-    public Result<?> getAnomalyLogins(@RequestBody Map<String, Object> requestBody) {
-        String startDate = (String) requestBody.get("startDate");
-        String endDate = (String) requestBody.get("endDate");
-        String username = (String) requestBody.get("username");
-        String pageStr = (String) requestBody.get("page");
-        String pageSizeStr = (String) requestBody.get("pageSize");
-        Integer page = pageStr == null ? 1 : Integer.parseInt(pageStr);
-        Integer pageSize = pageSizeStr == null ? 10 : Integer.parseInt(pageSizeStr);
-        log.info("获取异常登录列表：startDate={}, endDate={}, username={}, page={}, pageSize={}", startDate, endDate, username, page, pageSize);
+    public Result<?> getAnomalyLogins(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String username,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        
+        log.info("获取异常登录列表：startDate={}, endDate={}, username={}, page={}, pageSize={}", 
+                startDate, endDate, username, page, pageSize);
+        
         return adminActionsService.getAnomalyLogins(startDate, endDate, username, page-1, pageSize);
     }
 
@@ -206,30 +207,32 @@ public class AdminActionsController {
     }
 
     @GetMapping("/anomaly/contents")
-    public Result<?> getAnomalyContents(@RequestBody Map<String, Object> requestBody) {
-        String startDate = (String) requestBody.get("startDate");
-        String endDate = (String) requestBody.get("endDate");
-        String username = (String) requestBody.get("username");
-        String reason = (String) requestBody.get("reason");
-        String pageStr = (String) requestBody.get("page");
-        String pageSizeStr = (String) requestBody.get("pageSize");
-        Integer page = pageStr == null ? 1 : Integer.parseInt(pageStr);
-        Integer pageSize = pageSizeStr == null ? 10 : Integer.parseInt(pageSizeStr);
-        log.info("获取异常内容列表：startDate={}, endDate={}, username={}, reason={}, page={}, pageSize={}", startDate, endDate, username, reason, page, pageSize);
+    public Result<?> getAnomalyContents(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String reason,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        
+        log.info("获取异常内容列表：startDate={}, endDate={}, username={}, reason={}, page={}, pageSize={}", 
+                startDate, endDate, username, reason, page, pageSize);
+        
         return adminActionsService.getAnomalyContents(startDate, endDate, username, reason, page-1, pageSize);
     }
 
     @GetMapping("/logs")
-    public Result<?> getLogs(@RequestBody Map<String, Object> requestBody) {
-        String startDate = (String) requestBody.get("startDate");
-        String endDate = (String) requestBody.get("endDate");
-        String type = (String) requestBody.get("type");
-        String operator = (String) requestBody.get("operator");
-        String pageStr = (String) requestBody.get("page");
-        String pageSizeStr = (String) requestBody.get("pageSize");
-        Integer page = pageStr == null ? 1 : Integer.parseInt(pageStr);
-        Integer pageSize = pageSizeStr == null ? 10 : Integer.parseInt(pageSizeStr);
-        log.info("获取操作日志：startDate={}, endDate={}, type={}, operator={}, page={}, pageSize={}", startDate, endDate, type, operator, page, pageSize);
+    public Result<?> getLogs(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String operator,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        
+        log.info("获取操作日志：startDate={}, endDate={}, type={}, operator={}, page={}, pageSize={}", 
+                startDate, endDate, type, operator, page, pageSize);
+        
         return adminActionsService.getAdminActions(startDate, endDate, type, operator, page-1, pageSize);
     }
 
@@ -240,20 +243,18 @@ public class AdminActionsController {
     }
 
     @GetMapping("/stats/users/active")
-    public Result<?> getUsersActive(@RequestBody Map<String, Object> requestBody) {
-        String period = (String) requestBody.get("period");
-        if(period==null)
-            period="week";
-        log.info("获取用户活跃度统计");
+    public Result<?> getUsersActive(
+            @RequestParam(required = false, defaultValue = "week") String period) {
+        
+        log.info("获取用户活跃度统计，period={}", period);
         return adminActionsService.getUsersActive(period);
     }
 
     @GetMapping("/stats/contents")
-    public Result<?> getContentsStats(@RequestBody Map<String, Object> requestBody) {
-        String period = (String) requestBody.get("period");
-        if(period==null)
-            period="week";
-        log.info("内容发布统计");
+    public Result<?> getContentsStats(
+            @RequestParam(required = false, defaultValue = "week") String period) {
+        
+        log.info("内容发布统计，period={}", period);
         return adminActionsService.getContentsStats(period);
     }
 
@@ -279,4 +280,5 @@ public class AdminActionsController {
         }
     }
 }
+
 
