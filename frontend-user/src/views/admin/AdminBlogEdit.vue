@@ -84,11 +84,15 @@ const handleSave = async () => {
   }
 
   try {
+    console.log('准备保存博客，ID:', route.params.id, '数据:', form)
+    
     const res = await blogApi.updateBlog(route.params.id, {
-      title: form.title,
+      title: form.title.trim(),
       content: form.content,
       status: 'draft'
     })
+    
+    console.log('保存响应:', res)
     
     if (res.code === 200) {
       ElMessage.success('保存成功')
@@ -98,7 +102,11 @@ const handleSave = async () => {
     }
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error('保存失败: ' + (error.message || '未知错误'))
+    if (error.response && error.response.status === 403) {
+      ElMessage.error('无权限编辑此博客')
+    } else {
+      ElMessage.error('保存失败: ' + (error.message || '未知错误'))
+    }
   }
 }
 
@@ -115,11 +123,15 @@ const handlePublish = async () => {
       type: 'info'
     })
 
+    console.log('准备发布博客，ID:', route.params.id, '数据:', form)
+
     const res = await blogApi.updateBlog(route.params.id, {
-      title: form.title,
+      title: form.title.trim(),
       content: form.content,
       status: 'published'
     })
+    
+    console.log('发布响应:', res)
     
     if (res.code === 200) {
       ElMessage.success('发布成功')
@@ -130,7 +142,11 @@ const handlePublish = async () => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('发布失败:', error)
-      ElMessage.error('发布失败: ' + (error.message || '未知错误'))
+      if (error.response && error.response.status === 403) {
+        ElMessage.error('无权限编辑此博客')
+      } else {
+        ElMessage.error('发布失败: ' + (error.message || '未知错误'))
+      }
     }
   }
 }

@@ -27,9 +27,9 @@ export const API_PATHS = {
         LIST: '/api/blogs',
         GET: '/api/blogs/{id}', // 修复：从 /api/getBlogs/{id} 改为 /api/blogs/{id}
         CREATE: '/api/blogs/addBlog',
-        UPDATE: '/api/updateBlogs',
+        UPDATE: '/api/updateBlogs/{id}', // 修复：添加 {id} 参数
         DELETE: '/api/deleteBlogs/{id}',
-        PUBLISH: '/api/updateBlogs',
+        PUBLISH: '/api/updateBlogs/{id}', // 修复：添加 {id} 参数
         WITHDRAW: '/api/admin/articles/{id}/withdraw',
         GET_DRAFT: '/api/getDraft',
         SAVE_CONTENT: '/api/saveBlogContent'

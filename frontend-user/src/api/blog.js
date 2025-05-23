@@ -75,14 +75,22 @@ export default {
   /**
    * 更新博客
    * @param {string|number} id - 博客ID
-   * @param {Object} blogData - 博客数据
+   * @param {Object} data - 博客数据
    */
-  async updateBlog(id, blogData) {
+  async updateBlog(id, data) {
     try {
-      const response = await put(API_PATHS.BLOGS.UPDATE, {
-        id,
-        ...blogData
-      })
+      console.log('正在更新博客，ID:', id, '数据:', data)
+      
+      // 构建完整的博客数据，包含ID
+      const blogData = {
+        id: parseInt(id),
+        title: data.title,
+        content: data.content,
+        status: data.status || 'draft'
+      }
+      
+      console.log('发送到后端的数据:', blogData)
+      const response = await put(API_PATHS.BLOGS.UPDATE.replace('{id}', id), blogData)
       return response
     } catch (error) {
       console.error('更新博客失败:', error)

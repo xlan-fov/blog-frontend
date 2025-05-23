@@ -1,18 +1,20 @@
 package com.blog.controller;
 
 
-import com.blog.entity.BlogsDraft;
-import org.springframework.core.io.ClassPathResource;
-import cn.hutool.extra.template.TemplateEngine;
+import com.blog.dto.UserDTO;
 import com.blog.entity.Blogs;
 import com.blog.entity.BlogsPageQueryDTO;
 import com.blog.entity.BlogsShowContext;
+import com.blog.entity.BlogsSucessVO;
+import com.blog.entity.RemoveVO;
+import com.blog.mapper.UsersMapper;
 import com.blog.result.PageResult;
 import com.blog.result.Result;
 import com.blog.service.IBlogsService;
-import com.blog.service.impl.BlogsServiceImpl;
+import com.blog.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.*;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +44,10 @@ import java.nio.file.*;
 public class BlogsController {
     @Autowired
     private IBlogsService blogsService;
+    
+    @Autowired
+    private UsersMapper userMapper;
+
     private final SpringTemplateEngine templateEngine;
     public BlogsController(SpringTemplateEngine templateEngine) {
         this.templateEngine = templateEngine;
@@ -82,12 +88,51 @@ public class BlogsController {
      * @Date: 2025-5-6
      * @Description: 修改Blog
      */
-    @PutMapping("/blogs/{id}")
-    public Result<?> editBlog(@PathVariable Integer id, @RequestBody Blogs blogs){
-        log.info("修改Blog:{}" , blogs);
+    @PutMapping("/updateBlogs/{id}")
+    public Result<?> updateBlogs(@PathVariable Integer id, @RequestBody Blogs blogs){
+        log.info("更新博客，ID: {}, 数据: {}", id, blogs);
+        
+        // 设置博客ID
         blogs.setId(id);
+        
+        // 验证用户权限 - 确保用户只能编辑自己的博客
+        UserDTO currentUser = UserHolder.getUser();
+        if (currentUser == null) {
+            return Result.error("用户未登录，请先登录");
+        }
+        
+        // 获取原博客信息
+        Blogs existingBlog = blogsService.getById(id);
+        if (existingBlog == null) {
+            return Result.error("博客不存在");
+        }
+        
+        // 检查权限：只有博客作者或管理员可以编辑
+        boolean isAdmin = "admin".equals(userMapper.getRoleById(currentUser.getId()));
+        boolean isOwner = existingBlog.getUserId().equals(currentUser.getId());
+        
+        if (!isAdmin && !isOwner) {
+            return Result.error("无权限编辑此博客");
+        }
+        
+        // 保持原有的用户信息
+        blogs.setUserId(existingBlog.getUserId());
+        blogs.setUsername(existingBlog.getUsername());
+        
         Result<?> result = blogsService.updateBlogs(blogs);
         return result;
+    }
+    
+    // 保留原有的无ID版本以兼容其他调用
+    @PutMapping("/updateBlogs")
+    public Result<?> updateBlogsCompat(@RequestBody Blogs blogs){
+        log.info("更新博客（兼容版本），数据: {}", blogs);
+        
+        if (blogs.getId() == null) {
+            return Result.error("博客ID不能为空");
+        }
+        
+        return updateBlogs(blogs.getId(), blogs);
     }
     /*
      * @Author: kai.hu
