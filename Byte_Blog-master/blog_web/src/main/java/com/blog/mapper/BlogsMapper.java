@@ -4,10 +4,8 @@ import com.blog.entity.Blogs;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.blog.entity.BlogsPageQueryDTO;
 import com.github.pagehelper.Page;
-import org.apache.ibatis.annotations.Select;
-
-import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
@@ -21,6 +19,7 @@ import java.util.Map;
  * @author 郭钰冉
  * @since 2025-05-05
  */
+@Mapper
 public interface BlogsMapper extends BaseMapper<Blogs> {
 
     /*
@@ -106,4 +105,31 @@ public interface BlogsMapper extends BaseMapper<Blogs> {
             "GROUP BY time " +
             "ORDER BY time DESC")
     List<Map<String, Object>> getPublishedBlogsByPeriod(String period);
+
+    /**
+     * 获取所有博客及其用户名信息
+     */
+    @Select("SELECT b.*, u.username FROM blogs b LEFT JOIN users u ON b.user_id = u.id WHERE b.is_deleted = 0 ORDER BY b.created_at DESC")
+    List<Map<String, Object>> getAllBlogsWithUsername();
+
+    /**
+     * 获取所有文章（支持关键词和状态筛选）
+     */
+    @Select("<script>" +
+            "SELECT b.*, u.username FROM blogs b LEFT JOIN users u ON b.user_id = u.id WHERE b.is_deleted = 0 " +
+            "<if test='keyword != null and keyword != \"\"'>" +
+            "AND (b.title LIKE CONCAT('%', #{keyword}, '%') OR b.content LIKE CONCAT('%', #{keyword}, '%')) " +
+            "</if>" +
+            "<if test='status != null and status != \"\"'>" +
+            "AND b.status = #{status} " +
+            "</if>" +
+            "ORDER BY b.created_at DESC " +
+            "<if test='page != null and pageSize != null'>" +
+            "LIMIT #{page}, #{pageSize}" +
+            "</if>" +
+            "</script>")
+    List<Map<String, Object>> getAllArticles(@Param("keyword") String keyword,
+                                            @Param("status") String status,
+                                            @Param("page") Integer page,
+                                            @Param("pageSize") Integer pageSize);
 }

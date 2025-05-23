@@ -154,16 +154,16 @@ const checkBackendConnection = async () => {
 const fetchMyBlogs = async () => {
   loading.value = true
   try {
-    // 调用后端API获取数据
-    const res = await adminApi.getArticles({
-      author: userStore.userInfo.username,
-      page: currentPage.value,
-      pageSize: pageSize.value
-    })
+    // 调用后端API获取当前管理员的博客
+    const res = await adminApi.getBlogList() // 获取当前用户的博客
     
     if (res.code === 200 && res.data) {
-      myBlogs.value = res.data.list || []
-      totalMyBlogs.value = res.data.total || 0
+      // 过滤出当前管理员的博客
+      const currentUsername = userStore.userInfo.username
+      const allBlogs = Array.isArray(res.data) ? res.data : res.data.list || []
+      
+      myBlogs.value = allBlogs.filter(blog => blog.username === currentUsername)
+      totalMyBlogs.value = myBlogs.value.length
     } else {
       ElMessage.error(res.message || '获取博客列表失败')
       myBlogs.value = []
@@ -183,16 +183,21 @@ const fetchMyBlogs = async () => {
 const searchUserBlogs = async () => {
   loading.value = true
   try {
-    // 调用后端API获取数据
-    const res = await adminApi.getArticles({
-      author: searchForm.value.username || undefined,
-      page: currentPage.value,
-      pageSize: pageSize.value
-    })
+    // 调用后端API获取所有博客
+    const res = await adminApi.getBlogList()
     
     if (res.code === 200 && res.data) {
-      userBlogs.value = res.data.list || []
-      totalUserBlogs.value = res.data.total || 0
+      let allBlogs = Array.isArray(res.data) ? res.data : res.data.list || []
+      
+      // 如果有搜索用户名，进行过滤
+      if (searchForm.value.username && searchForm.value.username.trim()) {
+        allBlogs = allBlogs.filter(blog => 
+          blog.username && blog.username.includes(searchForm.value.username.trim())
+        )
+      }
+      
+      userBlogs.value = allBlogs
+      totalUserBlogs.value = allBlogs.length
     } else {
       ElMessage.error(res.message || '获取用户博客列表失败')
       userBlogs.value = []
@@ -271,8 +276,12 @@ const publishBlog = (blog) => {
       
       if (res.code === 200) {
         ElMessage.success('发布成功')
-        // 更新本地博客状态
-        blog.status = 'published'
+        // 重新加载数据
+        if (activeTab.value === 'myBlogs') {
+          fetchMyBlogs()
+        } else {
+          searchUserBlogs()
+        }
       } else {
         ElMessage.error(res.message || '发布失败')
       }

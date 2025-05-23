@@ -65,7 +65,7 @@ export default {
    * @param {Number} userId - 用户ID
    */
   getUserBlogList(userId) {
-    return get(API_PATHS.ADMIN.GET_USER_BLOG_LIST, { userId })
+    return get(`${API_PATHS.ADMIN.GET_USER_BLOG_LIST}?userId=${userId}`)
   },
 
   /**
@@ -87,8 +87,17 @@ export default {
    * 获取文章列表
    * @param {Object} params - 查询参数
    */
-  getArticles(params) {
-    return get(API_PATHS.ADMIN.ARTICLES, params)
+  getArticles(params = {}) {
+    const query = new URLSearchParams()
+
+    if (params.author) query.append('author', params.author)
+    if (params.keyword) query.append('keyword', params.keyword)
+    if (params.status) query.append('status', params.status)
+    if (params.page) query.append('page', params.page)
+    if (params.pageSize) query.append('pageSize', params.pageSize)
+
+    const queryString = query.toString()
+    return get(`${API_PATHS.ADMIN.ARTICLES}${queryString ? '?' + queryString : ''}`)
   },
 
   /**

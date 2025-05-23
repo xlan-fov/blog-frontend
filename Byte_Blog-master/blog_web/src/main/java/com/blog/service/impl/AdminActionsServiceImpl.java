@@ -234,7 +234,10 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
             System.out.println(userMapper.getRoleById(currentUser.getId()));
             return Result.error("没有权限");
         }
-        return Result.success(blogsService.list());
+        
+        // 获取所有博客，包括用户名信息
+        List<Map<String, Object>> blogList = blogsMapper.getAllBlogsWithUsername();
+        return Result.success(blogList);
     }
 
     public Result<?> getUserBlogList(Integer userId) {
@@ -260,11 +263,22 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
             System.out.println(userMapper.getRoleById(currentUser.getId()));
             return Result.error("没有权限");
         }
-        List<Map<String,Object>> list=blogsMapper.getUserArticles(keyword, status, author, page, pageSize);
-        Map<String,Object>result = new HashMap<>();
-        result.put("total", list.size());
-        result.put("list", list);
-        return Result.success(result);
+        
+        // 如果没有指定作者，返回所有博客
+        if (author == null || author.trim().isEmpty()) {
+            List<Map<String,Object>> list = blogsMapper.getAllArticles(keyword, status, page, pageSize);
+            Map<String,Object> result = new HashMap<>();
+            result.put("total", list.size());
+            result.put("list", list);
+            return Result.success(result);
+        } else {
+            // 指定作者的博客
+            List<Map<String,Object>> list = blogsMapper.getUserArticles(keyword, status, author, page, pageSize);
+            Map<String,Object> result = new HashMap<>();
+            result.put("total", list.size());
+            result.put("list", list);
+            return Result.success(result);
+        }
     }
 
     public Result<?> publishBlog(Integer blogId) {
