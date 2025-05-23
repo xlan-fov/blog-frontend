@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.blog.entity.AdminSecret;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.springframework.stereotype.Repository;
 
 /**
  * 管理员密钥 Mapper 接口
  */
+@Repository
 @Mapper
 public interface AdminSecretMapper extends BaseMapper<AdminSecret> {
     

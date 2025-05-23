@@ -108,7 +108,7 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
             String redisKey = CAPTCHA_PREFIX + captchaId;
             String code = stringRedisTemplate.opsForValue().get(redisKey);
             log.debug("从Redis获取的验证码: {}, 提交的验证码: {}", code, captcha);
-            if (code == null || !code.equals(captcha)) {
+            if (code == null || code.equalsIgnoreCase(captcha)) {
                 return Result.error("验证码错误或已过期");
             }
 
@@ -195,7 +195,7 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         //校验验证码
         String redisKey = CAPTCHA_PREFIX + captchaId;
         String code = stringRedisTemplate.opsForValue().get(redisKey);
-        if (code == null || !code.equals(captcha)) {
+        if (code == null || !code.equalsIgnoreCase(captcha)) {
             stringRedisTemplate.opsForValue().increment(failKey);
             stringRedisTemplate.expire(failKey, 1, TimeUnit.MINUTES);
             return Result.error("验证码错误或已过期");
@@ -442,7 +442,7 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         }
 
         // 存储验证码到Redis，有效期设置为5分钟
-        stringRedisTemplate.opsForValue().set(CAPTCHA_PREFIX + captchaId, code, 5, TimeUnit.MINUTES);
+        stringRedisTemplate.opsForValue().set(CAPTCHA_PREFIX + captchaId, code.toUpperCase(), 5, TimeUnit.MINUTES);
 
         return Result.success(Collections.singletonMap("img", image));
     }
