@@ -12,25 +12,45 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   config => {
-    // 记录请求
-    console.log('⬆️ 发送请求:', {
-      url: config.url,
-      method: config.method,
-      data: config.data,
-      params: config.params
-    })
+    console.log(`DEBUG: 请求URL: ${config.url}, 方法: ${config.method}, 数据:`, config.data || config.params);
     
-    // 从localStorage获取token并添加到请求头
-    const token = localStorage.getItem('token')
-    if (token) {
-      // 尝试不同的认证头格式
-      config.headers['Authorization'] = `Bearer ${token}`
-      // 有些后端可能期望不同的格式
-      config.headers['token'] = token
-      // 确保携带cookies
-      config.withCredentials = true
+    // 对于验证码等公开接口，不需要token验证
+    const publicPaths = ['/users/captcha', '/users/registerByname', '/users/loginByname']
+    const isPublicPath = publicPaths.some(path => config.url.includes(path))
+    
+    if (!isPublicPath) {
+      // 从localStorage获取token并添加到请求头
+      const token = localStorage.getItem('token')
+      
+      // 增加token验证逻辑
+      if (token) {
+        // 验证token是否是有效的JWT格式(应该包含两个点)
+        const tokenParts = token.split('.');
+        if (tokenParts.length === 3) {
+          console.log('Token验证通过: 包含3个部分');
+          // 直接发送原始token，不添加任何前缀
+          config.headers['Authorization'] = token;
+        } else {
+          console.warn('警告: Token格式不正确!', token);
+          // 清除无效token
+          localStorage.removeItem('token');
+          localStorage.removeItem('userState');
+        }
+        
+        // 记录详细日志便于调试
+        console.log('Authorization头的值:', config.headers['Authorization']);
+        console.log('Token长度:', token.length);
+        
+        // 确保携带cookies
+        config.withCredentials = true;
+      } else {
+        console.log('未找到token');
+      }
+    } else {
+      console.log('公开接口，跳过token验证:', config.url);
     }
-    return config
+    
+    return config;
   },
   error => {
     console.error('Request error:', error)
@@ -38,80 +58,54 @@ service.interceptors.request.use(
   }
 )
 
-// 响应拦截器
+// 响应拦截器 - 添加token过期处理
 service.interceptors.response.use(
   response => {
-    // 记录响应
-    console.log('⬇️ 接收响应:', {
-      url: response.config.url,
-      status: response.status,
-      data: response.data
-    })
+    console.log(`DEBUG: 响应URL: ${response.config.url}, 状态: ${response.status}, 数据:`, response.data);
     
-    const res = response.data
-    // 根据后端返回的状态码进行处理
-    if (res.code && res.code !== 200) {
-      // 401: 未登录或token过期，改为不立即强制跳转
-      if (res.code === 401) {
-        console.warn('认证失败:', res.message)
-        // 显示友好的提示而不是强制跳转
-        ElMessage({
-          message: '登录已过期，请重新登录',
-          type: 'warning',
-          duration: 5000,
-          showClose: true,
-          onClose: () => {
-            // 清除登录状态
-            localStorage.removeItem('userState')
-            localStorage.removeItem('token')
-            // 仅当用户不在登录页时跳转
-            if (window.location.pathname !== '/login') {
-              window.location.href = '/login'
-            }
-          }
-        })
-      } else {
-        ElMessage.error(res.message || '请求失败')
-      }
-      return Promise.reject(new Error(res.message || 'Error'))
+    // 标准化响应格式，将code=0转换为code=200，保持前端一致性
+    if (response.data && response.data.code === 0 && response.data.msg === 'success') {
+      return {
+        ...response.data,
+        code: 200
+      };
     }
-    return res
+    
+    return response.data;
   },
   error => {
     console.error('❌ 响应错误:', {
       url: error.config?.url,
       status: error.response?.status,
-      data: error.response?.data
-    })
+      data: error.response?.data,
+      message: error.message
+    });
     
-    console.error('Response error:', error)
-    // 处理网络错误
-    let message = '网络错误，请稍后重试'
-    if (error.response) {
-      switch (error.response.status) {
-        case 401:
-          message = '未授权，请重新登录'
-          localStorage.removeItem('userState')
-          localStorage.removeItem('token')
-          setTimeout(() => {
-            window.location.href = '/login'
-          }, 1500)
-          break
-        case 403:
-          message = '拒绝访问'
-          break
-        case 404:
-          message = '请求的资源不存在'
-          break
-        case 500:
-          message = '服务器内部错误'
-          break
-        default:
-          message = `请求错误 ${error.response.status}`
-      }
+    // 处理401未授权错误（token过期或无效）
+    if (error.response?.status === 401) {
+      console.warn('Token已过期或无效，清理登录状态');
+      // 清理本地存储
+      localStorage.removeItem('token');
+      localStorage.removeItem('userState');
+      // 可以在这里跳转到登录页面
+      // window.location.href = '/login';
     }
-    ElMessage.error(message)
-    return Promise.reject(error)
+    
+    // 增强错误处理，提供更具体的错误信息
+    if (error.response?.status === 500) {
+      console.error('服务器内部错误，请检查后端日志');
+      ElMessage.error('服务器处理请求失败，请稍后再试');
+    } else if (error.response?.status === 400) {
+      console.error('请求参数错误:', error.response.data);
+      const errorMsg = error.response.data?.msg || '请求参数错误';
+      ElMessage.error(errorMsg);
+    } else if (error.response?.status === 404) {
+      ElMessage.error('请求的资源不存在');
+    } else {
+      ElMessage.error('请求失败，请稍后再试');
+    }
+    
+    return Promise.reject(error);
   }
 )
 

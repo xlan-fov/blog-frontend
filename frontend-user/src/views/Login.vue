@@ -36,7 +36,7 @@
             </el-form-item>
 
             <el-form-item>
-              <el-button type="primary" @click="handleLoginClick" :loading="loading" style="width: 100%">
+              <el-button type="primary" @click="handleLogin" :loading="loading" style="width: 100%">
                 登录
               </el-button>
             </el-form-item>
@@ -66,19 +66,8 @@
               </div>
             </el-form-item>
 
-            <el-form-item prop="captcha">
-              <div class="captcha-wrapper">
-                <el-input v-model="phoneForm.captcha" placeholder="请输入图片验证码">
-                  <template #prefix>
-                    <el-icon><Key /></el-icon>
-                  </template>
-                </el-input>
-                <Captcha v-model="captchaText" ref="captchaRef" :onCaptchaChange="handleCaptchaChange" />
-              </div>
-            </el-form-item>
-
             <el-form-item>
-              <el-button type="primary" @click="handlePhoneLoginClick" :loading="loading" style="width: 100%">
+              <el-button type="primary" @click="handlePhoneLogin" :loading="loading" style="width: 100%">
                 登录
               </el-button>
             </el-form-item>
@@ -87,55 +76,32 @@
       </el-tabs>
 
       <div class="login-footer">
-        <router-link to="/register">注册账号</router-link>
+        <router-link to="/register">没有账号？立即注册</router-link>
+        <router-link to="/senti-admin-auth">管理员登录</router-link>
       </div>
     </el-card>
-
-    <!-- 滑块验证弹窗 -->
-    <el-dialog
-      v-model="showSliderDialog"
-      title="安全验证"
-      width="380px"
-      :show-close="false"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-    >
-      <SlideVerify
-        ref="slideVerifyRef"
-        @success="handleSlideSuccess"
-      />
-    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '../stores/user'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Phone, Message, Key } from '@element-plus/icons-vue'
 import Captcha from '@/components/Captcha.vue'
-import SlideVerify from '@/components/SlideVerify.vue'
 import { loginByUsername, loginByPhone, sendPhoneCode } from '@/api/user'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const userStore = useUserStore()
-
 const activeTab = ref('account')
 const loading = ref(false)
-const showSliderDialog = ref(false)
-const slideVerified = ref(false)
 const countdown = ref(0)
-const loginFailCount = ref(0)
-const captchaRef = ref(null)
-const captchaText = ref('')
-const slideVerifyRef = ref(null)
-const pendingLoginAction = ref(null)
-const captchaId = ref('')
-const sliderToken = ref('')
-const sliderX = ref(0)
 const loginFormRef = ref(null)
 const phoneFormRef = ref(null)
+const captchaRef = ref(null)
+const captchaText = ref('')
+const captchaId = ref('')
 
 const loginForm = reactive({
   username: '',
@@ -145,13 +111,19 @@ const loginForm = reactive({
 
 const phoneForm = reactive({
   phone: '',
-  code: '',
-  captcha: ''
+  code: ''
 })
 
 const rules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' }
+  ],
+  captcha: [
+    { required: true, message: '请输入验证码', trigger: 'blur' }
+  ]
 }
 
 const phoneRules = {
@@ -159,143 +131,95 @@ const phoneRules = {
     { required: true, message: '请输入手机号', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
   ],
-  code: [{ required: true, message: '请输入验证码', trigger: 'blur' }],
-  captcha: [{ required: true, message: '请输入图片验证码', trigger: 'blur' }]
-}
-
-const handleLoginClick = async () => {
-  if (!loginForm.username || !loginForm.password) {
-    ElMessage.warning('请填写完整信息')
-    return
-  }
-
-  // 如果登录失败次数达到3次且未通过滑块验证，显示滑块验证
-  if (loginFailCount.value >= 3 && !slideVerified.value) {
-    pendingLoginAction.value = 'account'
-    showSliderDialog.value = true
-    return
-  }
-
-  await handleLogin()
-}
-
-const handlePhoneLoginClick = async () => {
-  if (!phoneForm.phone || !phoneForm.code || !phoneForm.captcha) {
-    ElMessage.warning('请填写完整信息')
-    return
-  }
-
-  await handlePhoneLogin()
-}
-
-const handleSlideSuccess = (token, x) => {
-  showSliderDialog.value = false
-  slideVerified.value = true
-  sliderToken.value = token
-  sliderX.value = x
-  
-  if (pendingLoginAction.value === 'account') {
-    handleLogin()
-  } else if (pendingLoginAction.value === 'phone') {
-    handlePhoneLogin()
-  }
-}
-
-const resetSlideVerify = () => {
-  slideVerified.value = false
-  showSliderDialog.value = false
-  sliderToken.value = ''
-  sliderX.value = 0
-  if (slideVerifyRef.value) {
-    slideVerifyRef.value.reset()
-  }
-}
-
-const handleLogin = async () => {
-  loading.value = true
-  try {
-    // 先验证表单
-    await loginFormRef.value.validate()
-    
-    try {
-      const loginParams = {
-        username: loginForm.username,
-        password: loginForm.password
-      }
-
-      // 如果存在滑块验证token和坐标，添加到登录参数中
-      if (slideVerified.value) {
-        loginParams.sliderToken = sliderToken.value
-        loginParams.sliderX = sliderX.value
-      }
-
-      const response = await loginByUsername(loginParams)
-      
-      if (response.data.banned) {
-        ElMessage.error('您的账号已被封禁，请联系管理员')
-        resetSlideVerify()
-        return
-      }
-      
-      // 登录成功，重置失败次数
-      loginFailCount.value = 0
-      
-      // 更新用户信息
-      userStore.setUserInfo(response.data)
-      ElMessage.success('登录成功')
-      const redirectPath = router.currentRoute.value.query.redirect || '/'
-      router.push(redirectPath)
-    } catch (error) {
-      // 登录失败，增加失败次数
-      loginFailCount.value++
-      
-      // 如果是滑块验证错误，显示滑块验证弹窗
-      if (error.response?.data?.code === 401 && error.response?.data?.msg?.includes('滑块验证')) {
-        pendingLoginAction.value = 'account'
-        showSliderDialog.value = true
-      }
-      // 清空密码
-      loginForm.password = ''
-    }
-  } catch (error) {
-    console.log('表单验证失败', error)
-    ElMessage.error('请检查表单填写是否正确')
-  } finally {
-    loading.value = false
-  }
+  code: [{ required: true, message: '请输入验证码', trigger: 'blur' }]
 }
 
 const handleCaptchaChange = (newCaptchaId) => {
   captchaId.value = newCaptchaId
+  localStorage.setItem('captchaId', newCaptchaId)
 }
 
-const handlePhoneLogin = async () => {
-  loading.value = true
+const handleLogin = async () => {
   try {
-    const response = await loginByPhone({
-      phone: phoneForm.phone,
-      code: phoneForm.code
-    })
+    await loginFormRef.value.validate()
     
-    if (response.data.banned) {
-      ElMessage.error('您的账号已被封禁，请联系管理员')
+    if (!loginForm.captcha) {
+      ElMessage.error('请输入验证码')
       return
     }
     
-    // 更新用户信息
-    userStore.setUserInfo(response.data)
-    ElMessage.success('登录成功')
-    router.push('/blog')
+    loading.value = true
+    
+    // 不要在登录前清理token，只有在明确需要重新登录时才清理
+    
+    try {
+      const result = await loginByUsername({
+        username: loginForm.username,
+        password: loginForm.password,
+        captcha: loginForm.captcha,
+        captchaId: captchaId.value
+      })
+      
+      if (result.code === 200 || result.code === 0) {
+        // 登录成功后设置新的用户信息和token
+        userStore.setUserInfo(result.data)
+        handleLoginSuccess()
+      } else {
+        ElMessage.error(result.msg || '登录失败')
+        // 只在登录失败时刷新验证码
+        if (captchaRef.value) {
+          captchaRef.value.refreshCaptcha()
+        }
+        loginForm.captcha = ''
+      }
+    } catch (error) {
+      console.error('登录请求失败:', error)
+      // 只在请求失败时刷新验证码
+      if (captchaRef.value) {
+        captchaRef.value.refreshCaptcha()
+      }
+      loginForm.captcha = ''
+    } finally {
+      loading.value = false
+    }
   } catch (error) {
-    captchaRef.value.refreshCaptcha()
-    phoneForm.captcha = ''
-  } finally {
-    loading.value = false
+    ElMessage.error('请检查表单填写是否正确')
+    if (captchaRef.value) {
+      captchaRef.value.refreshCaptcha()
+    }
+  }
+}
+
+const handlePhoneLogin = async () => {
+  try {
+    await phoneFormRef.value.validate()
+    
+    loading.value = true
+    
+    try {
+      const result = await loginByPhone({
+        phone: phoneForm.phone,
+        code: phoneForm.code
+      })
+      
+      if (result.code === 200 || result.code === 0) {
+        userStore.setUserInfo(result.data)
+        ElMessage.success('登录成功')
+        router.push('/')
+      } else {
+        ElMessage.error(result.msg || '登录失败')
+      }
+    } catch (error) {
+      console.error('手机登录失败:', error)
+    } finally {
+      loading.value = false
+    }
+  } catch (error) {
+    ElMessage.error('请检查表单填写是否正确')
   }
 }
 
 const sendCode = async () => {
-  // 验证手机号格式
   if (!/^1[3-9]\d{9}$/.test(phoneForm.phone)) {
     ElMessage.error('请输入正确的手机号')
     return
@@ -316,6 +240,24 @@ const sendCode = async () => {
     // 错误处理已经在API层完成
   }
 }
+
+onMounted(() => {
+  // 初始化验证码
+  if (captchaRef.value) {
+    captchaRef.value.refreshCaptcha()
+  }
+})
+
+// 登录成功后的处理
+const handleLoginSuccess = () => {
+  ElMessage.success('登录成功')
+  const redirectPath = router.currentRoute.value.query.redirect
+  if (redirectPath) {
+    router.push(redirectPath)
+  } else {
+    router.push('/dashboard')
+  }
+}
 </script>
 
 <style scoped>
@@ -332,21 +274,19 @@ const sendCode = async () => {
 
 .login-card {
   width: 480px;
-  min-height: 580px;
+  min-height: 520px;
   background-color: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(8px);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  flex-direction: column;
 }
 
 .login-footer {
-  text-align: right;
-  margin-top: auto;
-  padding: 20px 24px;
-  position: relative;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding: 0 24px 20px;
 }
 
 .login-footer a {
@@ -356,28 +296,11 @@ const sendCode = async () => {
   padding: 8px 16px;
   border-radius: 4px;
   transition: all 0.3s ease;
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: rgba(64, 158, 255, 0);
-}
-
-.login-footer a::before {
-  content: '→';
-  font-size: 16px;
-  opacity: 0.6;
-  transition: all 0.3s ease;
 }
 
 .login-footer a:hover {
   color: #409EFF;
   background-color: rgba(64, 158, 255, 0.1);
-}
-
-.login-footer a:hover::before {
-  opacity: 1;
-  transform: translateX(2px);
 }
 
 .code-input {
@@ -411,28 +334,10 @@ const sendCode = async () => {
   font-size: 32px;
   font-weight: 800;
   letter-spacing: 4px;
-  background: linear-gradient(90deg, #409EFF 10%, #66b1ff 90%);
+  background: linear-gradient(90deg, #67C23A 10%, #409EFF 90%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
-  text-shadow: 0 2px 8px rgba(64,158,255,0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-/* 可选：加一个用户图标 */
-:deep(.el-card__header h2)::before {
-  content: '\f007';
-  font-family: 'Font Awesome 5 Free', 'FontAwesome';
-  font-weight: 900;
-  font-size: 28px;
-  color: #409EFF;
-  margin-right: 8px;
-  display: inline-block;
-  vertical-align: middle;
 }
 
 :deep(.el-tabs__nav) {
@@ -459,7 +364,7 @@ const sendCode = async () => {
 
 :deep(.el-button) {
   height: 40px;
-  font-size: 16px;
+  line-height: 40px;
 }
 
 :deep(.el-input__inner) {
@@ -467,93 +372,12 @@ const sendCode = async () => {
   line-height: 40px;
 }
 
-:deep(.el-slider) {
-  margin: 20px 0;
-}
-
-/* 平板设备 */
-@media screen and (max-width: 1024px) {
-  .login-card {
-    width: 420px;
-    min-height: 540px;
-  }
-}
-
-/* 移动设备 */
 @media screen and (max-width: 768px) {
-  .login-container {
-    background-image: url('https://sentiblog-repo.oss-cn-wuhan-lr.aliyuncs.com/assets/login_bg_mobile.png');
-    background-position: center 30%;
-  }
-
   .login-card {
     width: 90%;
     max-width: 360px;
-    min-height: 520px;
+    min-height: 480px;
     margin: 20px;
   }
-
-  :deep(.el-card__header h2) {
-    font-size: 24px;
-  }
-
-  :deep(.el-tabs__item) {
-    font-size: 14px;
-    height: 40px;
-    line-height: 40px;
-  }
-
-  :deep(.el-form-item) {
-    margin-bottom: 20px;
-  }
-
-  :deep(.el-button) {
-    height: 40px;
-    font-size: 14px;
-    line-height: 40px;
-  }
-
-  :deep(.el-input__wrapper) {
-    height: 40px;
-    line-height: 40px;
-  }
-
-  :deep(.el-input__inner) {
-    height: 40px;
-    line-height: 40px;
-  }
-
-  .code-input {
-    align-items: center;
-  }
 }
-
-/* 小屏移动设备 */
-@media screen and (max-width: 375px) {
-  .login-card {
-    min-height: 480px;
-  }
-
-  :deep(.el-card__header) {
-    padding: 16px;
-  }
-
-  :deep(.el-form-item) {
-    margin-bottom: 16px;
-  }
-}
-
-:deep(.el-dialog__header) {
-  text-align: center;
-  margin-right: 0;
-  padding: 20px;
-}
-
-:deep(.el-dialog__headerbtn) {
-  display: none;
-}
-
-:deep(.el-dialog__body) {
-  padding: 0 20px 30px;
-}
-</style> 
+</style>

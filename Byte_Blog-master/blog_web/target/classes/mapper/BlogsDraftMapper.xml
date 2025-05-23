@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.blog.mapper.BlogsDraftMapper">
+
+    <insert id="addBlog" useGeneratedKeys="true" keyProperty="id">
+        insert into blog_drafts (user_id,title,content,last_saved_at)
+        values (#{userId},#{title},#{content},#{lastSavedAt})
+    </insert>
+    <update id="updateBlog">
+        update blog_drafts
+        <set>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="lastSavedAt != null">last_saved_at = #{lastSavedAt}</if>
+        </set>
+        where id = #{id}
+    </update>
+</mapper>

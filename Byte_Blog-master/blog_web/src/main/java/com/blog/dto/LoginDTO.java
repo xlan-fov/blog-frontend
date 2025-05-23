@@ -1,3 +1,4 @@
+
 package com.blog.dto;
 
 import lombok.Data;
@@ -12,7 +13,10 @@ public class LoginDTO {
     @NotBlank
     private String password;
 
-    private String sliderToken; // 滑块验证码 token
+    @NotBlank(message = "验证码不能为空")
+    private String captcha; // 用户输入的验证码
 
-    private Integer sliderX; // 用户拖动的 x 坐标
+    private String captchaId;
+
+    private String secretCode;
 }

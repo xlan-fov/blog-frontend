@@ -1,17 +1,32 @@
 package com.blog.controller;
 
 
+import com.blog.entity.BlogsDraft;
+import org.springframework.core.io.ClassPathResource;
+import cn.hutool.extra.template.TemplateEngine;
 import com.blog.entity.Blogs;
+import com.blog.entity.BlogsPageQueryDTO;
+import com.blog.entity.BlogsShowContext;
+import com.blog.result.PageResult;
 import com.blog.result.Result;
 import com.blog.service.IBlogsService;
 import com.blog.service.impl.BlogsServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.http.*;
+import org.springframework.util.StreamUtils;
+import org.springframework.web.bind.annotation.*;
+import org.thymeleaf.context.Context;
 
-import org.springframework.web.bind.annotation.RestController;
+
+import java.io.*;
+
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import org.thymeleaf.spring5.SpringTemplateEngine;
+
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
 
 /**
  * <p>
@@ -23,22 +38,175 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
-@RequestMapping("/blogs")
+@RequestMapping("/api")
 public class BlogsController {
     @Autowired
     private IBlogsService blogsService;
-    
+    private final SpringTemplateEngine templateEngine;
+    public BlogsController(SpringTemplateEngine templateEngine) {
+        this.templateEngine = templateEngine;
+    }
+
     /*
      * @Author: kai.hu
      * @Date: 2025-5-5
-     * @Description: 添加Blog
+     * @Description: 创建Blog(包括发布,或者存为草稿)
      */
-    @PostMapping("/addBiog")
-    public Result addBlog(@RequestBody Blogs blogs){
+    @PostMapping("blogs/addBlog")
+    public Result<?> addBlog(@RequestBody Blogs blogs){
         log.info("添加Blog：{}" , blogs);
-        blogsService.addBlog(blogs);
-        return Result.success();
+        Result<?> result = blogsService.addBlog(blogs);
+        return result;
 
     }
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-6
+     * @Description: 通过BlogsId获取Blog
+     */
+    @GetMapping("/getBlogs/{id}")
+    public Result<?> getBlog(@PathVariable Integer id){
+        log.info("获取Blog");
+        Result<?> result = blogsService.getBlog(id);
+        return result;
+    }
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-6
+     * @Description: 修改Blog
+     */
+    @PutMapping("/updateBlogs")
+    public Result<?> editBlog(@RequestBody Blogs blogs){
+        log.info("修改Blog:{}" , blogs);
+        Result<?> result = blogsService.updateBlogs(blogs);
+        return result;
+    }
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-6
+     * @Description: 管理员下架Blog
+     */
+    @PutMapping("/admin/articles/{Id}/withdraw")
+    public Result<?> removeBlog(@PathVariable Integer Id , @RequestParam String reason){
+        log.info("下架Blog");
+        Result<?> result = blogsService.removeBlog(Id);
+        return result;
+    }
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-19
+     * @Description: 管理员删除博客
+     */
+    @DeleteMapping("/admin/articles/{Id}")
+    public Result<?> deleteBlog(@PathVariable Integer Id , @RequestParam String reason){
+        log.info("删除Blog");
+        Result<?> result = blogsService.deleteBlog(Id);
+        return result;
+    }
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-6
+     * @Description: 管理员分页查询，包含文章名字的模糊查询查询
+     */
+    @GetMapping("/admin/articles")
+    public Result<PageResult> pageBlogs(@RequestBody BlogsPageQueryDTO blogsPageQueryDTO){
+        log.info("分页查询");
+        PageResult pageResult = blogsService.pageQuery(blogsPageQueryDTO);
+        return Result.success(pageResult);
+    }
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-6
+     * @Description: 导出Blog为PDF
+     */
+    @PostMapping("/export/{blogsId}")
+    public ResponseEntity<byte[]> exportBlog(@PathVariable Integer blogsId) throws IOException {
+        log.info("导出Blog为PDF");
+        // 查询Blog内容,只保留需要渲染的信息
+        BlogsShowContext blogsShowContext = blogsService.getBlogPDF(blogsId);
+        // 2. 渲染HTML模板
+        Context context = new Context();
+        context.setVariable("blog", blogsShowContext);
+        String htmlContent = templateEngine.process("blog-pdf-template", context);
+        log.info("渲染HTML模板：{}" , htmlContent);
+        // HTML -> PDF
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.withHtmlContent(htmlContent, null);
+        builder.toStream(baos);
+        // 注册中文字体
+        try (InputStream fontStream = new ClassPathResource("static/fonts/NotoSansSC-Regular.ttf").getInputStream()) {
+            builder.useFont(() -> fontStream, "Noto Sans SC");
+        } catch (IOException e) {
+            throw new RuntimeException("加载字体失败", e);
+        }
+        builder.run();
+        byte[] pdfBytes = baos.toByteArray();
+
+        //  3. 保存 PDF 到磁盘
+        String sanitizedTitle = blogsShowContext.getTitle().replaceAll("[^a-zA-Z0-9\\-]", "_"); // 避免非法文件名
+        Path savePath = Paths.get("pdf-exports", sanitizedTitle + ".pdf");
+        try {
+            Files.createDirectories(savePath.getParent());
+            Files.write(savePath, pdfBytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException("保存 PDF 到磁盘失败", e);
+        }
+        // 返回 PDF
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename(blogsShowContext.getTitle() + ".pdf", StandardCharsets.UTF_8)
+                .build());
+
+        return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+    }
+
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-14
+     * @Description: 实时保存博客内容为草稿
+     */
+    @PostMapping("/saveBlogContent")
+    public Result<?> saveBlogContent(@RequestBody Blogs blogs){
+        log.info("保存Blog内容:{}" , blogs);
+        Result<?> result = blogsService.saveBlogDraft(blogs);
+        return result;
+    }
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-15
+     * @Description: 点击创建按钮，查询当前用户是否有未发布的草稿
+     */
+    @GetMapping("/getDraft")
+    public Result<?> getDraft(Integer userId) {
+        // 查询当前用户是否有未发布的草稿
+        Result<?> result = blogsService.getDraft(userId);
+        return result;
+    }
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-19
+     * @Description: 用户获取自己的博客列表
+     */
+    @GetMapping("/blogs")
+    public Result<?> getBlogs(@RequestBody BlogsPageQueryDTO blogsPageQueryDTO) {
+        log.info("获取用户博客列表");
+        // 查询当前用户是否有未发布的草稿
+        PageResult pageResult = blogsService.pageQuery(blogsPageQueryDTO);
+        return Result.success(pageResult);
+    }
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-19
+     * @Description: 用户端删除博客
+     */
+    @DeleteMapping("/deleteBlogs/{id}")
+    public Result<?> deleteBlog(@PathVariable Integer id) {
+        log.info("删除用户博客");
+        Result<?> result = blogsService.deleteBlog(id);
+        return result;
+    }
+
 }
 

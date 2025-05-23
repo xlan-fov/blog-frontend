@@ -2,10 +2,10 @@ package com.blog.mapper;
 
 import com.blog.entity.Users;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,9 +22,28 @@ import java.util.Map;
 @Repository
 @Mapper
 public interface UsersMapper extends BaseMapper<Users> {
-    @Select("SELECT id, username, password_hash AS password, phone, avatar_url, bio, role, is_banned, is_logged_in, is_deleted, deleted_by, last_login_time, created_at FROM users WHERE username = #{username}")
+    @Select("SELECT id, username, password_hash AS password, phone, avatar_url, bio, role, is_banned, is_logged_in, is_deleted, deleted_by, last_login_time, created_at FROM users WHERE username = #{username} and is_banned = 0 and is_deleted = 0")
     Users selectByUsername(@Param("username") String username);
 
+    @Update("Update users set is_logged_in = 1 where username = #{username}")
+    int update1ByUsername(@Param("username") String username);
+
+    @Update("Update users set is_logged_in = 1 where phone = #{phone}")
+    int update1ByPhone(@Param("phone") String phone);
+
+    @Update("Update users set is_logged_in = 0 where username = #{username}")
+    int update0ByUsername(@Param("username") String username);
+
+    @Update("Update users set is_logged_in = 0 where phone = #{phone}")
+    int update0ByPhone(@Param("phone") String phone);
+
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-6
+     * @Description: 通过用户id获取用户名
+     */
+    @Select("select username from users where id = #{userId}")
+    String getByUserId(Integer userId);
     @Select("SELECT id, username, password_hash AS password, phone, avatar_url, bio, role, is_banned, is_logged_in, is_deleted, deleted_by, last_login_time, created_at FROM users WHERE phone = #{phone}")
     Users getUserByPhone(@Param("phone") String phone);
 

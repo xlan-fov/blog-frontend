@@ -2,6 +2,11 @@ package com.blog.mapper;
 
 import com.blog.entity.Blogs;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.blog.entity.BlogsPageQueryDTO;
+import com.github.pagehelper.Page;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
@@ -18,7 +23,43 @@ import java.util.Map;
  */
 public interface BlogsMapper extends BaseMapper<Blogs> {
 
-    void addBlog(Blogs blogs);
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-5
+     * @Description: 添加Blog
+     */
+    int addBlog(Blogs blogs);
+
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-6
+     * @Description: 获取Blog
+     */
+    @Select("select * from blogs where id = #{BlogsId}")
+    Blogs getBlog(Integer BlogsId);
+
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-6
+     * @Description: 更新Blog信息
+     */
+    void updateBlogs(Blogs blogs);
+
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-6
+     * @Description: 分页查询
+     */
+    Page<Blogs> pageQuery(BlogsPageQueryDTO blogsPageQueryDTO);
+
+    /*
+     * @Author: kai.hu
+     * @Date: 2025-5-15
+     * @Description:
+     */
+    @Select("select * from blogs where user_id = #{userId}")
+    List<Blogs> getBlogsByuserId(Integer userId);
+//    void addBlog(Blogs blogs);
 
     @Select("SELECT * FROM blogs WHERE user_id = #{userId}")
     List<Blogs> getBlogListByUserId(int userId);

@@ -80,20 +80,20 @@ onBeforeUnmount(() => {
 })
 
 const goHome = () => {
-  router.push('/')
+  router.push('/dashboard')
 }
 
 const handleSelect = (key) => {
   if (key === 'blog') {
-    router.push('/blog')
+    router.push('/dashboard/blog')
   } else if (key === 'profile') {
-    router.push('/profile')
+    router.push('/dashboard/profile')
   }
 }
 
 const handleCommand = (command) => {
   if (command === 'profile') {
-    router.push('/profile')
+    router.push('/dashboard/profile')
   } 
   else if (command === 'logout') {
     userStore.logout()
@@ -199,4 +199,4 @@ const login = () => {
     padding: 10px !important;
   }
 }
-</style> 
+</style>

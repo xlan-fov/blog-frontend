@@ -5,35 +5,49 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 后端统一返回结果
+ * 通用返回类
  * @param <T>
  */
 @Data
 public class Result<T> implements Serializable {
 
-    private Integer code; //编码：0成功，1和其它数字为失败
-    private String msg; //错误信息
-    private T data; //数据
+    private Integer code; // 0 或 200 表示成功
+    private String msg;
+    private T data;
 
     public static <T> Result<T> success() {
-        Result<T> result = new Result<T>();
-        result.code = 0;
-        result.msg = "成功";
+        return success(null);
+    }
+
+    public static <T> Result<T> success(T data) {
+        return success(200, "success", data);
+    }
+    
+    public static <T> Result<T> success(String message) {
+        return success(200, message, null);
+    }
+
+    public static <T> Result<T> success(Integer code, String msg, T data) {
+        Result<T> result = new Result<>();
+        result.setCode(code);
+        result.setMsg(msg);
+        result.setData(data);
         return result;
     }
 
-    public static <T> Result<T> success(T object) {
-        Result<T> result = new Result<T>();
-        result.data = object;
-        result.code = 0;
-        result.msg = "成功";
-        return result;
+    public static <T> Result<T> error(String message) {
+        return error(500, message, null);
     }
 
-    public static <T> Result<T> error(String msg) {
-        Result result = new Result();
-        result.msg = msg;
-        result.code = 1;
+    public static <T> Result<T> error(Integer code, String message) {
+        return error(code, message, null);
+    }
+
+    public static <T> Result<T> error(Integer code, String message, T data) {
+        Result<T> result = new Result<>();
+        result.setCode(code);
+        result.setMsg(message);
+        result.setData(data);
         return result;
     }
 

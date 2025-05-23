@@ -1,0 +1,1562 @@
+管理员相关界面 API
+
+1. 异常感知接口
+
+1.1 账号异常登录记录查询
+
+GET /api/admin/anomaly/logins
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+startDate
+String
+是
+开始日期，格式：YYYY-MM-DD
+endDate
+String
+是
+结束日期，格式：YYYY-MM-DD
+username
+String
+否
+用户名，用于筛选特定用户
+page
+Integer
+否
+页码，默认1
+pageSize
+Integer
+否
+每页数量，默认10
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "total": 2,
+        "list": [
+            {
+                "user_id": 4,
+                "failure_time": "2025-05-15T08:02:15.000+00:00",
+                "id": 1,
+                "username": "temp2"
+            },
+            {
+                "user_id": 4,
+                "failure_time": "2025-05-15T14:48:07.000+00:00",
+                "id": 2,
+                "username": "temp2"
+            }
+        ]
+    }
+}
+
+1.2 违禁内容记录查询
+
+GET /api/admin/anomaly/contents
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+startDate
+String
+是
+开始日期，格式：YYYY-MM-DD
+endDate
+String
+是
+结束日期，格式：YYYY-MM-DD
+username
+String
+否
+用户名，用于筛选特定用户
+reason
+String
+否
+拒绝原因，用于筛选特定类型的违禁内容
+page
+Integer
+否
+页码，默认1
+pageSize
+Integer
+否
+每页数量，默认10
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "total": 1,
+        "list": [
+            {
+                "blog_id": 2,
+                "user_id": 1,
+                "created_at": "2025-05-16T04:00:00.000+00:00",
+                "id": 1,
+                "detail": "This is a test detail",
+                "type": "negative_content",
+                "username": "wajorrr"
+            }
+        ]
+    }
+}
+
+1.3 封禁账号
+
+POST /api/admin/users/ban
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+username
+String
+是
+要封禁的用户名
+reason
+String
+是
+封禁原因
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "banTime": "2025-05-16T02:39:25.325+00:00",
+        "username": "temp",
+        "status": "banned"
+    }
+}
+
+2. 文章管理接口
+
+2.1 文章列表查询
+
+GET /api/admin/articles
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+titlekeyword
+String
+否
+搜索关键词，用于标题和内容的模糊匹配
+status
+String
+否
+文章状态：published(已发布)/draft(未发布)
+usernameauthor
+String
+否
+作者用户名
+page
+Integer
+否
+页码，默认1(不传就按默认)
+pageSize
+Integer
+否
+每页数量，默认10(不传就按默认)
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "total": 1,
+        "list": [
+            {
+                "image": "image_url",
+                "created_at": "2025-05-06T10:00:00.000+00:00",
+                "title": "My First Blog",
+                "content": "This is the content of my first blog.",
+                "tags": "Java,Spring",
+                "is_deleted": false,
+                "updated_at": "2025-05-06T10:00:00.000+00:00",
+                "user_id": 1,
+                "id": 3,
+                "category": "科技",
+                "published_at": "2025-05-06T10:00:00.000+00:00",
+                "status": "published",
+                "username": "wajorrr"
+            }
+        ]
+    }
+}
+
+2.2 发布文章
+
+POST /api/admin/articles/{id}/publish
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+id
+IntegerString
+是
+文章ID (路径参数)
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "publishTime": "2025-05-16T04:34:19.857+00:00",
+        "blogId": 2,
+        "status": "published"
+    }
+}
+
+2.3 下架文章
+
+POST /api/admin/articles/{id}/withdraw
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+id
+IntegerString
+是
+文章ID (路径参数)
+reason
+String
+否
+下架原因
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "blogId": 2,
+        "status": "draft"
+    }
+}
+
+2.4 删除文章
+
+DELETE /api/admin/articles/{id}
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+id
+IntegerString
+是
+文章ID (路径参数)
+reason
+String
+否
+删除原因
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "blogId": 2,
+        "status": "removed"
+    }
+}
+
+3. 账号管理接口
+
+3.1 账号列表查询
+
+GET /api/admin/users
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+keyword
+String
+否
+搜索关键词，用于用户名和手机号的模糊匹配
+status
+String
+否
+账号状态：normal(正常)/banned(已封禁)
+page
+Integer
+否
+页码，默认1
+pageSize
+Integer
+否
+每页数量，默认10
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "total": 3,
+        "list": [
+            {
+                "id": 1,
+                "username": "wajorrr",
+                "password": "******",
+                "role": "admin",
+                "isBanned": 0,
+                "isLoggedIn": 0,
+                "isDeleted": 0,
+                "lastLoginTime": "2025-05-08T06:06:01.000+00:00",
+                "createdAt": "2025-05-08T02:05:23.000+00:00"
+            },
+            {
+                "id": 2,
+                "username": "temp",
+                "password": "******",
+                "role": "user",
+                "isBanned": 1,
+                "isLoggedIn": 0,
+                "isDeleted": 0,
+                "lastLoginTime": "2025-05-08T05:10:04.000+00:00",
+                "createdAt": "2025-05-08T05:10:04.000+00:00"
+            },
+            {
+                "id": 4,
+                "username": "temp2",
+                "password": "******",
+                "role": "user",
+                "isBanned": 0,
+                "isLoggedIn": 0,
+                "isDeleted": 0,
+                "lastLoginTime": "2025-05-15T07:29:20.000+00:00",
+                "createdAt": "2025-05-15T07:29:20.000+00:00"
+            }
+        ]
+    }
+}
+
+3.2 创建账号
+
+POST /api/admin/users
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+username
+String
+是
+用户名
+password
+String
+是
+密码
+phone
+String
+是
+手机号
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "phone": "12345678901",
+        "createTime": "2025-05-16T07:27:48.446+00:00",
+        "username": "user2"
+    }
+}
+
+3.3 封禁账号
+
+POST /api/admin/users/{username}/ban
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+username
+String
+是
+用户名 (路径参数)
+reason
+String
+是
+封禁原因
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "banTime": "2025-05-16T07:33:43.041+00:00",
+        "username": "user1",
+        "status": "banned"
+    }
+}
+
+3.4 解封账号
+
+POST /api/admin/users/{username}/unban
+
+请求参数：z
+
+参数名
+类型
+必填
+描述
+username
+String
+是
+用户名 (路径参数)
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "banTime": "2025-05-16T07:35:03.246+00:00",
+        "username": "user1",
+        "status": "normal"
+    }
+}
+
+3.5 账号详情查询
+
+GET /api/admin/users/{username}
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+username
+String
+是
+用户名 (路径参数)
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "banHistory": [
+            {
+                "reason": "发布敏感内容",
+                "actionTime": "2025-05-16T07:33:43.000+00:00",
+                "action": "ban",
+                "operator": "wajorrr"
+            },
+            {
+                "reason": "用户申诉",
+                "actionTime": "2025-05-16T07:33:53.000+00:00",
+                "action": "unban",
+                "operator": "wajorrr"
+            },
+            {
+                "reason": "用户申诉",
+                "actionTime": "2025-05-16T07:35:03.000+00:00",
+                "action": "unban",
+                "operator": "wajorrr"
+            }
+        ],
+        "lastLoginTime": "2025-05-16T07:23:58.000+00:00",
+        "phone": "1234567890",
+        "createTime": "2025-05-16T07:23:56.000+00:00",
+        "articleCount": 0,
+        "username": "user1",
+        "status": "normal"
+    }
+}
+
+4. 统计分析接口
+
+4.1 系统概况统计
+
+GET /api/admin/stats/overview
+
+请求参数： 无
+
+响应示例：
+
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "userCount": 1000,
+    "articleCount": 5000,
+    "todayNewUsers": 10,
+    "todayNewArticles": 50,
+    "todayActiveUsers": 100,
+    "todayAbnormalLogins": 5,
+    "pendingReviews": 20
+  }
+}
+
+4.2 用户活跃度统计
+
+GET /api/admin/stats/users/active
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+period
+String
+否
+统计周期：day/week/month/year，默认week
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "newUsers": [
+            {
+                "newUserCount": 4,
+                "time": "2025-05-12 to 2025-05-18"
+            },
+            {
+                "newUserCount": 2,
+                "time": "2025-05-05 to 2025-05-11"
+            }
+        ],
+        "activeUsers": [
+            {
+                "activeUserCount": 4,
+                "time": "2025-05-12 to 2025-05-18"
+            },
+            {
+                "activeUserCount": 2,
+                "time": "2025-05-05 to 2025-05-11"
+            }
+        ]
+    }
+}
+
+4.3 内容发布统计
+
+GET /api/admin/stats/contents
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+period
+String
+否
+统计周期：day/week/month/year，默认week
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "newBlogs": [
+            {
+                "time": "2025-05-05 to 2025-05-11",
+                "newBlogCount": 1
+            }
+        ],
+        "publishedBlogs": [
+            {
+                "publishedBlogCount": 1,
+                "time": "2025-05-05 to 2025-05-11"
+            }
+        ]
+    }
+}
+
+5. 日志查询接口
+
+5.1 系统操作日志查询
+
+GET /api/admin/logs
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+startDate
+String
+是
+开始日期，格式：YYYY-MM-DD
+endDate
+String
+是
+结束日期，格式：YYYY-MM-DD
+type
+String
+否
+操作类型：login/logout/ban/unban/publish
+operator
+String
+否
+操作者用户名
+page
+Integer
+否
+页码，默认1
+pageSize
+Integer
+否
+每页数量，默认10
+
+响应示例：
+
+{
+    "code": 0,
+    "msg": "成功",
+    "data": {
+        "total": 10,
+        "list": [
+            {
+                "reason": "发布敏感内容",
+                "action_type": "BAN_USER",
+                "admin_id": 1,
+                "target_type": "USER",
+                "created_at": "2025-05-15T07:28:54.000+00:00",
+                "target_id": 2,
+                "id": 16,
+                "operator": "wajorrr"
+            },
+            {
+                "reason": "创建用户",
+                "action_type": "CREATE_USER",
+                "admin_id": 1,
+                "target_type": "USER",
+                "created_at": "2025-05-15T07:29:21.000+00:00",
+                "target_id": 4,
+                "id": 17,
+                "operator": "wajorrr"
+            },
+            {
+                "reason": "异常操作",
+                "action_type": "KICK_USER",
+                "admin_id": 1,
+                "target_type": "USER",
+                "created_at": "2025-05-15T07:31:53.000+00:00",
+                "target_id": 4,
+                "id": 18,
+                "operator": "wajorrr"
+            },
+            {
+                "reason": "用户申诉",
+                "action_type": "UNBAN_USER",
+                "admin_id": 1,
+                "target_type": "USER",
+                "created_at": "2025-05-15T07:32:39.000+00:00",
+                "target_id": 2,
+                "id": 19,
+                "operator": "wajorrr"
+            },
+            {
+                "reason": "删除博客",
+                "action_type": "DELETE_BLOG",
+                "admin_id": 1,
+                "target_type": "BLOG",
+                "created_at": "2025-05-15T07:40:44.000+00:00",
+                "target_id": 2,
+                "id": 20,
+                "operator": "wajorrr"
+            },
+            {
+                "reason": "包含敏感内容",
+                "action_type": "DELETE_BLOG",
+                "admin_id": 1,
+                "target_type": "BLOG",
+                "created_at": "2025-05-15T07:42:57.000+00:00",
+                "target_id": 2,
+                "id": 21,
+                "operator": "wajorrr"
+            },
+            {
+                "reason": "发布敏感内容",
+                "action_type": "BAN_USER",
+                "admin_id": 1,
+                "target_type": "USER",
+                "created_at": "2025-05-16T02:39:25.000+00:00",
+                "target_id": 2,
+                "id": 22,
+                "operator": "wajorrr"
+            },
+            {
+                "reason": "内容不规范",
+                "action_type": "WITHDRAW_BLOG",
+                "admin_id": 1,
+                "target_type": "BLOG",
+                "created_at": "2025-05-16T04:41:03.000+00:00",
+                "target_id": 2,
+                "id": 23,
+                "operator": "wajorrr"
+            },
+            {
+                "reason": "内容不规范",
+                "action_type": "WITHDRAW_BLOG",
+                "admin_id": 1,
+                "target_type": "BLOG",
+                "created_at": "2025-05-16T04:42:25.000+00:00",
+                "target_id": 2,
+                "id": 24,
+                "operator": "wajorrr"
+            },
+            {
+                "reason": "内容不规范",
+                "action_type": "WITHDRAW_BLOG",
+                "admin_id": 1,
+                "target_type": "BLOG",
+                "created_at": "2025-05-16T04:56:51.000+00:00",
+                "target_id": 2,
+                "id": 25,
+                "operator": "wajorrr"
+            }
+        ]
+    }
+}
+
+用户相关界面API 
+
+1. 用户认证接口
+
+1.1 获取图片验证码
+
+GET /api/users/captcha
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+captchaId
+String
+否
+验证码ID，用于标识特定的验证码实例
+
+响应示例：
+
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "captchaId": "a1b2c3d4",
+    "imageBase64": "data:image/png;base64,iVBORw0KGgoAAAANSUhE..."
+  }
+}
+
+对应前端组件：
+- 文件路径1：`d:\blog\frontend-user\src\views\Register.vue`
+- 组件位置：注册表单中的图片验证码组件
+- 调用位置：`Captcha` 组件内部
+
+- 文件路径2：`d:\blog\frontend-user\src\views\Login.vue`
+- 组件位置：登录表单中的图片验证码组件
+- 调用位置：`Captcha` 组件内部
+
+1.2 发送手机验证码
+
+POST /api/users/code
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+phone
+String
+是
+手机号
+
+响应示例：
+
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "expired": 300
+  }
+}
+
+对应前端组件：
+- 文件路径1：`d:\blog\frontend-user\src\views\Register.vue`
+- 组件位置：手机验证码注册表单
+- 函数调用：`sendCode()` 函数中通过 `sendPhoneCode` API 调用
+
+- 文件路径2：`d:\blog\frontend-user\src\views\Login.vue`
+- 组件位置：手机验证码登录表单
+- 函数调用：`sendCode()` 函数中通过 `sendPhoneCode` API 调用
+
+1.3 用户名密码注册
+
+POST /api/users/register
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+username
+String
+是
+用户名
+password
+String
+是
+密码
+captcha
+String
+是
+验证码
+captchaId
+String
+是
+验证码ID
+
+响应示例：
+
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "username": "newuser",
+    "createTime": "2023-05-10 14:30:45"
+  }
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\Register.vue`
+- 组件位置：账号密码注册表单
+- 函数调用：`handleRegister()` 函数中通过 `registerByUsername` API 调用
+
+1.4 手机号码注册
+
+POST /api/users/registerByphone
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+phone
+String
+是
+手机号
+code
+String
+是
+短信验证码
+captcha
+String
+是
+图片验证码
+captchaId
+String
+是
+验证码ID
+
+响应示例：
+
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "username": "user_85939522",
+    "phone": "159****7777",
+    "createTime": "2023-05-10 14:30:45"
+  }
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\Register.vue`
+- 组件位置：手机验证码注册表单
+- 函数调用：`handlePhoneRegister()` 函数中通过 `registerByPhone` API 调用
+
+1.5 用户名密码登录
+
+POST /api/users/loginByname
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+username
+String
+是
+用户名
+password
+String
+是
+密码
+sliderToken
+String
+否
+滑块验证token（多次登录失败时需要）
+sliderX
+Number
+否
+滑块验证X坐标（多次登录失败时需要）
+
+响应示例：
+
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "username": "username",
+    "avatar": "https://example.com/avatar.jpg",
+    "role": "user",
+    "banned": false
+  }
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\Login.vue`
+- 组件位置：账号密码登录表单
+- 函数调用：`handleLogin()` 函数中通过 `loginByUsername` API 调用
+
+1.6 手机号码登录
+
+POST /api/users/loginByphone
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+phone
+String
+是
+手机号
+code
+String
+是
+短信验证码
+
+响应示例：
+
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "username": "username",
+    "avatar": "https://example.com/avatar.jpg",
+    "role": "user",
+    "banned": false
+  }
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\Login.vue`
+- 组件位置：手机验证码登录表单
+- 函数调用：`handlePhoneLogin()` 函数中通过 `loginByPhone` API 调用
+
+2. 用户资料接口
+
+2.1 获取用户资料
+
+GET /api/users/profile
+
+请求头：
+
+参数名
+描述
+Authorization
+Bearer {token}
+
+响应示例：
+
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "username": "username",
+    "email": "user@example.com",
+    "phone": "159****7777",
+    "avatar": "https://example.com/avatar.jpg",
+    "bio": "这是我的个人简介",
+    "registerTime": "2023-01-01 10:00:00",
+    "lastLoginTime": "2023-05-10 14:30:00",
+    "blogCount": 8
+  }
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\Profile.vue`
+- 组件位置：个人资料卡片
+- 加载时机：组件挂载时 `onMounted()` 钩子中
+
+2.2 更新用户资料
+
+PUT /api/users/profile
+
+请求头：
+
+参数名
+描述
+Authorization
+Bearer {token}
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+email
+String
+否
+用户邮箱
+bio
+String
+否
+个人简介
+
+响应示例：
+
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "username": "username",
+    "email": "new_email@example.com",
+    "bio": "新的个人简介"
+  }
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\Profile.vue`
+- 组件位置：个人资料编辑表单
+- 函数调用：`saveProfile()` 函数中
+
+2.3 上传用户头像
+
+POST /api/users/avatar
+
+请求头：
+
+参数名
+描述
+Authorization
+Bearer {token}
+Content-Type
+multipart/form-data
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+file
+File
+是
+头像文件
+
+响应示例：
+
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "avatar": "https://example.com/avatars/new_avatar.jpg"
+  }
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\Profile.vue`
+- 组件位置：头像上传组件
+- 函数调用：`uploadAvatar()` 函数中
+
+2.4 修改密码
+
+PUT /api/users/password
+
+请求头：
+
+参数名
+描述
+Authorization
+Bearer {token}
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+oldPassword
+String
+是
+原密码
+newPassword
+String
+是
+新密码
+
+响应示例：
+
+{
+  "code": 200,
+  "message": "success",
+  "data": null
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\Profile.vue`
+- 组件位置：修改密码对话框
+- 函数调用：`changePassword()` 函数中
+
+2.5 修改手机号
+
+PUT /api/users/phone
+
+请求头：
+
+参数名
+描述
+Authorization
+Bearer {token}
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+newPhone
+String
+是
+新手机号
+code
+String
+是
+短信验证码
+
+响应示例：
+
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "phone": "138****8000"
+  }
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\Profile.vue`
+- 组件位置：修改手机号对话框
+- 函数调用：`changePhone()` 函数中
+
+3. 用户内容管理接口
+
+3.1 获取用户博客列表
+
+GET /api/blogs/list
+
+请求头：
+
+参数名
+描述
+Authorization
+Bearer {token}
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+titlekeyword
+String
+否
+通过标题进行模糊匹配搜索关键词（过滤条件）
+status
+String
+否
+通过状态：draft/published进行搜索（过滤条件）
+page
+Integer
+否
+页码，默认1
+pageSize
+Integer
+否
+每页数量，默认10
+userId
+Integer
+是
+用户id
+
+响应示例：
+
+{
+  "code": 0200,
+  "message": "success",
+  "data": {
+    "total": 18,
+    "list": [
+      {
+        "id": "1",
+        "title": "我的第一篇博客",
+        "summary": "这是摘要...",
+        "createTime": "2023-05-01 10:00:00",
+        "updateTime": "2023-05-02 14:30:00",
+        "status": "published",
+        "viewCount": 120,
+        "commentCount": 5,
+        "likeCount": 10
+      }
+    ]
+  }
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\ContentManagement.vue`
+- 组件位置：博客列表页面
+- 函数调用：组件挂载时以及搜索/筛选时
+
+3.2 创建博客
+
+POST /api/blogs/addBlog
+
+请求头：
+
+参数名
+描述
+Authorization
+Bearer {token}
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+title
+String
+是
+博客标题
+content
+
+String
+
+是
+
+博客内容，支持HTML或Markdown格式
+userId
+Integer
+是
+用户ID
+summary
+
+String
+
+否
+摘要，不提供时系统自动截取（这个字段数据库没有）
+tags
+StringArray
+否
+标签列表
+status
+
+String
+是否
+状态：draft(草稿)/published(发布)，这里我感觉前端至少传一个。
+category
+String
+否
+类别
+image
+String
+否
+图像存储在oss的绝对路径
+
+
+
+
+
+响应示例：
+
+{
+  "code": 0200,
+  "message": "success",
+  "data": {
+    "id": "123",
+    "title": "新博客标题",
+    "createTime": "2023-05-10 14:30:45"
+  }
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\BlogCreate.vue`
+- 组件位置：博客创建页面
+- 函数调用：提交表单时
+
+3.3 获取博客详情
+
+GET /api/getBblogs/{id}
+
+请求头：
+
+参数名
+描述
+Authorization
+Bearer {token}
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+id
+IntegerString
+是
+博客ID
+
+
+
+
+
+响应示例：
+
+{
+  "code": 0200,
+  "message": "success",
+  "data": {
+    "id": "123",
+    "title": "博客标题",
+    "content": "<p>博客内容...</p>",
+    "summary": "这是摘要...",
+    "createTime": "2023-05-01 10:00:00",
+    "updateTime": "2023-05-02 14:30:00",
+    "status": "published",
+    "tags": ["技术", "编程"],
+    "viewCount": 120,
+    "commentCount": 5,
+    "likeCount": 10,
+    "author": {
+      "username": "author",
+      "avatar": "https://example.com/avatar.jpg"
+    }
+  }
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\BlogView.vue`
+- 组件位置：博客查看页面
+- 函数调用：组件挂载时
+
+3.4 更新博客
+
+PUT /api/updatebblogs/{id}（这里路径参数直接封装到请求体可以吗）
+
+请求头：
+
+参数名
+描述
+Authorization
+Bearer {token}
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+id
+IntegerString
+是
+博客ID (路径参数)
+title
+String
+否
+博客标题
+content
+String
+否
+博客内容
+summary
+String
+否
+摘要
+tags
+StringArray
+否
+标签列表(数据库用的String)
+status
+String
+否
+状态：draft/published
+
+响应示例：
+
+{
+  "code": 0200,
+  "message": "success",
+  "data": {
+    "id": "123",
+    "title": "更新后的标题",
+    "updateTime": "2023-05-10 14:30:45"
+  }
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\BlogEdit.vue`
+- 组件位置：博客编辑页面
+- 函数调用：提交表单时
+
+3.5 删除博客
+
+DELETE /api/deleteBblogs/{id}
+
+请求头：
+
+参数名
+描述
+Authorization
+Bearer {token}
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+id
+IntegerString
+是
+博客ID
+
+响应示例：
+
+{
+  "code": 0200,
+  "message": "success",
+  "data": null
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\ContentManagement.vue`
+- 组件位置：博客列表中的删除按钮
+- 函数调用：点击删除按钮时
+3.6 图片上传
+POST /common/upload
+请求参数
+参数名
+参数描述
+file
+文件
+相应示例
+{
+    "code": 0,
+    "msg": "success",
+    "data": "https://sentiblog-repo.oss-cn-wuhan-lr.aliyuncs.com/34717ac0-1395-4f32-93fd-80ed9c36c4ae.jpg"
+}
+4. 用户操作日志接口
+
+4.1 获取登录日志
+
+GET /api/users/login-logs
+
+请求头：
+
+参数名
+描述
+Authorization
+Bearer {token}
+
+请求参数：
+
+参数名
+类型
+必填
+描述
+page
+Integer
+否
+页码，默认1
+pageSize
+Integer
+否
+每页数量，默认10
+
+响应示例：
+
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "total": 10,
+    "list": [
+      {
+        "id": 1,
+        "time": "2023-05-10 14:30:45",
+        "ip": "192.168.1.1",
+        "location": "北京",
+        "device": "Windows Chrome",
+        "status": "success"
+      }
+    ]
+  }
+}
+
+对应前端组件：
+- 文件路径：`d:\blog\frontend-user\src\views\Profile.vue`
+- 组件位置：登录日志对话框
+- 函数调用：打开登录日志对话框时

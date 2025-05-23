@@ -1,0 +1,53 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: Byte_blog
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver  # 更改为较新的驱动
+    url: jdbc:mysql://1.92.78.100:3306/blog?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+    username: blog
+    password: "C32nAfFxCWt3jCSx"
+    initialization-mode: always
+    hikari:
+      connection-test-query: SELECT 1
+      connection-timeout: 60000
+      validation-timeout: 3000
+      max-lifetime: 60000
+  redis:
+    host: 1.92.78.100
+    port: 6379
+    password: "AsDfGh31415"
+    lettuce:
+      pool:
+        max-active: 20
+        max-idle: 10
+        min-idle: 5
+        time-between-eviction-runs: 10s
+    database: 0
+  jackson:
+    default-property-inclusion: non_null # JSON处理时忽略非空字段
+mybatis-plus:
+  type-aliases-package: com.blog.entity
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+logging:
+  level:
+    com.blog: debug # 增加日志级别
+    org.springframework.web: debug # 增加Spring Web日志
+    org.springframework.security: debug # 增加Security日志
+    org.springframework.data.redis: debug # 增加Redis日志
+    com.blog.controller: debug  # 控制器层详细日志
+    com.blog.service: debug     # 服务层详细日志
+blog:
+  alioss:
+    endpoint: oss-cn-wuhan-lr.aliyuncs.com
+    access-key-id: LTAI5tMPXCLfLbfwrRAb7gEa
+    access-key-secret: pFxcSyviXJ1URoBGRFYIUMgvnlQQGx
+    bucket-name: sentiblog-repo
+dependencies {
+    // ...existing code...
+    implementation 'mysql:mysql-connector-java:8.0.28'
+    // ...existing code...
+}

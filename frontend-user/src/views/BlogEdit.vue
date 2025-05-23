@@ -74,14 +74,14 @@ const handleSubmit = async () => {
       content: form.content
     })
     ElMessage.success('更新成功')
-    router.push('/blog')
+    router.push('/dashboard/blog')
   } catch (error) {
     ElMessage.error('更新失败: ' + (error.message || '未知错误'))
   }
 }
 
 const handleCancel = () => {
-  router.push('/blog')
+  router.push('/dashboard/blog')
 }
 </script>
 

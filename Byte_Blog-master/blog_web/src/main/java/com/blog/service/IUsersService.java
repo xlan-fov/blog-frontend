@@ -1,8 +1,6 @@
 package com.blog.service;
 
-import com.blog.dto.LoginDTO;
-import com.blog.dto.RegisterDTO;
-import com.blog.dto.SliderCheckDTO;
+import com.blog.dto.*;
 import com.blog.entity.Users;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.blog.result.Result;
@@ -19,12 +17,22 @@ import javax.servlet.http.HttpServletRequest;
  */
 public interface IUsersService extends IService<Users> {
 
-    Result<?> register(RegisterDTO registerDTO);
-    Result<?> login(LoginDTO loginDTO, HttpServletRequest request);
+    Result<?> registerByname(RegisterDTO registerDTO);
+    Result<?> loginByname(LoginDTO loginDTO, HttpServletRequest request);
 
-    Result<?> captcha(String username);
+    Result<?> captcha(String captchaId);
 
     Result<?> generateSliderImage();
 
     Result<?> validateSlider(SliderCheckDTO sliderCheckDTO);
+
+    Result<?> logout(HttpServletRequest request);
+
+    //Result<?> registerByphone(PhoneDTO phoneDTO);
+
+    Result<?> loginByphone(PhoneDTO phoneDTO, HttpServletRequest request);
+
+    Result<?> sendCode(String phone);
+
+    Result<?> adminLogin(LoginDTO loginDTO, HttpServletRequest request);
 }

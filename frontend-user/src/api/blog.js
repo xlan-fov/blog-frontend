@@ -32,7 +32,9 @@ export default {
    * @param {Object} data - 博客更新数据
    */
   updateBlog(id, data) {
-    return put(API_PATHS.BLOGS.UPDATE.replace('{id}', id), data)
+    // 后端不使用路径参数，而是在请求体中包含id
+    data.id = id;
+    return put(API_PATHS.BLOGS.UPDATE, data)
   },
 
   /**
@@ -44,26 +46,36 @@ export default {
   },
 
   /**
-   * 发布博客
+   * 发布博客 - 通过更新博客状态实现
    * @param {String} id - 博客ID
    */
   publishBlog(id) {
-    return post(API_PATHS.BLOGS.PUBLISH.replace('{id}', id))
+    // 使用更新博客API，设置状态为published
+    return this.updateBlog(id, { status: 'published' })
   },
 
   /**
-   * 撤回博客
+   * 撤回博客 - 通过更新博客状态实现
    * @param {String} id - 博客ID
    */
   withdrawBlog(id) {
-    return post(API_PATHS.BLOGS.WITHDRAW.replace('{id}', id))
+    // 使用更新博客API，设置状态为draft
+    return this.updateBlog(id, { status: 'draft' })
+  },
+  
+  /**
+   * 获取草稿
+   * @param {Number} userId - 用户ID
+   */
+  getDraft(userId) {
+    return get(API_PATHS.BLOGS.GET_DRAFT, { userId })
   },
 
   /**
-   * 搜索博客
-   * @param {Object} params - 搜索参数
+   * 实时保存博客内容为草稿
+   * @param {Object} data - 博客数据
    */
-  searchBlogs(params) {
-    return get(API_PATHS.BLOGS.SEARCH, params)
+  saveBlogContent(data) {
+    return post(API_PATHS.BLOGS.SAVE_CONTENT, data)
   }
 }

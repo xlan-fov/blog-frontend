@@ -159,13 +159,18 @@ const validateConfirmPassword = (rule, value, callback) => {
 const rules = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
+    { min: 6, max: 20, message: '用户名长度必须在6-20个字符之间', trigger: 'blur' }
   ],
   password: [
-    { required: true, validator: validatePassword, trigger: 'blur' }
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { validator: validatePassword, trigger: 'blur' }
   ],
   confirmPassword: [
-    { required: true, validator: validateConfirmPassword, trigger: 'blur' }
+    { required: true, message: '请再次输入密码', trigger: 'blur' },
+    { validator: validateConfirmPassword, trigger: 'blur' }
+  ],
+  captcha: [
+    { required: true, message: '请输入验证码', trigger: 'blur' }
   ]
 }
 
@@ -174,80 +179,119 @@ const phoneRules = {
     { required: true, message: '请输入手机号', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
   ],
-  code: [{ required: true, message: '请输入验证码', trigger: 'blur' }],
-  captcha: [{ required: true, message: '请输入图片验证码', trigger: 'blur' }]
+  code: [
+    { required: true, message: '请输入验证码', trigger: 'blur' }
+  ],
+  captcha: [
+    { required: true, message: '请输入图片验证码', trigger: 'blur' }
+  ]
 }
 
 const handleCaptchaChange = (newCaptchaId) => {
   captchaId.value = newCaptchaId
+  localStorage.setItem('captchaId', newCaptchaId)
 }
 
 const handleRegister = async () => {
   try {
-    // 先验证表单
     await registerFormRef.value.validate()
     
-    // 验证验证码
     if (!registerForm.captcha) {
       ElMessage.error('请输入验证码')
       return
     }
     
+    loading.value = true
+    
     try {
-      await registerByUsername({
+      const result = await registerByUsername({
         username: registerForm.username,
         password: registerForm.password,
         captcha: registerForm.captcha,
         captchaId: captchaId.value
       })
       
-      ElMessage.success('注册成功')
-      router.push('/login')
+      if (result.code === 200 || result.code === 0) {
+        ElMessage.success('注册成功，请登录')
+        router.push('/login')
+      } else {
+        ElMessage.error(result.msg || '注册失败')
+        if (captchaRef.value) {
+          captchaRef.value.refreshCaptcha()
+        }
+        registerForm.captcha = ''
+      }
     } catch (error) {
-      captchaRef.value.refreshCaptcha()
+      console.error('注册请求失败:', error)
+      if (captchaRef.value) {
+        captchaRef.value.refreshCaptcha()
+      }
       registerForm.captcha = ''
+    } finally {
+      loading.value = false
     }
   } catch (error) {
     ElMessage.error('请检查表单填写是否正确')
-    captchaRef.value.refreshCaptcha()
   }
 }
 
 const handlePhoneRegister = async () => {
   try {
-    // 先验证表单
     await phoneFormRef.value.validate()
     
+    loading.value = true
+    
     try {
-      await registerByPhone({
+      const result = await registerByPhone({
         phone: phoneForm.phone,
         code: phoneForm.code,
         captcha: phoneForm.captcha,
         captchaId: captchaId.value
       })
       
-      ElMessage.success('注册成功')
-      router.push('/login')
+      if (result.code === 200 || result.code === 0) {
+        ElMessage.success('注册成功，请登录')
+        router.push('/login')
+      } else {
+        ElMessage.error(result.msg || '注册失败')
+        if (captchaRef.value) {
+          captchaRef.value.refreshCaptcha()
+        }
+        phoneForm.captcha = ''
+      }
     } catch (error) {
-      captchaRef.value.refreshCaptcha()
+      console.error('手机注册失败:', error)
+      if (captchaRef.value) {
+        captchaRef.value.refreshCaptcha()
+      }
       phoneForm.captcha = ''
+    } finally {
+      loading.value = false
     }
   } catch (error) {
     ElMessage.error('请检查表单填写是否正确')
-    captchaRef.value.refreshCaptcha()
   }
 }
 
 const sendCode = async () => {
-  // 验证手机号格式
-  if (!/^1[3-9]\d{9}$/.test(phoneForm.phone)) {
-    ElMessage.error('请输入正确的手机号')
+  if (!phoneForm.phone) {
+    ElMessage.warning('请输入手机号')
     return
   }
-
+  
+  if (!/^1[3-9]\d{9}$/.test(phoneForm.phone)) {
+    ElMessage.warning('请输入正确的手机号')
+    return
+  }
+  
+  if (!phoneForm.captcha) {
+    ElMessage.warning('请先输入图片验证码')
+    return
+  }
+  
   try {
     await sendPhoneCode(phoneForm.phone)
-
+    
     countdown.value = 60
     const timer = setInterval(() => {
       countdown.value--
@@ -255,25 +299,18 @@ const sendCode = async () => {
         clearInterval(timer)
       }
     }, 1000)
+    
     ElMessage.success('验证码已发送')
   } catch (error) {
     // 错误处理已经在API层完成
   }
 }
 
-const captchaUrl = ref('')
-
-const refreshCaptcha = () => {
-  // 添加时间戳防止缓存
-  captchaUrl.value = `/api/captcha?t=${Date.now()}`
-}
-
 onMounted(() => {
-  refreshCaptcha()
-})
-
-defineExpose({
-  refreshCaptcha
+  // 初始化验证码
+  if (captchaRef.value) {
+    captchaRef.value.refreshCaptcha()
+  }
 })
 </script>
 
@@ -283,7 +320,7 @@ defineExpose({
   display: flex;
   justify-content: center;
   align-items: center;
-  background-image: url('https://sentiblog-repo.oss-cn-wuhan-lr.aliyuncs.com/assets/register_bg.jpeg');
+  background-image: url('https://sentiblog-repo.oss-cn-wuhan-lr.aliyuncs.com/assets/login_bg.jpeg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -291,21 +328,19 @@ defineExpose({
 
 .register-card {
   width: 480px;
-  min-height: 580px;
+  min-height: 600px;
   background-color: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(8px);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  flex-direction: column;
 }
 
 .register-footer {
-  text-align: right;
-  margin-top: auto;
-  padding: 20px 24px;
-  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  padding: 0 24px 20px;
 }
 
 .register-footer a {
@@ -315,28 +350,11 @@ defineExpose({
   padding: 8px 16px;
   border-radius: 4px;
   transition: all 0.3s ease;
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: rgba(64, 158, 255, 0);
-}
-
-.register-footer a::before {
-  content: '←';
-  font-size: 16px;
-  opacity: 0.6;
-  transition: all 0.3s ease;
 }
 
 .register-footer a:hover {
   color: #409EFF;
   background-color: rgba(64, 158, 255, 0.1);
-}
-
-.register-footer a:hover::before {
-  opacity: 1;
-  transform: translateX(-2px);
 }
 
 .code-input {
@@ -374,23 +392,6 @@ defineExpose({
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
-  text-shadow: 0 2px 8px rgba(64,158,255,0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-:deep(.el-card__header h2)::before {
-  content: '\f234';
-  font-family: 'Font Awesome 5 Free', 'FontAwesome';
-  font-weight: 900;
-  font-size: 28px;
-  color: #67C23A;
-  margin-right: 8px;
-  display: inline-block;
-  vertical-align: middle;
 }
 
 :deep(.el-tabs__nav) {
@@ -417,7 +418,7 @@ defineExpose({
 
 :deep(.el-button) {
   height: 40px;
-  font-size: 16px;
+  line-height: 40px;
 }
 
 :deep(.el-input__inner) {
@@ -425,75 +426,12 @@ defineExpose({
   line-height: 40px;
 }
 
-/* 平板设备 */
-@media screen and (max-width: 1024px) {
-  .register-card {
-    width: 420px;
-    min-height: 540px;
-  }
-}
-
-/* 移动设备 */
 @media screen and (max-width: 768px) {
-  .register-container {
-    background-image: url('https://sentiblog-repo.oss-cn-wuhan-lr.aliyuncs.com/assets/register_bg_mobile.png');
-    background-position: center 30%;
-  }
-
   .register-card {
     width: 90%;
     max-width: 360px;
-    min-height: 520px;
+    min-height: 560px;
     margin: 20px;
   }
-
-  :deep(.el-card__header h2) {
-    font-size: 24px;
-  }
-
-  :deep(.el-tabs__item) {
-    font-size: 14px;
-    height: 40px;
-    line-height: 40px;
-  }
-
-  :deep(.el-form-item) {
-    margin-bottom: 20px;
-  }
-
-  :deep(.el-button) {
-    height: 40px;
-    font-size: 14px;
-    line-height: 40px;
-  }
-
-  :deep(.el-input__wrapper) {
-    height: 40px;
-    line-height: 40px;
-  }
-
-  :deep(.el-input__inner) {
-    height: 40px;
-    line-height: 40px;
-  }
-
-  .code-input {
-    align-items: center;
-  }
 }
-
-/* 小屏移动设备 */
-@media screen and (max-width: 375px) {
-  .register-card {
-    min-height: 480px;
-  }
-
-  :deep(.el-card__header) {
-    padding: 16px;
-  }
-
-  :deep(.el-form-item) {
-    margin-bottom: 16px;
-  }
-}
-</style> 
+</style>

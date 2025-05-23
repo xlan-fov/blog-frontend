@@ -120,6 +120,7 @@ const totalMyBlogs = ref(0)
 const totalUserBlogs = ref(0)
 const loading = ref(false)
 const activeTab = ref('myBlogs')
+const backendAvailable = ref(true)  // 添加缺失的变量
 
 // 分页
 const currentPage = ref(1)

@@ -45,6 +45,45 @@ export default {
   },
 
   /**
+   * 踢出用户
+   * @param {Number} userId - 用户ID
+   * @param {String} reason - 踢出原因
+   */
+  kickUser(userId, reason) {
+    return post(API_PATHS.ADMIN.KICK_USER, { id: userId, reason })
+  },
+
+  /**
+   * 获取博客列表
+   */
+  getBlogList() {
+    return get(API_PATHS.ADMIN.GET_BLOG_LIST)
+  },
+
+  /**
+   * 获取用户博客列表
+   * @param {Number} userId - 用户ID
+   */
+  getUserBlogList(userId) {
+    return get(API_PATHS.ADMIN.GET_USER_BLOG_LIST, { userId })
+  },
+
+  /**
+   * 获取敏感词列表
+   */
+  getSensitiveWordsList() {
+    return get(API_PATHS.ADMIN.GET_SENSITIVE_WORDS)
+  },
+
+  /**
+   * 添加敏感词
+   * @param {String} word - 敏感词
+   */
+  addSensitiveWord(word) {
+    return post(API_PATHS.ADMIN.ADD_SENSITIVE_WORD.replace('{sensitiveWord}', word))
+  },
+
+  /**
    * 获取文章列表
    * @param {Object} params - 查询参数
    */

@@ -21,12 +21,15 @@ const AdminProfile = () => import('@/views/admin/AdminProfile.vue')
 // 获取管理员路径（从环境变量中读取，增加安全性）
 const ADMIN_AUTH_PATH = import.meta.env.ADMIN_PATH || 'senti-admin-auth'
 
-// 添加测试路由
-const TestLogin = () => import('@/views/TestLogin.vue')
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // 默认路由重定向到登录页面
+    {
+      path: '/',
+      redirect: '/login'
+    },
     {
       path: '/login',
       name: 'login',
@@ -47,13 +50,13 @@ const router = createRouter({
     },
     // 普通用户路由
     {
-      path: '/',
+      path: '/dashboard',
       component: Layout,
       meta: { requiresAuth: true },
       children: [
         {
           path: '',
-          redirect: '/blog'
+          redirect: '/dashboard/blog'
         },
         {
           path: 'blog',
@@ -130,13 +133,6 @@ const router = createRouter({
         }
       ]
     },
-    // 添加测试登录路由
-    {
-      path: '/test-login',
-      name: 'test-login',
-      component: TestLogin,
-      meta: { requiresAuth: false }
-    },
     // 通配符路由，匹配所有未定义的路由
     {
       path: '/:pathMatch(.*)*',
@@ -145,66 +141,29 @@ const router = createRouter({
   ]
 })
 
-// 路由守卫
+// 添加一个简单的路由守卫，确保默认访问登录页面
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const isAuthenticated = userStore.isLoggedIn
-  const isAdmin = userStore.isAdmin()
-  const isBanned = userStore.isBanned()
 
-  // 如果账号被封禁，强制登出并跳转到登录页
-  if (isAuthenticated && isBanned && to.path !== '/login') {
-    userStore.logout()
-    next({
-      path: '/login',
-      query: { banned: true }
-    })
-    return
-  }
-
-  // 如果访问需要管理员权限的页面但不是管理员
-  if (to.meta.requiresAdmin && !isAdmin) {
-    next('/error/403') // 重定向到403错误页
-    return
-  }
-
-  // 防止普通用户访问管理员登录页面 (可选，防止通过直接输入URL访问)
-  if (to.path === `/${ADMIN_AUTH_PATH}` && isAuthenticated && !isAdmin) {
-    next('/error/403')
-    return
-  }
-
-  // 如果访问需要认证的页面但未登录
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    // 保存当前要访问的路径，登录后可以跳转回来
-    const redirectPath = to.fullPath
-
-    // 如果尝试访问管理员页面，重定向到管理员登录页
-    if (to.meta.requiresAdmin) {
-      next({
-        path: `/${ADMIN_AUTH_PATH}`,
-        query: { redirect: redirectPath }
-      })
+  // 如果用户已登录且访问登录或注册页面，重定向到仪表板
+  if (isAuthenticated && (to.path === '/login' || to.path === '/register')) {
+    if (userStore.isAdmin()) {
+      next('/admin')
     } else {
-      next({
-        path: '/login',
-        query: { redirect: redirectPath }
-      })
+      next('/dashboard')
     }
+    return
   }
-  // 如果已登录但访问登录或注册页面
-  else if ((to.path === '/login' || to.path === '/register') && isAuthenticated) {
-    // 根据角色重定向到相应首页
-    next(isAdmin ? '/admin' : '/')
+
+  // 如果用户未登录且访问需要认证的页面，重定向到登录页面
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    next('/login')
+    return
   }
-  // 如果已登录管理员访问管理员登录页
-  else if (to.path === `/${ADMIN_AUTH_PATH}` && isAuthenticated && isAdmin) {
-    next('/admin')
-  }
+
   // 其他情况正常放行
-  else {
-    next()
-  }
+  next()
 })
 
 export default router

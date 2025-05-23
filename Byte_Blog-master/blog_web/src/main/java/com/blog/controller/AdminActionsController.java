@@ -103,18 +103,18 @@ public class AdminActionsController {
         return adminActionsService.getUserBlogList(userId);
     }
 
-    @GetMapping("/articles")
-    public Result<?> getUserArticles(@RequestBody Map<String, Object> requestBody) {
-        String keyword = (String) requestBody.get("keyword");
-        String status = (String) requestBody.get("status");
-        String author = (String) requestBody.get("author");
-        String pageStr = (String) requestBody.get("page");
-        String pageSizeStr = (String) requestBody.get("pageSize");
-        Integer page = pageStr == null ? 1 : Integer.parseInt(pageStr);
-        Integer pageSize = pageSizeStr == null ? 10 : Integer.parseInt(pageSizeStr);
-        log.info("获取用户博客列表：keyword={}, status={}, author={}, page={}, pageSize={}", keyword, status, author, page, pageSize);
-        return adminActionsService.getUserArticles(keyword, status, author, page-1, pageSize);
-    }
+//    @GetMapping("/articles")
+//    public Result<?> getUserArticles(@RequestBody Map<String, Object> requestBody) {
+//        String keyword = (String) requestBody.get("keyword");
+//        String status = (String) requestBody.get("status");
+//        String author = (String) requestBody.get("author");
+//        String pageStr = (String) requestBody.get("page");
+//        String pageSizeStr = (String) requestBody.get("pageSize");
+//        Integer page = pageStr == null ? 1 : Integer.parseInt(pageStr);
+//        Integer pageSize = pageSizeStr == null ? 10 : Integer.parseInt(pageSizeStr);
+//        log.info("获取用户博客列表：keyword={}, status={}, author={}, page={}, pageSize={}", keyword, status, author, page, pageSize);
+//        return adminActionsService.getUserArticles(keyword, status, author, page-1, pageSize);
+//    }
 
     @PostMapping("/articles/{blogId}/publish")
     public Result<?> publishBlog(@PathVariable Integer blogId) {
@@ -254,6 +254,28 @@ public class AdminActionsController {
             period="week";
         log.info("内容发布统计");
         return adminActionsService.getContentsStats(period);
+    }
+
+    // 修改这个新接口的路径，避免与BlogsController中的路径冲突
+    @GetMapping("/articleslist")
+    public Result<?> getArticles(
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        
+        log.info("获取文章列表：author={}, keyword={}, status={}, page={}, pageSize={}", 
+                author, keyword, status, page, pageSize);
+                
+        // 统一调用已有的博客查询接口
+        if (author != null && !author.isEmpty()) {
+            // 如果指定了作者，调用获取用户博客列表接口
+            return adminActionsService.getUserArticles(keyword, status, author, page-1, pageSize);
+        } else {
+            // 否则获取所有博客
+            return adminActionsService.getBlogList();
+        }
     }
 }
 

@@ -31,6 +31,8 @@ public class Blogs implements Serializable {
 
     private Integer userId;
 
+    private String username;
+
     private String title;
 
     private String content;

@@ -30,6 +30,7 @@ CREATE TABLE verification_codes (
 CREATE TABLE blogs (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
+    username VARCHAR(50) NOT NULL COMMENT '关联用户表的用户名',
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     image VARCHAR(255),
@@ -42,7 +43,8 @@ CREATE TABLE blogs (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (deleted_by) REFERENCES users(id)
+    FOREIGN KEY (deleted_by) REFERENCES users(id),
+    FOREIGN KEY (username) REFERENCES users(username)
 );
 
 /* 超管操作日志 */

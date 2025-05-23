@@ -1,82 +1,104 @@
 <template>
-  <div class="captcha-container" @click="refreshCaptcha">
-    <img v-if="captchaUrl" :src="captchaUrl" alt="验证码" width="120" height="40" />
+  <div class="captcha-container">
+    <img 
+      :src="captchaUrl" 
+      alt="验证码" 
+      class="captcha-image"
+      @click="refreshCaptcha"
+      @error="handleImageError"
+      title="点击更换验证码"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { v4 as uuidv4 } from 'uuid'
-import { getCaptcha } from '@/api/captcha'
+import { getCaptcha } from '@/api/user'
 
 const props = defineProps({
-  modelValue: {
-    type: String,
-    required: true
-  },
   onCaptchaChange: {
     type: Function,
     default: () => {}
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
-
 const captchaUrl = ref('')
 const captchaId = ref('')
 
-const generateCaptcha = async () => {
-  try {
-    // 生成唯一标识符
-    const timestamp = Date.now()
-    const uuid = uuidv4()
-    const newCaptchaId = `${timestamp}-${uuid}`
-    captchaId.value = newCaptchaId
+const generateCaptchaId = () => {
+  return 'captcha_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+}
 
-    const response = await getCaptcha(newCaptchaId)
+const refreshCaptcha = async () => {
+  try {
+    const newCaptchaId = generateCaptchaId()
+    captchaId.value = newCaptchaId
     
-    if (response.code === 0) {
-      captchaUrl.value = response.data.img
-      // 通知父组件captchaId发生变化
+    const result = await getCaptcha(newCaptchaId)
+    if (result.code === 200 || result.code === 0) {
+      // 检查返回的数据格式，避免重复添加前缀
+      let imageData = result.data.img
+      
+      // 如果已经是完整的data URL，直接使用
+      if (imageData && imageData.startsWith('data:image/')) {
+        captchaUrl.value = imageData
+      } 
+      // 如果只是base64字符串，添加前缀
+      else if (imageData) {
+        captchaUrl.value = 'data:image/png;base64,' + imageData
+      } else {
+        console.error('验证码图片数据为空')
+        return
+      }
+      
       props.onCaptchaChange(newCaptchaId)
     } else {
-      console.error('获取验证码失败:', response.msg)
+      console.error('获取验证码失败:', result.msg)
     }
   } catch (error) {
-    console.error('获取验证码出错:', error)
+    console.error('获取验证码失败:', error)
+    // 不要在错误时无限重试
   }
 }
 
-const refreshCaptcha = () => {
-  generateCaptcha()
+const handleImageError = () => {
+  console.error('验证码图片加载失败')
+  refreshCaptcha()
 }
 
 onMounted(() => {
-  generateCaptcha()
+  refreshCaptcha()
 })
 
 defineExpose({
-  refreshCaptcha,
-  getCaptchaId: () => captchaId.value
+  refreshCaptcha
 })
 </script>
 
 <style scoped>
 .captcha-container {
-  cursor: pointer;
-  border-radius: 4px;
-  overflow: hidden;
-  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.captcha-container:hover {
-  opacity: 0.8;
-}
-
-.captcha-container img {
-  display: block;
+.captcha-image {
   width: 120px;
   height: 40px;
-  object-fit: cover;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
 }
-</style> 
+
+.captcha-image:hover {
+  border-color: #409eff;
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
+}
+
+.captcha-image:active {
+  transform: scale(0.98);
+}
+</style>
