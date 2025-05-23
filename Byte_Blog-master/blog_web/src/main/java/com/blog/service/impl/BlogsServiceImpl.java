@@ -1,6 +1,7 @@
 package com.blog.service.impl;
 
 import cn.hutool.core.date.DateTime;
+import com.blog.dto.UserDTO;
 import com.blog.entity.*;
 import com.blog.mapper.BlogsDraftMapper;
 import com.blog.mapper.BlogsMapper;
@@ -10,6 +11,7 @@ import com.blog.result.Result;
 import com.blog.service.IBlogsService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.blog.utils.TextCheck;
+import com.blog.utils.UserHolder;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import org.jsoup.Jsoup;
@@ -52,8 +54,24 @@ public class BlogsServiceImpl extends ServiceImpl<BlogsMapper, Blogs> implements
         if(blogs.getContent() == null) {
             return Result.error("文章内容不能为空");
         }
-        // 如果是要发布，需要对类容进行检测
-        if(blogs.getStatus().equals("published")) {
+        
+        // 如果status为null，设置默认值为draft
+        if(blogs.getStatus() == null) {
+            blogs.setStatus("draft");
+        }
+        
+        // 从当前登录用户上下文中获取用户ID
+        UserDTO currentUser = UserHolder.getUser();
+        if (currentUser == null) {
+            return Result.error("用户未登录，请先登录");
+        }
+        
+        // 设置用户ID和用户名
+        blogs.setUserId(currentUser.getId());
+        blogs.setUsername(currentUser.getUsername());
+        
+        // 如果是要发布，需要对内容进行检测
+        if("published".equals(blogs.getStatus())) {
             // 1,提取内容，去除标签
             String html = blogs.getContent();
             String text = Jsoup.parse(html).text();
@@ -70,8 +88,7 @@ public class BlogsServiceImpl extends ServiceImpl<BlogsMapper, Blogs> implements
                 return Result.error("内容检测失败，请稍后重试");
             }
         }
-        // 通过用户id获取用户名
-        blogs.setUsername(usersMapper.getByUserId(blogs.getUserId()));
+        
         // 上面没有返回说明内容合规
         blogs.setCreatedAt(DateTime.now());
         blogs.setPublishedAt(DateTime.now());

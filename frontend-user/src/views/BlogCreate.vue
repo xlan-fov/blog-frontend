@@ -22,10 +22,12 @@ import { reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useBlogStore } from '@/stores/blog'
+import { useUserStore } from '@/stores/user' // 添加用户存储
 import E from 'wangeditor'
 
 const router = useRouter()
 const blogStore = useBlogStore()
+const userStore = useUserStore() // 实例化用户存储
 
 const form = reactive({
   title: '',
@@ -56,10 +58,19 @@ const handleSubmit = async () => {
     return
   }
 
+  // 检查用户是否已登录
+  if (!userStore.userInfo || !userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    router.push('/login')
+    return
+  }
+
   try {
+    // 不再手动传递userId，让后端从登录上下文中获取
     await blogStore.createBlog({
       title: form.title,
-      content: form.content
+      content: form.content,
+      status: 'draft'
     })
     ElMessage.success('创建成功')
     router.push('/dashboard/blog')

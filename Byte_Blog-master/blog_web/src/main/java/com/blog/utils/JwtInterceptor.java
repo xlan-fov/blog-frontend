@@ -1,21 +1,19 @@
 package com.blog.utils;
 
-
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.auth0.jwt.interfaces.Claim;
 import com.blog.dto.UserDTO;
-import com.blog.entity.Users;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-import static com.blog.utils.RedisConstants.LOGIN_USER_KEY;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static com.blog.utils.RedisConstants.LOGIN_USER_KEY;
 
 /*
  * @Author: guoyuran

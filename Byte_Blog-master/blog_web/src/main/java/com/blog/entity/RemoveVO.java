@@ -1,8 +1,6 @@
 package com.blog.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * @Author: kai.hu
@@ -10,8 +8,6 @@ import lombok.NoArgsConstructor;
  * @Description:
  */
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class RemoveVO {
     private Integer id;
     private String status;

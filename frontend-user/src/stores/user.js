@@ -5,6 +5,7 @@ import { ElMessage } from 'element-plus'
 
 export const useUserStore = defineStore('user', () => {
   const userInfo = ref({
+    id: '', // 添加用户ID字段
     username: '',
     avatar: '',
     bio: '',
@@ -55,6 +56,10 @@ export const useUserStore = defineStore('user', () => {
       console.log('登录响应详情:', res) 
       
       if (res.code === 200 && res.data) {
+        // 从JWT token中解析用户ID，或者从响应中获取
+        const userId = res.data.userId || res.data.id
+        
+        userInfo.value.id = userId // 确保设置用户ID
         userInfo.value.username = res.data.username || username
         userInfo.value.avatar = res.data.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
         userInfo.value.bio = res.data.bio || '这是一个普通用户'
@@ -64,10 +69,19 @@ export const useUserStore = defineStore('user', () => {
         
         // 保存token
         if (res.data.token) {
-          // 检查token格式
           const receivedToken = res.data.token;
           token.value = receivedToken;
           localStorage.setItem('token', receivedToken);
+          
+          // 如果响应中没有用户ID，尝试从token中解析
+          if (!userId) {
+            try {
+              const tokenPayload = JSON.parse(atob(receivedToken.split('.')[1]))
+              userInfo.value.id = tokenPayload.id || tokenPayload.userId
+            } catch (e) {
+              console.warn('无法从token中解析用户ID:', e)
+            }
+          }
         } else {
           console.warn('响应中没有token字段');
           return false;
@@ -76,6 +90,8 @@ export const useUserStore = defineStore('user', () => {
         isLoggedIn.value = true
         userInfo.value.loginAttempts = 0
         saveState() // 保存状态
+        
+        console.log('登录成功，用户ID:', userInfo.value.id)
         
         // 如果用户被封禁，返回封禁状态
         if (userInfo.value.status === 'banned') {
@@ -178,6 +194,7 @@ export const useUserStore = defineStore('user', () => {
     
     // 清理用户信息
     userInfo.value = {
+      id: '', // 清理用户ID
       username: '',
       avatar: '',
       bio: '',

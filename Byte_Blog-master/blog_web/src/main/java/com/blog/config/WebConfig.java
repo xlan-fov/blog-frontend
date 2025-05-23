@@ -25,17 +25,29 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new LoginInterceptor())
-                //.addPathPatterns("/**") // 拦截所有请求
-                .excludePathPatterns("/users/login",
-                        "/users/register",
-                        "/users/captcha",
-                        "/users/slider-image",
-                        "/users/slider-validate",
-                        "/users/logout").order(1); // 登录、注册不拦截
-
+        // JWT拦截器先执行，用于解析token并设置用户信息
         registry.addInterceptor(new JwtInterceptor(stringRedisTemplate))
-                .addPathPatterns("./**").order(0);
+                .addPathPatterns("/**")
+                .excludePathPatterns(
+                        "/api/users/registerByname",
+                        "/api/users/loginByname", 
+                        "/api/users/loginByphone",
+                        "/api/users/adminLogin",
+                        "/api/users/captcha",
+                        "/api/users/code",
+                        "/api/users/slider-image",
+                        "/api/users/slider-validate",
+                        "/api/health"
+                ).order(0);
+
+        // 登录拦截器后执行，检查是否需要登录
+        registry.addInterceptor(new LoginInterceptor())
+                .addPathPatterns("/api/blogs/**")
+                .excludePathPatterns(
+                        "/api/users/**",
+                        "/api/health",
+                        "/api/common/upload"
+                ).order(1);
     }
 
     /**

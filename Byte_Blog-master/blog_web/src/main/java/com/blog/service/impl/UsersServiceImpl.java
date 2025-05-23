@@ -241,7 +241,16 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         // 清除登录失败计数
         stringRedisTemplate.delete(failKey);
 
-        return Result.success(Collections.singletonMap("token", token));
+        // 返回包含用户信息的数据
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("token", token);
+        responseData.put("id", user.getId()); // 确保返回用户ID
+        responseData.put("userId", user.getId()); // 兼容不同的字段名
+        responseData.put("username", user.getUsername());
+        responseData.put("role", user.getRole());
+        responseData.put("status", user.getIsBanned() == 1 ? "banned" : "normal");
+
+        return Result.success(responseData);
     }
 
     @Override

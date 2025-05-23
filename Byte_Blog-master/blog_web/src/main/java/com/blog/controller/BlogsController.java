@@ -38,7 +38,7 @@ import java.nio.file.*;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api") // 这里已经有/api前缀
+@RequestMapping("/api")
 public class BlogsController {
     @Autowired
     private IBlogsService blogsService;
@@ -52,7 +52,7 @@ public class BlogsController {
      * @Date: 2025-5-5
      * @Description: 创建Blog(包括发布,或者存为草稿)
      */
-    @PostMapping("/blogs/addBlog") // 修复：去掉多余的blogs前缀
+    @PostMapping("/blogs/addBlog")
     public Result<?> addBlog(@RequestBody Blogs blogs){
         log.info("添加Blog：{}" , blogs);
         Result<?> result = blogsService.addBlog(blogs);
@@ -64,7 +64,7 @@ public class BlogsController {
      * @Date: 2025-5-6
      * @Description: 通过BlogsId获取Blog
      */
-    @GetMapping("/getBlogs/{id}")
+    @GetMapping("/blogs/{id}")
     public Result<?> getBlog(@PathVariable Integer id){
         log.info("获取Blog");
         Result<?> result = blogsService.getBlog(id);
@@ -75,9 +75,10 @@ public class BlogsController {
      * @Date: 2025-5-6
      * @Description: 修改Blog
      */
-    @PutMapping("/updateBlogs")
-    public Result<?> editBlog(@RequestBody Blogs blogs){
+    @PutMapping("/blogs/{id}")
+    public Result<?> editBlog(@PathVariable Integer id, @RequestBody Blogs blogs){
         log.info("修改Blog:{}" , blogs);
+        blogs.setId(id);
         Result<?> result = blogsService.updateBlogs(blogs);
         return result;
     }

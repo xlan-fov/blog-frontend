@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { blogApi } from '@/api'
+import { useUserStore } from '@/stores/user' // 添加用户存储导入
 
 export const useBlogStore = defineStore('blog', {
   state: () => ({
@@ -98,6 +99,7 @@ export const useBlogStore = defineStore('blog', {
     async createBlog(blogData) {
       this.loading = true
       try {
+        // 后端会从登录上下文中获取用户ID，不需要前端传递
         const response = await blogApi.createBlog(blogData)
         
         if (response && response.data) {
