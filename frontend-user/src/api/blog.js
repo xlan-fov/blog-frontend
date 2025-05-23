@@ -49,6 +49,7 @@ export default {
    */
   async getBlogById(id) {
     try {
+      console.log('正在请求博客详情，ID:', id, '路径:', API_PATHS.BLOGS.GET.replace('{id}', id))
       const response = await get(API_PATHS.BLOGS.GET.replace('{id}', id))
       return response
     } catch (error) {

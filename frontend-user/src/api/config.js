@@ -25,7 +25,7 @@ export const API_PATHS = {
     BLOGS: {
         // 博客相关接口 - 修复路径
         LIST: '/api/blogs',
-        GET: '/api/getBlogs/{id}', 
+        GET: '/api/blogs/{id}', // 修复：从 /api/getBlogs/{id} 改为 /api/blogs/{id}
         CREATE: '/api/blogs/addBlog',
         UPDATE: '/api/updateBlogs',
         DELETE: '/api/deleteBlogs/{id}',

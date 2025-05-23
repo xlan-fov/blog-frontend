@@ -66,9 +66,16 @@ public class BlogsController {
      */
     @GetMapping("/blogs/{id}")
     public Result<?> getBlog(@PathVariable Integer id){
-        log.info("获取Blog");
+        log.info("获取Blog，ID: {}", id);
         Result<?> result = blogsService.getBlog(id);
         return result;
+    }
+    
+    // 添加一个备用路径以兼容旧的前端请求
+    @GetMapping("/getBlogs/{id}")
+    public Result<?> getBlogCompat(@PathVariable Integer id){
+        log.info("获取Blog（兼容路径），ID: {}", id);
+        return getBlog(id);
     }
     /*
      * @Author: kai.hu

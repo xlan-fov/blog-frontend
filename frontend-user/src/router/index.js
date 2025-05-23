@@ -121,6 +121,24 @@ const router = createRouter({
           meta: { requiresAuth: true, requiresAdmin: true }
         },
         {
+          path: 'blog-management/create',
+          name: 'admin-blog-create',
+          component: () => import('@/views/admin/AdminBlogCreate.vue'),
+          meta: { requiresAuth: true, requiresAdmin: true }
+        },
+        {
+          path: 'blog-management/edit/:id',
+          name: 'admin-blog-edit',
+          component: () => import('@/views/admin/AdminBlogEdit.vue'),
+          meta: { requiresAuth: true, requiresAdmin: true }
+        },
+        {
+          path: 'blog-management/view/:id',
+          name: 'admin-blog-view',
+          component: () => import('@/views/admin/AdminBlogView.vue'),
+          meta: { requiresAuth: true, requiresAdmin: true }
+        },
+        {
           path: 'account-management',
           name: 'account-management',
           component: AccountManagement,
