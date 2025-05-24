@@ -27,6 +27,23 @@ export default {
   },
 
   /**
+   * 更新用户状态（封禁/解封）- AdminController接口
+   * @param {Number} userId - 用户ID
+   * @param {Object} data - 状态数据
+   */
+  updateUserStatus(userId, data) {
+    return put(API_PATHS.ADMIN.UPDATE_USER_STATUS.replace('{id}', userId), data)
+  },
+
+  /**
+   * 删除用户 - AdminController接口
+   * @param {Number} userId - 用户ID
+   */
+  deleteUser(userId) {
+    return del(API_PATHS.ADMIN.DELETE_USER.replace('{id}', userId))
+  },
+
+  /**
    * 封禁用户
    * @param {String} username - 用户名
    * @param {Object} data - 封禁原因等数据
@@ -81,6 +98,75 @@ export default {
    */
   addSensitiveWord(word) {
     return post(API_PATHS.ADMIN.ADD_SENSITIVE_WORD.replace('{sensitiveWord}', word))
+  },
+
+  /**
+   * 删除敏感词
+   * @param {String} word - 敏感词
+   */
+  deleteSensitiveWord(word) {
+    return post(API_PATHS.ADMIN.DELETE_SENSITIVE_WORD.replace('{sensitiveWord}', word))
+  },
+
+  /**
+   * 批量添加敏感词
+   * @param {Array} words - 敏感词数组
+   */
+  addSensitiveWords(words) {
+    return post(API_PATHS.ADMIN.ADD_SENSITIVE_WORDS, { sensitiveWord: words })
+  },
+
+  /**
+   * 批量删除敏感词
+   * @param {Array} words - 敏感词数组
+   */
+  deleteSensitiveWords(words) {
+    return post(API_PATHS.ADMIN.DELETE_SENSITIVE_WORDS, { sensitiveWord: words })
+  },
+
+  /**
+   * 获取失败登录列表
+   */
+  getFailLoginList() {
+    return get(API_PATHS.ADMIN.GET_FAIL_LOGIN_LIST)
+  },
+
+  /**
+   * 获取异常博客列表
+   */
+  getAnomaliesBlogList() {
+    return get(API_PATHS.ADMIN.GET_ANOMALIES_BLOG_LIST)
+  },
+
+  /**
+   * 获取操作日志
+   * @param {Object} params - 查询参数
+   */
+  getLogs(params) {
+    return get(API_PATHS.ADMIN.LOGS, params)
+  },
+
+  /**
+   * 获取统计概览
+   */
+  getStatsOverview() {
+    return get(API_PATHS.ADMIN.STATS_OVERVIEW)
+  },
+
+  /**
+   * 获取用户活跃度统计
+   * @param {String} period - 时间段（day/week/month/year）
+   */
+  getUsersActive(period = 'week') {
+    return get(API_PATHS.ADMIN.USERS_ACTIVE, { period })
+  },
+
+  /**
+   * 获取内容统计
+   * @param {String} period - 时间段（day/week/month/year）
+   */
+  getContentsStats(period = 'week') {
+    return get(API_PATHS.ADMIN.CONTENTS_STATS, { period })
   },
 
   /**

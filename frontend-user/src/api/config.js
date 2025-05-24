@@ -37,6 +37,8 @@ export const API_PATHS = {
     ADMIN: {
         // 管理员相关接口
         LOGIN: '/api/users/adminLogin',
+        
+        // AdminActionsController 接口
         USERS: '/api/admin/users',
         USER_INFO: '/api/admin/users/{username}',
         KICK_USER: '/api/admin/kickUser',
@@ -60,7 +62,12 @@ export const API_PATHS = {
         LOGS: '/api/admin/logs',
         STATS_OVERVIEW: '/api/admin/stats/overview',
         USERS_ACTIVE: '/api/admin/stats/users/active',
-        CONTENTS_STATS: '/api/admin/stats/contents'
+        CONTENTS_STATS: '/api/admin/stats/contents',
+        
+        // AdminController 接口（新增）
+        UPDATE_USER_STATUS: '/api/admin-api/users/{id}/status',
+        DELETE_USER: '/api/admin-api/users/{id}',
+        ADMIN_USERS: '/api/admin-api/users'
     },
     COMMON: {
         UPLOAD: '/api/common/upload'
