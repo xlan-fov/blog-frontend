@@ -1,3 +1,8 @@
+<!--
+重要接口：
+handleLogin()
+handlePhoneLogin()
+-->
 <template>
   <div class="login-container">
     <el-card class="login-card">

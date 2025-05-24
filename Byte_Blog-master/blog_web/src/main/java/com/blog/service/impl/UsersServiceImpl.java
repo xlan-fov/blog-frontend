@@ -170,6 +170,15 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         // 获取验证码ID
         String captchaId = loginDTO.getCaptchaId();
 
+        //校验验证码
+        String redisKey = CAPTCHA_PREFIX + captchaId;
+        String code = stringRedisTemplate.opsForValue().get(redisKey);
+        if (code == null || !code.equalsIgnoreCase(captcha)) {
+            stringRedisTemplate.opsForValue().increment(failKey);
+            stringRedisTemplate.expire(failKey, 1, TimeUnit.MINUTES);
+            return Result.error("验证码错误或已过期");
+
+
         String cacheKey = stringRedisTemplate.opsForValue().get(failKey);
 
         //登陆失败次数统计
@@ -193,14 +202,7 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
             return Result.error("密码错误");
         }
 
-        //校验验证码
-        String redisKey = CAPTCHA_PREFIX + captchaId;
-        String code = stringRedisTemplate.opsForValue().get(redisKey);
-        if (code == null || !code.equalsIgnoreCase(captcha)) {
-            stringRedisTemplate.opsForValue().increment(failKey);
-            stringRedisTemplate.expire(failKey, 1, TimeUnit.MINUTES);
-            return Result.error("验证码错误或已过期");
-        }
+
 
         if (failCount >= 3) {
             return Result.error("请先进行滑动验证！");
