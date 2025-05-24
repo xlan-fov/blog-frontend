@@ -105,7 +105,7 @@ export default {
    * @param {String} id - 文章ID
    */
   publishArticle(id) {
-    return post(API_PATHS.ADMIN.PUBLISH_ARTICLE.replace('{id}', id))
+    return post(API_PATHS.ADMIN.PUBLISH_ARTICLE.replace('{blogId}', id))
   },
 
   /**
