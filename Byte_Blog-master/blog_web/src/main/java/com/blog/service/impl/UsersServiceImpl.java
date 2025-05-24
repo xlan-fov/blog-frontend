@@ -177,7 +177,7 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
             stringRedisTemplate.opsForValue().increment(failKey);
             stringRedisTemplate.expire(failKey, 1, TimeUnit.MINUTES);
             return Result.error("验证码错误或已过期");
-
+        }
 
         String cacheKey = stringRedisTemplate.opsForValue().get(failKey);
 
