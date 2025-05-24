@@ -103,11 +103,11 @@
     >
       <el-descriptions :column="2" border>
         <el-descriptions-item label="用户名">{{ selectedAccount.username }}</el-descriptions-item>
-        <el-descriptions-item label="邮箱">{{ selectedAccount.email }}</el-descriptions-item>
-        <el-descriptions-item label="手机号">{{ selectedAccount.phone }}</el-descriptions-item>
-        <el-descriptions-item label="注册时间">{{ selectedAccount.registerTime }}</el-descriptions-item>
-        <el-descriptions-item label="最后登录时间">{{ selectedAccount.lastLoginTime }}</el-descriptions-item>
-        <el-descriptions-item label="最后登录IP">{{ selectedAccount.lastLoginIp }}</el-descriptions-item>
+        <el-descriptions-item label="邮箱">{{ selectedAccount.email || '未设置' }}</el-descriptions-item>
+        <el-descriptions-item label="手机号">{{ selectedAccount.phone || '未设置' }}</el-descriptions-item>
+        <el-descriptions-item label="注册时间">{{ formatDateTime(selectedAccount.registerTime || selectedAccount.createdAt) }}</el-descriptions-item>
+        <el-descriptions-item label="最后登录时间">{{ formatDateTime(selectedAccount.lastLoginTime) }}</el-descriptions-item>
+        <el-descriptions-item label="最后登录IP">{{ selectedAccount.lastLoginIp || '未记录' }}</el-descriptions-item>
         <el-descriptions-item label="账号状态">
           <el-tag :type="getStatusType(selectedAccount.status)">
             {{ getStatusText(selectedAccount.status) }}
@@ -123,6 +123,21 @@
       <div v-if="selectedAccount.banReason" class="ban-info">
         <div class="ban-title">封禁原因</div>
         <div class="ban-content">{{ selectedAccount.banReason }}</div>
+      </div>
+      
+      <!-- 添加封禁历史记录 -->
+      <div v-if="selectedAccount.banHistory && selectedAccount.banHistory.length > 0" class="ban-info" style="margin-top: 16px;">
+        <div class="ban-title">封禁历史</div>
+        <el-timeline>
+          <el-timeline-item
+            v-for="(item, index) in selectedAccount.banHistory"
+            :key="index"
+            :timestamp="formatDateTime(item.createdAt)"
+            :type="item.action === 'ban' ? 'danger' : 'success'"
+          >
+            {{ item.action === 'ban' ? '封禁' : '解封' }}: {{ item.reason || '未提供原因' }}
+          </el-timeline-item>
+        </el-timeline>
       </div>
     </el-dialog>
     
@@ -330,19 +345,22 @@ const viewAccountDetail = async (account) => {
     const res = await adminApi.getUserInfo(account.username)
     
     if (res.code === 200 && res.data) {
-      ElMessageBox.alert(
-        `
-        <p><strong>用户名:</strong> ${res.data.username}</p>
-        <p><strong>注册时间:</strong> ${res.data.registerTime}</p>
-        <p><strong>用户状态:</strong> ${res.data.status === 'banned' ? '已封禁' : '正常'}</p>
-        <p><strong>简介:</strong> ${res.data.bio || '暂无'}</p>
-        `,
-        '用户详情',
-        {
-          dangerouslyUseHTMLString: true,
-          confirmButtonText: '关闭'
-        }
-      )
+      console.log('获取到用户详情:', res.data);
+      
+      // 更新 selectedAccount
+      selectedAccount.value = {
+        ...res.data,
+        // 确保有正确的状态字段
+        status: res.data.isBanned !== undefined 
+          ? (res.data.isBanned === 1 ? 'banned' : 'normal') 
+          : res.data.status || 'normal',
+        loginStatus: res.data.isLoggedIn !== undefined 
+          ? res.data.isLoggedIn === 1 
+          : res.data.loginStatus || false
+      }
+      
+      // 打开详情对话框
+      dialogVisible.value = true
     } else {
       ElMessage.error(res.message || '获取用户详情失败')
     }
