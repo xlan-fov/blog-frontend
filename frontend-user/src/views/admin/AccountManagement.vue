@@ -217,6 +217,7 @@ const fetchAccounts = async () => {
       // 转换数据格式，确保每个用户对象都有正确的 status 和 loginStatus 字段
       const userList = res.data.list || [];
       accounts.value = userList.map(user => {
+        console.log('原始用户数据:', user);
         // 检查并转换字段
         return {
           ...user,
@@ -227,7 +228,10 @@ const fetchAccounts = async () => {
           // 根据 isLoggedIn 字段设置登录状态，如果不存在则保持原状态
           loginStatus: user.isLoggedIn !== undefined 
             ? user.isLoggedIn === 1 
-            : user.loginStatus || false
+            : user.loginStatus || false,
+          // 确保时间字段映射正确
+          registerTime: user.registerTime || user.created_at || user.createdAt || user.create_time || user.createTime,
+          lastLoginTime: user.lastLoginTime || user.last_login_time || user.lastLoginTime || user.last_login
         };
       });
       total.value = res.data.total || 0;
@@ -345,19 +349,63 @@ const viewAccountDetail = async (account) => {
     const res = await adminApi.getUserInfo(account.username)
     
     if (res.code === 200 && res.data) {
-      console.log('获取到用户详情:', res.data);
+      console.log('获取到用户详情(原始数据):', res.data);
+      
+      // 正确的字段映射表 - 将后端返回的字段名映射到前端期望的字段名
+      const fieldMappings = {
+        // 后端SQL别名 -> 前端期望字段名
+        createTime: 'createdAt',        // 注册时间
+        lastLoginTime: 'lastLoginTime', // 最后登录时间（保持不变）
+        
+        // 处理可能的其他字段名格式
+        created_at: 'createdAt',
+        last_login_time: 'lastLoginTime',
+        last_login_ip: 'lastLoginIp',
+        is_banned: 'isBanned',
+        is_logged_in: 'isLoggedIn',
+        ban_reason: 'banReason',
+        
+        // 直接映射的字段
+        username: 'username',
+        phone: 'phone',
+        status: 'status',
+        email: 'email',
+        articleCount: 'articleCount'
+      };
+      
+      // 创建映射后的数据对象
+      const mappedData = {};
+      
+      // 复制并映射所有字段
+      Object.keys(res.data).forEach(key => {
+        console.log(`处理字段: ${key} = ${res.data[key]}`);
+        const mappedKey = fieldMappings[key] || key;
+        mappedData[mappedKey] = res.data[key];
+      });
+      
+      console.log('字段映射后的数据:', mappedData);
+      
+      // 处理状态转换
+      let userStatus = 'normal';
+      if (mappedData.status === 'banned') {
+        userStatus = 'banned';
+      } else if (mappedData.status === 'normal') {
+        userStatus = 'normal';
+      }
       
       // 更新 selectedAccount
       selectedAccount.value = {
-        ...res.data,
-        // 确保有正确的状态字段
-        status: res.data.isBanned !== undefined 
-          ? (res.data.isBanned === 1 ? 'banned' : 'normal') 
-          : res.data.status || 'normal',
-        loginStatus: res.data.isLoggedIn !== undefined 
-          ? res.data.isLoggedIn === 1 
-          : res.data.loginStatus || false
+        ...mappedData,
+        // 确保状态字段正确
+        status: userStatus,
+        loginStatus: false, // 详情页面暂时没有在线状态信息
+        // 确保时间字段存在并正确命名
+        createdAt: mappedData.createdAt,
+        registerTime: mappedData.createdAt, // 注册时间就是创建时间
+        lastLoginTime: mappedData.lastLoginTime
       }
+      
+      console.log('最终显示数据:', selectedAccount.value);
       
       // 打开详情对话框
       dialogVisible.value = true
