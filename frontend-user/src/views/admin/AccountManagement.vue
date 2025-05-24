@@ -25,8 +25,16 @@
         <el-table-column prop="username" label="用户名" width="120" />
         <el-table-column prop="email" label="邮箱" width="180" />
         <el-table-column prop="phone" label="手机号" width="120" />
-        <el-table-column prop="registerTime" label="注册时间" width="180" />
-        <el-table-column prop="lastLoginTime" label="最后登录时间" width="180" />
+        <el-table-column label="注册时间" width="180">
+          <template #default="scope">
+            {{ formatDateTime(scope.row.registerTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="最后登录时间" width="180">
+          <template #default="scope">
+            {{ formatDateTime(scope.row.lastLoginTime) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="loginStatus" label="登录状态" width="100">
           <template #default="scope">
             <el-tag :type="scope.row.loginStatus ? 'success' : 'info'">
@@ -371,6 +379,32 @@ const handleSizeChange = (size) => {
 const handleCurrentChange = (page) => {
   currentPage.value = page
   fetchAccounts()
+}
+
+// 格式化日期时间
+const formatDateTime = (dateTime) => {
+  if (!dateTime) return '暂无记录';
+  
+  try {
+    const date = new Date(dateTime);
+    
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) return dateTime;
+    
+    // 格式化为 YYYY-MM-DD HH:MM:SS
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/\//g, '-');
+  } catch (error) {
+    console.error('日期格式化错误:', error);
+    return dateTime; // 出错时返回原始值
+  }
 }
 
 // 初始化
