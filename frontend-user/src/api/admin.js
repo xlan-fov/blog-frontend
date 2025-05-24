@@ -123,7 +123,7 @@ export default {
    * @param {Object} data - 删除原因等数据
    */
   deleteArticle(id, data) {
-    return del(API_PATHS.ADMIN.DELETE_ARTICLE.replace('{id}', id), data)
+    return del(API_PATHS.ADMIN.DELETE_ARTICLE.replace('{blogId}', id), data)
   },
 
   /**

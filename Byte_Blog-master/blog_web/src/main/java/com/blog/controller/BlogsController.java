@@ -149,13 +149,17 @@ public class BlogsController {
      * @Author: kai.hu
      * @Date: 2025-5-19
      * @Description: 管理员删除博客
+     *
+     * 与AdminActionsController中的deleteBlog方法冲突
      */
+    /*
     @DeleteMapping("/admin/articles/{Id}")
     public Result<?> deleteBlog(@PathVariable Integer Id , @RequestParam String reason){
         log.info("删除Blog");
         Result<?> result = blogsService.deleteBlog(Id);
         return result;
     }
+    */
     /*
      * @Author: kai.hu
      * @Date: 2025-5-6
