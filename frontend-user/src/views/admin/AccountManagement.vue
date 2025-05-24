@@ -191,8 +191,25 @@ const fetchAccounts = async () => {
     const res = await adminApi.getUsers(params);
     
     if (res.code === 200 && res.data) {
-      accounts.value = res.data.list || [];
+      // 转换数据格式，确保每个用户对象都有正确的 status 和 loginStatus 字段
+      const userList = res.data.list || [];
+      accounts.value = userList.map(user => {
+        // 检查并转换字段
+        return {
+          ...user,
+          // 根据 isBanned 字段设置状态，如果不存在则保持原状态
+          status: user.isBanned !== undefined 
+            ? (user.isBanned === 1 ? 'banned' : 'normal') 
+            : user.status || 'normal',
+          // 根据 isLoggedIn 字段设置登录状态，如果不存在则保持原状态
+          loginStatus: user.isLoggedIn !== undefined 
+            ? user.isLoggedIn === 1 
+            : user.loginStatus || false
+        };
+      });
       total.value = res.data.total || 0;
+      
+      console.log('转换后的用户列表数据:', accounts.value);
     } else {
       ElMessage.error(res.message || '获取用户列表失败');
       accounts.value = [];
@@ -243,6 +260,8 @@ const kickAccount = (account) => {
 const banAccount = (account) => {
   banForm.value.accountId = account.id
   banForm.value.reason = ''
+  // 保存当前选中的账号信息
+  selectedAccount.value = account
   banDialogVisible.value = true
 }
 
