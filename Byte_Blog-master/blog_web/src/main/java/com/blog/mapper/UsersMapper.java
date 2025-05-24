@@ -23,7 +23,7 @@ import java.util.Map;
 @Repository
 @Mapper
 public interface UsersMapper extends BaseMapper<Users> {
-    @Select("SELECT id, username, password_hash AS password, phone, avatar_url AS avatarUrl, bio, role, is_banned AS isBanned, is_logged_in AS isLoggedIn, is_deleted, deleted_by, last_login_time AS lastLoginTime, created_at AS createdAt FROM users WHERE username = #{username} and is_banned = 0 and is_deleted = 0")
+    @Select("SELECT id, username, password_hash AS password, phone, avatar_url AS avatarUrl, bio, role, is_banned AS isBanned, is_logged_in AS isLoggedIn, is_deleted, deleted_by, last_login_time AS lastLoginTime, created_at AS createdAt FROM users WHERE username = #{username}  and is_deleted = 0")
     Users selectByUsername(@Param("username") String username);
 
     @Update("Update users set is_logged_in = 1 where username = #{username}")
