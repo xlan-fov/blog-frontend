@@ -108,7 +108,8 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
             String redisKey = CAPTCHA_PREFIX + captchaId;
             String code = stringRedisTemplate.opsForValue().get(redisKey);
             log.debug("从Redis获取的验证码: {}, 提交的验证码: {}", code, captcha);
-            if (code == null || code.equalsIgnoreCase(captcha)) {
+            if (code == null || !code.equalsIgnoreCase(captcha)) {
+                log.info("验证码校验失败: Redis验证码为 {}, 提交验证码为 {}", code, captcha);
                 return Result.error("验证码错误或已过期");
             }
 
@@ -409,7 +410,8 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         }
 
         // 符合，生成验证码
-        String code = RandomUtil.randomString(6);
+        // 由于短信服务商限制，验证码只能是6位数字
+        String code = RandomUtil.randomNumbers(6);
         boolean result = SMSUtil.sendSms(phone, code);
         if(result){
             // 发送验证码

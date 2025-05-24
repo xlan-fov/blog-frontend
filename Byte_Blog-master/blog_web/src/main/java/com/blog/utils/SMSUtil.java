@@ -1,11 +1,14 @@
 package com.blog.utils;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 public class SMSUtil {
     public static boolean sendSms(String phone, String code) {
         String host = "https://send.market.alicloudapi.com";
@@ -24,11 +27,12 @@ public class SMSUtil {
 
         try {
             HttpResponse response = HttpUtil.doPost(host, path, method, headers, new HashMap<>(), bodys);
-            System.out.println("SMS发送成功");
+            log.info(EntityUtils.toString(response.getEntity()));
+            log.info("SMS发送成功");
             return response.getStatusLine().getStatusCode() == 200;
         } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("SMS发送失败");
+            log.error("SMS发送失败");
             return false;
         }
     }

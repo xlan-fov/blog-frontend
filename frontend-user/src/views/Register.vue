@@ -194,8 +194,10 @@ const handleCaptchaChange = (newCaptchaId) => {
 
 const handleRegister = async () => {
   try {
+    // 判断表单是否为空（账号密码、密码确认）
     await registerFormRef.value.validate()
     
+    // 判断验证码输入框是否为空
     if (!registerForm.captcha) {
       ElMessage.error('请输入验证码')
       return
