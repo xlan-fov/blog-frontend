@@ -375,7 +375,11 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
         }
         //检查重复
         if (sensitiveWordsMapper.countByWord(sensitiveWord) > 0) {
-            return Result.error("敏感词已存在");
+            SensitiveWords word = sensitiveWordsMapper.selectByWord(sensitiveWord);
+            word.setIsDeleted(0);
+            word.setDeletedBy(null);
+            sensitiveWordsMapper.updateById(word);
+            return Result.success("敏感词已存在");
         }
         SensitiveWords newSensitiveWord = new SensitiveWords();
         newSensitiveWord.setWord(sensitiveWord);
