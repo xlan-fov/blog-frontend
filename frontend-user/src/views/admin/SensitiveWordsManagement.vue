@@ -42,13 +42,14 @@
         </el-table-column>
       </el-table>
 
-      <div class="pagination" v-if="totalWords > pageSize">
+      <div class="pagination">
         <el-pagination
           background
-          layout="total, prev, pager, next"
+          layout="total, sizes, prev, pager, next, jumper"
           :total="totalWords"
           :page-size="pageSize"
           :current-page="currentPage"
+          @size-change="handleSizeChange"
           @current-change="handlePageChange"
         />
       </div>
@@ -346,6 +347,14 @@ const handleSelectionChange = (selection) => {
 // 分页
 const handlePageChange = (page) => {
   currentPage.value = page
+  // 无需重新获取数据，computed property已处理分页
+}
+
+// 页面大小变化处理
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1 // 重置为第一页
+  // 无需重新获取数据，computed property已处理分页
 }
 
 // 格式化日期时间
