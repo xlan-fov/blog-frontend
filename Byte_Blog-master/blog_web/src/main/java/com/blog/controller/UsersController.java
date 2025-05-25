@@ -122,5 +122,14 @@ public class UsersController {
         return usersService.updateProfile(userProfileDTO);
     }
 
+    @PutMapping("/password/update")
+    public Result<?> updatePassword(@RequestBody UserPasswdChangeDTO userPasswdChangeDTO){
+        log.info("用户修改密码：{}", UserHolder.getUser().getId());
+        return usersService.updatePassword(userPasswdChangeDTO);
+    }
+
+    
+
+
 }
 

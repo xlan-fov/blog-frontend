@@ -29,6 +29,7 @@ export const API_PATHS = {
         CHANGE_PHONE: '/api/users/phone/change',
         LOGIN_LOGS: '/api/users/login/logs',
         UPLOAD_AVATAR: '/api/users/avatar/upload',
+        CHANGE_PASSWORD: '/api/users/password/update',
     },
     BLOGS: {
         // 博客相关接口 - 修复路径

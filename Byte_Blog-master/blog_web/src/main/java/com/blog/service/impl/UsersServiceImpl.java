@@ -633,4 +633,32 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
             return Result.error("更新失败");
         }
     }
+    @Override
+    public Result<?> updatePassword(UserPasswdChangeDTO userPasswdChangeDTO){
+        // 判断当前登录用户是否是要修改的用户
+        if (!Objects.equals(UserHolder.getUser().getId(), userPasswdChangeDTO.getId())) {
+            return Result.error("不能修改其他用户密码");
+        }
+        // 获取当前登录用户
+        String currentPasswd = userMapper.getPasswordById(userPasswdChangeDTO.getId());
+        // 判断旧密码是否正确
+//        System.out.println("当前用户密码：" + currentUser.getPassword());
+//        System.out.println("输出的旧密码：" + userPasswdChangeDTO.getOldPassword());
+        if (!passwordEncoder.matches(userPasswdChangeDTO.getOldPassword(), currentPasswd)) {
+            return Result.error("旧密码错误");
+        }
+        // 判断新密码是否符合规范
+        String newPassword = userPasswdChangeDTO.getNewPassword();
+        String passwordPattern = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{6,16}$";
+        if (!newPassword.matches(passwordPattern)) {
+            return Result.error("新密码不符合规范");
+        }
+        // 密码加密
+        String encodedPwd = passwordEncoder.encode(newPassword);
+        // 更新用户密码
+        // 更新数据库
+        userMapper.updateUserPassword(userPasswdChangeDTO.getId(), encodedPwd);
+        // 更新成功
+        return Result.success("密码修改成功");
+    }
 }

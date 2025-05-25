@@ -39,4 +39,6 @@ public interface IUsersService extends IService<Users> {
     Result<?> getProfile();
 
     Result<?> updateProfile(UserProfileDTO userProfileDTO);
+
+    Result<?> updatePassword(UserPasswdChangeDTO userPasswdChangeDTO);
 }

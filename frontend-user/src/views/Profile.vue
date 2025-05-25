@@ -251,7 +251,12 @@ const passwordRules = {
   ],
   newPassword: [
     { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6个字符', trigger: 'blur' }
+    { min: 6, message: '密码长度不能少于6个字符', trigger: 'blur' },
+    { 
+      pattern: /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,16}$/,
+      message: '密码必须包含数字、小写和大写字母，长度6-16位',
+      trigger: 'blur'
+    }
   ],
   confirmPassword: [
     { required: true, message: '请确认新密码', trigger: 'blur' },
@@ -361,6 +366,7 @@ const changePassword = async () => {
     submitting.value = true
     try {
       const res = await changePasswordApi({
+        id: userStore.userInfo.id,
         oldPassword: passwordForm.oldPassword,
         newPassword: passwordForm.newPassword
       })
@@ -372,12 +378,14 @@ const changePassword = async () => {
         passwordForm.oldPassword = ''
         passwordForm.newPassword = ''
         passwordForm.confirmPassword = ''
+        // 重置表单验证状态
+        passwordFormRef.value.resetFields()
       } else {
         ElMessage.error(res.message || '密码修改失败')
       }
     } catch (error) {
       console.error('修改密码失败:', error)
-      ElMessage.error('密码修改失败')
+      ElMessage.error(error.response?.data?.message || '密码修改失败')
     } finally {
       submitting.value = false
     }

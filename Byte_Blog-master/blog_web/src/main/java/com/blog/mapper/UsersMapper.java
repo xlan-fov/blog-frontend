@@ -123,6 +123,8 @@ public interface UsersMapper extends BaseMapper<Users> {
     @Select("SELECT * FROM users WHERE id = #{id} AND is_deleted = 0")
     Users selectById(@Param("id") Integer id);
 
+    @Select("SELECT password_hash as password FROM users WHERE id = #{id}")
+    String getPasswordById(@Param("id") Integer id);
     /**
      * 更新用户状态
      */

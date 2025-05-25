@@ -257,12 +257,24 @@ export const adminLogin = async (params) => {
 /**
  * 修改密码
  * @param {Object} data - 修改密码数据
- * @param {string} data.oldPassword - 旧密码
+ * @param {string} data.id - 用户ID
+ * @param {string} data.oldPassword - 原密码
  * @param {string} data.newPassword - 新密码
  * @returns {Promise} 返回修改结果
  */
-export const changePassword = (data) => {
-    return post(API_PATHS.USERS.CHANGE_PASSWORD, data)
+export const changePassword = async (data) => {
+    try {
+        const response = await request.put(API_PATHS.USERS.CHANGE_PASSWORD, {
+            id: data.id,
+            oldPassword: data.oldPassword,
+            newPassword: data.newPassword
+        });
+        return response;
+    } catch (error) {
+        console.error('修改密码失败:', error);
+        ElMessage.error(error.response?.data?.message || '修改密码失败');
+        throw error;
+    }
 }
 
 // 确保在默认导出中包含新方法

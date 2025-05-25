@@ -12,11 +12,17 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   config => {
+    // 确保config和url存在
+    if (!config || !config.url) {
+      console.error('请求配置或URL未定义:', config);
+      return Promise.reject(new Error('请求配置错误'));
+    }
+
     console.log(`DEBUG: 请求URL: ${config.url}, 方法: ${config.method}, 数据:`, config.data || config.params);
 
     // 对于验证码等公开接口，不需要token验证
     const publicPaths = ['/api/users/captcha', '/api/users/registerByname', '/api/users/loginByname']
-    const isPublicPath = publicPaths.some(path => config.url.includes(path))
+    const isPublicPath = publicPaths.some(path => config.url && config.url.includes(path))
 
     if (!isPublicPath) {
       // 从localStorage获取token并添加到请求头
