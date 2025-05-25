@@ -58,7 +58,7 @@
             :disabled="!isEditing"
           >
             <el-form-item label="用户名">
-              <el-input v-model="profileForm.username" disabled />
+              <el-input v-model="profileForm.username" :disabled="!isEditing" />
             </el-form-item>
             
             
@@ -365,12 +365,14 @@ const saveProfile = async () => {
   submitting.value = true
   try {
     const res = await adminApi.updateAdminProfile({
+      username: profileForm.username,
       phone: profileForm.phone,
       bio: profileForm.bio
     })
     
     if (res.code === 200) {
       // 更新本地数据
+      adminProfile.username = profileForm.username
       adminProfile.phone = profileForm.phone
       adminProfile.bio = profileForm.bio
       

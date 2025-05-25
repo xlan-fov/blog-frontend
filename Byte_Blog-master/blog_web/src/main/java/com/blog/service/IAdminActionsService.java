@@ -70,7 +70,7 @@ public interface IAdminActionsService extends IService<AdminActions> {
     /**
      * 更新管理员个人资料
      */
-    Result<?> updateAdminProfile(String username, String phone, String bio);
+    Result<?> updateAdminProfile(String username, String newUsername, String phone, String bio);
 
     /**
      * 修改管理员密码

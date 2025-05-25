@@ -313,12 +313,12 @@ public class AdminActionsController {
         } else if (!userMapper.getRoleById(currentUser.getId()).equals("admin")) {
             return Result.error("无权更新管理员资料");
         }
-        
+        String newUsername = (String) profileData.get("username");
         String phone = (String) profileData.get("phone");
         String bio = (String) profileData.get("bio");
         
         // 调用新增的服务方法更新管理员资料
-        return adminActionsService.updateAdminProfile(currentUser.getUsername(), phone, bio);
+        return adminActionsService.updateAdminProfile(currentUser.getUsername(), newUsername, phone, bio);
     }
     
     /**

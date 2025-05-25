@@ -632,7 +632,7 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
     /**
      * 更新管理员个人资料
      */
-    public Result<?> updateAdminProfile(String username,  String phone, String bio) {
+    public Result<?> updateAdminProfile(String username, String newUsername, String phone, String bio) {
         Users admin = userMapper.selectByUsername(username);
         if (admin == null) {
             return Result.error("管理员不存在");
@@ -648,11 +648,11 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
         }
         
         // 保存更新
-        int updated = userMapper.updateUserInfo(admin.getId(), admin.getPhone(), admin.getBio());
+        int updated = userMapper.updateUserInfo(admin.getId(), newUsername, admin.getPhone(), admin.getBio());
         if (updated > 0) {
             // 返回更新后的信息
             Map<String, Object> result = new HashMap<>();
-            result.put("username", admin.getUsername());
+            result.put("username", newUsername);
             result.put("phone", admin.getPhone());
             result.put("bio", admin.getBio());
             
