@@ -3,6 +3,8 @@ package com.blog.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.RandomUtil;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.blog.dto.*;
 import com.blog.entity.FailedLoginAttempts;
 import com.blog.entity.Users;
@@ -32,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
@@ -65,6 +68,9 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
 
     @Autowired
     private IFailedLoginAttemptsService failedLoginAttemptsService;
+
+    @Autowired
+    private IUsersService usersService;
 
     @Autowired
     private UsersMapper userMapper;
@@ -211,6 +217,12 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         // 生成新的token，确保每次登录都是唯一的
         String token = JwtUtil.generateToken(user);
         log.info("为用户 {} 生成新token: {}", username, token.substring(0, 20) + "...");
+
+        LambdaUpdateWrapper<Users> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(Users::getId, user.getId())
+                .set(Users::getLastLoginTime, new Date());
+
+        usersService.update(updateWrapper);
 
 
         UserDTO userDTO = new UserDTO();
