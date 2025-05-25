@@ -405,12 +405,21 @@ const changePassword = async () => {
       })
       
       if (res.code === 200) {
-        showChangePassword.value = false
-        ElMessage.success('密码修改成功')
+        ElMessage.success('密码修改成功，请重新登录')
+        
         // 重置表单
         passwordForm.oldPassword = ''
         passwordForm.newPassword = ''
         passwordForm.confirmPassword = ''
+        
+        // 关闭对话框
+        showChangePassword.value = false
+        
+        // 密码修改成功后，延迟一秒执行登出操作
+        setTimeout(() => {
+          // 调用 logout 方法，该方法会清理 localStorage 并重定向到登录页
+          userStore.logout()
+        }, 1000) // 延迟一秒，让用户看到成功消息
       } else {
         ElMessage.error(res.message || '密码修改失败')
       }

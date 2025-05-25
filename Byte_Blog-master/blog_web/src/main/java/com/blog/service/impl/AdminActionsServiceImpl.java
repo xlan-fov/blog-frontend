@@ -681,7 +681,7 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
         admin.setPassword(passwordEncoder.encode(newPassword));
         
         // 保存更新
-        int updated = userMapper.updateById(admin);
+        int updated = userMapper.updateUserPassword(admin.getId(), admin.getPassword());
         if (updated > 0) {
             return Result.success("密码修改成功");
         } else {

@@ -137,4 +137,9 @@ public interface UsersMapper extends BaseMapper<Users> {
          */
         @Update("UPDATE users SET phone = #{phone}, bio = #{bio} WHERE id = #{id}")
         int updateUserInfo(@Param("id") Integer id,  @Param("phone") String phone, @Param("bio") String bio);
+        /**
+         * 修改用户密码
+         */
+        @Update("UPDATE users SET password_hash = #{password} WHERE id = #{id}")
+        int updateUserPassword(@Param("id") Integer id, @Param("password") String password);
 }
