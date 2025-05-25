@@ -273,20 +273,23 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         String secretCode = loginDTO.getSecretCode();
 
         Users user = userMapper.selectByUsername(username);
-        Integer userId = user.getId();
+        
 
         if(user == null){
             return Result.error("管理员未注册");
         }
-
+        Integer userId = user.getId();
         if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
             stringRedisTemplate.opsForValue().increment(failKey);
             stringRedisTemplate.expire(failKey, 1, TimeUnit.MINUTES);
             return Result.error("密码错误");
         }
 
-
-        if(!adminSecretMapper.selectByUserId(userId).equals(secretCode)){
+        // Get the admin secret code safely
+        String adminSecret = adminSecretMapper.selectByUserId(userId);
+        
+        // Null-safe comparison
+        if(adminSecret == null || !adminSecret.equals(secretCode)){
             stringRedisTemplate.opsForValue().increment(failKey);
             stringRedisTemplate.expire(failKey, 1, TimeUnit.MINUTES);
             return Result.error("权限码错误");
@@ -302,6 +305,13 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
             return Result.error("请先进行滑动验证！");
         }
 
+        /* 
+        LambdaUpdateWrapper<Users> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(Users::getId, user.getId())
+                .set(Users::getLastLoginTime, new Date());
+
+        usersService.update(updateWrapper);
+        */
         String token = JwtUtil.generateToken(user);
 
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
