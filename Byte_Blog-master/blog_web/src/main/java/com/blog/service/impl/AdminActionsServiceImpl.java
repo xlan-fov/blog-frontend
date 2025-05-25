@@ -431,12 +431,14 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
                 existingWord.setIsDeleted(0);
                 existingWord.setDeletedBy(null);
                 existingWord.setCreatedAt(new Date());
+                word.setIsDeleted(1);
                 sensitiveWordsMapper.updateById(existingWord);
+                sensitiveWordsMapper.updateById(word);
                 return Result.success("敏感词编辑成功");
             }
             return Result.error("新敏感词已存在");
         }
-        // 修改敏感词
+        // 新敏感词在数据库中不存在
         word.setWord(newWord);
         word.setCreatedAt(new Date());
         sensitiveWordsMapper.updateById(word);
