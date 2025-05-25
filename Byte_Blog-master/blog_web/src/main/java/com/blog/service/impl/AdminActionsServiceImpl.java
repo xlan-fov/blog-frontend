@@ -75,7 +75,7 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
     private PasswordEncoder passwordEncoder;
 
 
-    public Result<?> getUserList(String keyword, String status, Integer page, Integer pageSize) {
+    public Result<?> getUserList(String keyword, String status) {
         UserDTO currentUser = UserHolder.getUser();
         if (currentUser == null) {
             return Result.error("请先登录");
@@ -83,7 +83,7 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
             System.out.println(userMapper.getRoleById(currentUser.getId()));
             return Result.error("没有权限");
         }
-        List<Users> users = userMapper.getUserList(keyword, status, page, pageSize);
+        List<Users> users = userMapper.getUserList(keyword, status);
         Map<String, Object> result = new HashMap<>();
         result.put("total", users.size());
         result.put("list", users);

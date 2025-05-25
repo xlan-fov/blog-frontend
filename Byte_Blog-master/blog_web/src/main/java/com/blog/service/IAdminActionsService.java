@@ -16,7 +16,7 @@ import com.blog.result.Result;
  */
 public interface IAdminActionsService extends IService<AdminActions> {
 
-    Result<?> getUserList(String keyword, String status, Integer page, Integer pageSize);
+    Result<?> getUserList(String keyword, String status);
 
     Result<?> getUserInfo(String username);
 

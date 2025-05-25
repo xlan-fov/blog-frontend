@@ -20,7 +20,7 @@
     </el-card>
     
     <el-card>
-      <el-table :data="accounts" border style="width: 100%" v-loading="loading">
+      <el-table :data="paginatedAccounts" border style="width: 100%" v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="username" label="用户名" width="120" />
         <el-table-column prop="email" label="邮箱" width="180" />
@@ -170,7 +170,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import adminApi from '@/api/admin'
 
@@ -182,8 +182,14 @@ const searchForm = ref({
 const accounts = ref([])
 const total = ref(0)
 const loading = ref(false)
+// 分页参数
 const currentPage = ref(1)
 const pageSize = ref(10)
+
+const paginatedAccounts = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return accounts.value.slice(start, start + pageSize.value)
+})
 
 // 账号详情
 const dialogVisible = ref(false)
@@ -204,9 +210,7 @@ const fetchAccounts = async () => {
     // 确保参数名称与后端一致
     const params = {
       keyword: searchForm.value.username || undefined, // username 在后端对应 keyword
-      status: searchForm.value.status || undefined,
-      page: currentPage.value,
-      pageSize: pageSize.value
+      status: searchForm.value.status || undefined, // status 在后端对应 status
     };
     
     console.log('发送获取用户列表请求，参数:', params);

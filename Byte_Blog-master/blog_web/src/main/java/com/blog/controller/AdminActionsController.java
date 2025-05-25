@@ -39,14 +39,12 @@ public class AdminActionsController {
     @GetMapping("/users")
     public Result<?> getUserList(
             @RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "status", required = false) String status,
-            @RequestParam(value = "page", defaultValue = "1") Integer page,
-            @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
+            @RequestParam(value = "status", required = false) String status) {
         
-        log.info("获取用户列表：keyword={}, status={}, page={}, pageSize={}", keyword, status, page, pageSize);
+        log.info("获取用户列表：keyword={}, status={}", keyword, status);
         
         // 页码从前端是从1开始的，但数据库通常是从0开始
-        return adminActionsService.getUserList(keyword, status, page - 1, pageSize);
+        return adminActionsService.getUserList(keyword, status);
     }
 
     @GetMapping("/users/{username}")

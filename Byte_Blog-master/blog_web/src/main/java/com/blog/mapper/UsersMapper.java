@@ -60,9 +60,9 @@ public interface UsersMapper extends BaseMapper<Users> {
             "avatar_url, bio, role, is_banned, is_logged_in, is_deleted, last_login_time, created_at " +
             "FROM users " +
             "WHERE (#{keyword} IS NULL OR username LIKE CONCAT('%', #{keyword}, '%') OR phone LIKE CONCAT('%', #{keyword}, '%')) " +
-            "AND (#{status} IS NULL OR (#{status} = 'normal' AND is_banned = 0) OR (#{status} = 'banned' AND is_banned = 1)) " +
-            "LIMIT #{page}, #{pageSize}")
-    List<Users> getUserList(String keyword, String status, Integer page, Integer pageSize);
+            "AND (#{status} IS NULL OR (#{status} = 'normal' AND is_banned = 0) OR (#{status} = 'banned' AND is_banned = 1)) " 
+            )
+    List<Users> getUserList(String keyword, String status);
 
     @Select("SELECT u.username, " +
             "u.phone, " +
