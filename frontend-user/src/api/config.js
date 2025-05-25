@@ -17,10 +17,18 @@ export const API_PATHS = {
         REGISTER_BY_PHONE: '/api/users/registerByphone',
         LOGIN: '/api/users/loginByname',
         LOGIN_BY_PHONE: '/api/users/loginByphone',
+        LOGOUT: '/api/users/logout',
+
         SEND_CODE: '/api/users/code',
         SLIDER_IMAGE: '/api/users/slider-image',
         SLIDER_VALIDATE: '/api/users/slider-validate',
-        LOGOUT: '/api/users/logout'
+        // 用户个人资料相关
+        PROFILE: '/api/users/profile',
+        UPDATE_PROFILE: '/api/users/profile/update',
+        SEND_PHONE_CODE: '/api/users/phone/code',
+        CHANGE_PHONE: '/api/users/phone/change',
+        LOGIN_LOGS: '/api/users/login/logs',
+        UPLOAD_AVATAR: '/api/users/avatar/upload',
     },
     BLOGS: {
         // 博客相关接口 - 修复路径
@@ -37,12 +45,12 @@ export const API_PATHS = {
     ADMIN: {
         // 管理员相关接口
         LOGIN: '/api/users/adminLogin',
-        
+
         // 添加管理员个人资料相关接口
         USER_PROFILE: '/api/admin/profile',
         UPDATE_PROFILE: '/api/admin/profile/update',
         CHANGE_PASSWORD: '/api/admin/profile/password',
-        
+
         // AdminActionsController 接口
         USERS: '/api/admin/users',
         USER_INFO: '/api/admin/users/{username}',
@@ -68,7 +76,7 @@ export const API_PATHS = {
         STATS_OVERVIEW: '/api/admin/stats/overview',
         USERS_ACTIVE: '/api/admin/stats/users/active',
         CONTENTS_STATS: '/api/admin/stats/contents',
-        
+
         // AdminController 接口（新增）
         UPDATE_USER_STATUS: '/api/admin-api/users/{id}/status',
         DELETE_USER: '/api/admin-api/users/{id}',

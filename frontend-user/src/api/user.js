@@ -1,6 +1,7 @@
 import request from './request'
 import { API_PATHS } from './config'
 import { ElMessage } from 'element-plus'
+import { get, post, put } from './request'
 
 /**
  * 用户名密码注册
@@ -16,20 +17,20 @@ export const registerByUsername = async (params) => {
         if (!params.captchaId) {
             params.captchaId = localStorage.getItem('captchaId') || '';
         }
-        
+
         // 添加密码格式检查
         const passwordPattern = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,16}$/;
         if (!passwordPattern.test(params.password)) {
             ElMessage.warning('密码必须包含数字、小写和大写字母，长度6-16位');
             throw new Error('密码格式不符合要求');
         }
-        
+
         // 添加用户名长度检查
         if (params.username.length < 6 || params.username.length > 20) {
             ElMessage.warning('用户名长度必须在6-20个字符之间');
             throw new Error('用户名长度不符合要求');
         }
-        
+
         // 确保发送的请求数据格式与后端DTO匹配
         const requestData = {
             username: params.username,
@@ -37,7 +38,7 @@ export const registerByUsername = async (params) => {
             captcha: params.captcha,
             captchaId: params.captchaId
         };
-        
+
         console.log('发送注册请求数据:', requestData);
         const response = await request.post(API_PATHS.USERS.REGISTER, requestData);
         return response;
@@ -61,17 +62,17 @@ export const registerByUsername = async (params) => {
  * @returns {Promise} 返回登录结果
  */
 export const loginByUsername = (data) => {
-  console.log('DEBUG: 登录请求数据:', data)
-  return request({
-    url: API_PATHS.USERS.LOGIN,
-    method: 'post',
-    data: {
-      username: data.username,
-      password: data.password,
-      captcha: data.captcha,
-      captchaId: data.captchaId
-    }
-  })
+    console.log('DEBUG: 登录请求数据:', data)
+    return request({
+        url: API_PATHS.USERS.LOGIN,
+        method: 'post',
+        data: {
+            username: data.username,
+            password: data.password,
+            captcha: data.captcha,
+            captchaId: data.captchaId
+        }
+    })
 }
 
 /**
@@ -100,11 +101,11 @@ export const loginByPhone = async (params) => {
  * @param {string} captchaId - 验证码ID
  */
 export const getCaptcha = (captchaId) => {
-  return request({
-    url: API_PATHS.USERS.CAPTCHA,
-    method: 'get',
-    params: { captchaId }
-  })
+    return request({
+        url: API_PATHS.USERS.CAPTCHA,
+        method: 'get',
+        params: { captchaId }
+    })
 }
 
 /**
@@ -130,20 +131,61 @@ export const logout = () => {
 }
 
 /**
+ * 获取用户个人资料
+ * @returns {Promise} 返回用户个人资料
+ */
+export const getProfile = () => {
+    return get(API_PATHS.USERS.PROFILE)
+}
+
+/**
+ * 更新用户个人资料
+ * @param {Object} data - 个人资料数据
+ * @returns {Promise} 返回更新结果
+ */
+export const updateProfile = (data) => {
+    return put(API_PATHS.USERS.UPDATE_PROFILE, data)
+}
+
+/**
  * 发送手机验证码
  * @param {string} phone - 手机号
  * @returns {Promise} 返回发送结果
  */
-export const sendPhoneCode = async (phone) => {
-    try {
-        const response = await request.post(API_PATHS.USERS.SEND_CODE, null, {
-            params: { phone }
-        })
-        return response
-    } catch (error) {
-        ElMessage.error(error.response?.data?.msg || '发送验证码失败')
-        throw error
-    }
+export const sendPhoneCode = (phone) => {
+    return post(API_PATHS.USERS.SEND_PHONE_CODE, { phone })
+}
+
+/**
+ * 修改手机号
+ * @param {Object} data - 修改手机号数据
+ * @param {string} data.newPhone - 新手机号
+ * @param {string} data.code - 验证码
+ * @returns {Promise} 返回修改结果
+ */
+export const changePhone = (data) => {
+    return post(API_PATHS.USERS.CHANGE_PHONE, data)
+}
+
+/**
+ * 获取登录日志
+ * @returns {Promise} 返回登录日志列表
+ */
+export const getLoginLogs = () => {
+    return get(API_PATHS.USERS.LOGIN_LOGS)
+}
+
+/**
+ * 上传头像
+ * @param {FormData} formData - 包含头像文件的FormData
+ * @returns {Promise} 返回上传结果
+ */
+export const uploadAvatar = (formData) => {
+    return post(API_PATHS.USERS.UPLOAD_AVATAR, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
 }
 
 /**
@@ -203,16 +245,33 @@ export const adminLogin = async (params) => {
     }
 }
 
+/**
+ * 修改密码
+ * @param {Object} data - 修改密码数据
+ * @param {string} data.oldPassword - 旧密码
+ * @param {string} data.newPassword - 新密码
+ * @returns {Promise} 返回修改结果
+ */
+export const changePassword = (data) => {
+    return post(API_PATHS.USERS.CHANGE_PASSWORD, data)
+}
+
 // 确保在默认导出中包含新方法
 export default {
-  registerByUsername,
-  registerByPhone,
-  loginByUsername,
-  loginByPhone,
-  sendPhoneCode,
-  getCaptcha,
-  getSliderImage,
-  validateSlider,
-  logout,
-  adminLogin
+    registerByUsername,
+    registerByPhone,
+    loginByUsername,
+    loginByPhone,
+    sendPhoneCode,
+    getCaptcha,
+    getSliderImage,
+    validateSlider,
+    logout,
+    adminLogin,
+    getProfile,
+    updateProfile,
+    changePhone,
+    getLoginLogs,
+    uploadAvatar,
+    changePassword
 }

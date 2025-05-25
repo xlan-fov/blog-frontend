@@ -4,6 +4,7 @@ package com.blog.controller;
 import com.blog.dto.*;
 import com.blog.result.Result;
 import com.blog.service.IUsersService;
+import com.blog.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -106,6 +107,13 @@ public class UsersController {
     public Result<?> logout(HttpServletRequest request) {
         log.info("用户退出：{}", request.getHeader("Authorization"));
         return usersService.logout(request);
+    }
+
+    @GetMapping("/profile")
+    public Result<?> getProfile(HttpServletRequest request) {
+        log.info("用户获取Profile详情：{}, {}", UserHolder.getUser().getId(), UserHolder.getUser().getUsername());
+        // 解析token，获取用户信息
+        return usersService.getProfile();
     }
 
 }

@@ -35,4 +35,6 @@ public interface IUsersService extends IService<Users> {
     Result<?> sendCode(String phone);
 
     Result<?> adminLogin(LoginDTO loginDTO, HttpServletRequest request);
+
+    Result<?> getProfile();
 }

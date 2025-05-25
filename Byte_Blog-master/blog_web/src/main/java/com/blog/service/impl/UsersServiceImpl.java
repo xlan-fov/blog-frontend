@@ -5,6 +5,7 @@ import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.extension.api.R;
 import com.blog.dto.*;
 import com.blog.entity.FailedLoginAttempts;
 import com.blog.entity.Users;
@@ -22,6 +23,7 @@ import static com.blog.utils.RedisConstants.CODE_KEY;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.blog.utils.*;
+import com.blog.vo.UserProfileVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -578,5 +580,24 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
             log.error("保存手机用户失败: {}", e.getMessage(), e);
             throw e;
         }
+    }
+
+    @Override
+    public Result<?> getProfile(){
+        Users user = userMapper.selectById(UserHolder.getUser().getId());
+        if(user == null){
+            return Result.error("用户不存在");
+        }
+        // 获取用户信息
+        // 用户ID，用户名，手机号，头像，描述（text），（），是否登录，最后登录时间，创建时间
+        UserProfileVO userProfileVO = new UserProfileVO();
+        userProfileVO.setId(user.getId());
+        userProfileVO.setUsername(user.getUsername());
+        userProfileVO.setPhone(user.getPhone());
+        userProfileVO.setAvatar(user.getAvatarUrl());
+        userProfileVO.setDescription(user.getBio());
+        userProfileVO.setLastLoginTime(user.getLastLoginTime());
+        userProfileVO.setRegisterTime(user.getCreatedAt());
+        return Result.success(userProfileVO);
     }
 }

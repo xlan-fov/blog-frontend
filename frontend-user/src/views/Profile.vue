@@ -31,11 +31,7 @@
             </div>
             <div class="info-item">
               <div class="label">最后登录</div>
-              <div class="value">{{ formatDate(new Date()) }}</div>
-            </div>
-            <div class="info-item">
-              <div class="label">博客数量</div>
-              <div class="value">{{ userStore.userInfo.blogCount || 0 }}</div>
+              <div class="value">{{ formatDate(userStore.userInfo.lastLoginTime) }}</div>
             </div>
           </div>
         </el-card>
@@ -61,12 +57,8 @@
               <el-input v-model="profileForm.username" disabled />
             </el-form-item>
             
-            <el-form-item label="邮箱">
-              <el-input v-model="profileForm.email" :disabled="!isEditing" />
-            </el-form-item>
-            
             <el-form-item label="手机号">
-              <el-input v-model="profileForm.phone" :disabled="!isEditing" />
+              <el-input v-model="profileForm.phone" disabled />
             </el-form-item>
             
             <el-form-item label="个人简介">
@@ -158,7 +150,7 @@
     >
       <el-form :model="phoneForm" label-width="100px" :rules="phoneRules" ref="phoneFormRef">
         <el-form-item label="原手机号">
-          <div>{{ maskPhone(profileForm.phone) }}</div>
+          <div>{{ maskPhone(userStore.userInfo.phone) }}</div>
         </el-form-item>
         
         <el-form-item label="新手机号" prop="newPhone">
@@ -214,6 +206,14 @@ import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Camera } from '@element-plus/icons-vue'
+import { 
+  getProfile, 
+  updateProfile, 
+  uploadAvatar as uploadAvatarApi, 
+  changePassword as changePasswordApi, 
+  changePhone as changePhoneApi,
+  sendPhoneCode
+} from '@/api/user'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -224,8 +224,7 @@ const countdown = ref(0)
 // 个人资料表单
 const profileForm = reactive({
   username: userStore.userInfo.username || '用户',
-  email: 'user@example.com',
-  phone: '13800138000',
+  phone: userStore.userInfo.phone || '',
   bio: userStore.userInfo.bio || '这是我的个人简介'
 })
 
@@ -320,16 +319,33 @@ const loginLogs = ref([
 const saveProfile = async () => {
   submitting.value = true
   try {
-    // TODO: 替换为axios请求
-    // 模拟保存
-    setTimeout(() => {
-      userStore.updateProfile(userStore.userInfo.avatar, profileForm.bio)
+    const res = await updateProfile({
+      description: profileForm.bio
+    })
+    
+    if (res.code === 200) {
+      // 重新获取用户信息
+      const profileRes = await getProfile()
+      if (profileRes.code === 200 && profileRes.data) {
+        userStore.updateUserInfo({
+          id: profileRes.data.id,
+          username: profileRes.data.username,
+          avatar: profileRes.data.avatar,
+          bio: profileRes.data.description,
+          phone: profileRes.data.phone,
+          registerTime: profileRes.data.registerTime,
+          lastLoginTime: profileRes.data.lastLoginTime
+        })
+      }
       isEditing.value = false
       ElMessage.success('保存成功')
-      submitting.value = false
-    }, 500)
+    } else {
+      ElMessage.error(res.message || '保存失败')
+    }
   } catch (error) {
+    console.error('保存个人资料失败:', error)
     ElMessage.error('保存失败')
+  } finally {
     submitting.value = false
   }
 }
@@ -343,26 +359,32 @@ const changePassword = async () => {
     
     submitting.value = true
     try {
-      // TODO: 替换为axios请求
-      // 模拟修改
-      setTimeout(() => {
+      const res = await changePasswordApi({
+        oldPassword: passwordForm.oldPassword,
+        newPassword: passwordForm.newPassword
+      })
+      
+      if (res.code === 200) {
         showChangePassword.value = false
         ElMessage.success('密码修改成功')
         // 重置表单
         passwordForm.oldPassword = ''
         passwordForm.newPassword = ''
         passwordForm.confirmPassword = ''
-        submitting.value = false
-      }, 500)
+      } else {
+        ElMessage.error(res.message || '密码修改失败')
+      }
     } catch (error) {
+      console.error('修改密码失败:', error)
       ElMessage.error('密码修改失败')
+    } finally {
       submitting.value = false
     }
   })
 }
 
 // 发送验证码
-const sendCode = () => {
+const sendCode = async () => {
   if (!phoneForm.newPhone) {
     ElMessage.warning('请输入新手机号')
     return
@@ -373,17 +395,24 @@ const sendCode = () => {
     return
   }
   
-  // TODO: 替换为axios请求
-  // 模拟发送验证码
-  countdown.value = 60
-  const timer = setInterval(() => {
-    countdown.value--
-    if (countdown.value <= 0) {
-      clearInterval(timer)
+  try {
+    const res = await sendPhoneCode(phoneForm.newPhone)
+    if (res.code === 200) {
+      countdown.value = 60
+      const timer = setInterval(() => {
+        countdown.value--
+        if (countdown.value <= 0) {
+          clearInterval(timer)
+        }
+      }, 1000)
+      ElMessage.success('验证码已发送')
+    } else {
+      ElMessage.error(res.message || '验证码发送失败')
     }
-  }, 1000)
-  
-  ElMessage.success('验证码已发送')
+  } catch (error) {
+    console.error('发送验证码失败:', error)
+    ElMessage.error('验证码发送失败')
+  }
 }
 
 // 修改手机号
@@ -395,19 +424,37 @@ const changePhone = async () => {
     
     submitting.value = true
     try {
-      // TODO: 替换为axios请求
-      // 模拟修改
-      setTimeout(() => {
-        profileForm.phone = phoneForm.newPhone
+      const res = await changePhoneApi({
+        newPhone: phoneForm.newPhone,
+        code: phoneForm.code
+      })
+      
+      if (res.code === 200) {
+        // 重新获取用户信息
+        const profileRes = await getProfile()
+        if (profileRes.code === 200 && profileRes.data) {
+          userStore.updateUserInfo({
+            id: profileRes.data.id,
+            username: profileRes.data.username,
+            avatar: profileRes.data.avatar,
+            bio: profileRes.data.description,
+            phone: profileRes.data.phone,
+            registerTime: profileRes.data.registerTime,
+            lastLoginTime: profileRes.data.lastLoginTime
+          })
+        }
         showChangePhone.value = false
         ElMessage.success('手机号修改成功')
         // 重置表单
         phoneForm.newPhone = ''
         phoneForm.code = ''
-        submitting.value = false
-      }, 500)
+      } else {
+        ElMessage.error(res.message || '手机号修改失败')
+      }
     } catch (error) {
+      console.error('修改手机号失败:', error)
       ElMessage.error('手机号修改失败')
+    } finally {
       submitting.value = false
     }
   })
@@ -430,28 +477,55 @@ const beforeAvatarUpload = (file) => {
 }
 
 // 上传头像
-const uploadAvatar = (options) => {
+const uploadAvatar = async (options) => {
   const file = options.file
   
-  // 使用 FileReader 读取文件作为 base64 数据 URL
-  const reader = new FileReader()
-  reader.readAsDataURL(file)
-  reader.onload = () => {
-    // TODO: 替换为axios请求
-    // 模拟上传
-    setTimeout(() => {
-      const avatarUrl = reader.result
-      userStore.updateProfile(avatarUrl, userStore.userInfo.bio)
+  // 创建 FormData 对象
+  const formData = new FormData()
+  formData.append('file', file)
+  
+  try {
+    const res = await uploadAvatarApi(formData)
+    if (res.code === 200) {
+      // 重新获取用户信息
+      const profileRes = await getProfile()
+      if (profileRes.code === 200 && profileRes.data) {
+        userStore.updateUserInfo({
+          id: profileRes.data.id,
+          username: profileRes.data.username,
+          avatar: profileRes.data.avatar,
+          bio: profileRes.data.description,
+          phone: profileRes.data.phone,
+          registerTime: profileRes.data.registerTime,
+          lastLoginTime: profileRes.data.lastLoginTime
+        })
+      }
       ElMessage.success('头像上传成功')
-    }, 500)
+    } else {
+      ElMessage.error(res.message || '头像上传失败')
+    }
+  } catch (error) {
+    console.error('上传头像失败:', error)
+    ElMessage.error('头像上传失败')
   }
 }
 
 // 格式化日期
-const formatDate = (dateStr) => {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  return date.toLocaleString()
+const formatDate = (timestamp) => {
+  if (!timestamp) return '-'
+  // 确保时间戳是数字
+  const time = Number(timestamp)
+  if (isNaN(time)) return '-'
+  const date = new Date(time)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  })
 }
 
 // 手机号脱敏
@@ -461,8 +535,32 @@ const maskPhone = (phone) => {
 }
 
 // 初始化
-onMounted(() => {
-  // 加载个人资料
+onMounted(async () => {
+  try {
+    console.log('开始获取用户信息...')
+    const profileRes = await getProfile()
+    console.log('获取到的用户信息:', profileRes)
+    if (profileRes.code === 200 && profileRes.data) {
+      // 更新 store 中的用户信息
+      userStore.updateUserInfo({
+        id: profileRes.data.id,
+        username: profileRes.data.username,
+        avatar: profileRes.data.avatar,
+        bio: profileRes.data.description,
+        phone: profileRes.data.phone,
+        registerTime: profileRes.data.registerTime,
+        lastLoginTime: profileRes.data.lastLoginTime
+      })
+      
+      // 更新表单数据
+      profileForm.username = profileRes.data.username
+      profileForm.phone = profileRes.data.phone || ''
+      profileForm.bio = profileRes.data.description || ''
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+    ElMessage.error('获取用户信息失败')
+  }
 })
 </script>
 
