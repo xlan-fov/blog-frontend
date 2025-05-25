@@ -45,6 +45,11 @@
             <el-icon><Warning /></el-icon>
             <span>异常感知</span>
           </el-menu-item>
+
+          <el-menu-item index="/admin/sensitive-words">
+          <el-icon><WarningFilled /></el-icon>
+          <span>敏感词管理</span>
+          </el-menu-item>
           
           <el-menu-item index="/admin/profile">
             <el-icon><Avatar /></el-icon>
