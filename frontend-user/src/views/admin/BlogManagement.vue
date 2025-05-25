@@ -18,7 +18,7 @@
           <el-button type="primary" @click="createBlog">新建博客</el-button>
         </div>
         
-        <el-table :data="myBlogs" border style="width: 100%" v-loading="loading">
+        <el-table :data="paginatedBlogs" border style="width: 100%" v-loading="loading">
           <el-table-column prop="id" label="ID" width="80" />
           <el-table-column prop="title" label="标题" show-overflow-tooltip />
           <el-table-column prop="category" label="分类" width="120" />
@@ -61,7 +61,7 @@
       </el-tab-pane>
       
       <el-tab-pane label="用户博客" name="userBlogs">
-        <el-table :data="userBlogs" border style="width: 100%" v-loading="loading">
+        <el-table :data="paginatedUserBlogs" border style="width: 100%" v-loading="loading">
           <el-table-column prop="id" label="ID" width="80" />
           <el-table-column prop="username" label="用户名" width="120" />
           <el-table-column prop="title" label="标题" show-overflow-tooltip />
@@ -99,7 +99,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
@@ -125,6 +125,20 @@ const backendAvailable = ref(true)  // 添加缺失的变量
 // 分页
 const currentPage = ref(1)
 const pageSize = ref(10)
+
+// 计算当前需要显示的我的博客数据（添加分页计算）
+const paginatedBlogs = computed(() => {
+  const startIndex = (currentPage.value - 1) * pageSize.value;
+  const endIndex = startIndex + pageSize.value;
+  return myBlogs.value.slice(startIndex, endIndex);
+});
+
+// 计算当前需要显示的用户博客数据（添加分页计算）
+const paginatedUserBlogs = computed(() => {
+  const startIndex = (currentPage.value - 1) * pageSize.value;
+  const endIndex = startIndex + pageSize.value;
+  return userBlogs.value.slice(startIndex, endIndex);
+});
 
 // 检查后端连接状态
 const checkBackendConnection = async () => {
@@ -198,6 +212,9 @@ const searchUserBlogs = async () => {
       
       userBlogs.value = allBlogs
       totalUserBlogs.value = allBlogs.length
+      
+      // 重置分页到第一页
+      currentPage.value = 1
     } else {
       ElMessage.error(res.message || '获取用户博客列表失败')
       userBlogs.value = []
@@ -295,20 +312,14 @@ const publishBlog = (blog) => {
 // 分页处理
 const handleSizeChange = (size) => {
   pageSize.value = size
-  if (activeTab.value === 'myBlogs') {
-    fetchMyBlogs()
-  } else {
-    searchUserBlogs()
-  }
+  // 当页面大小改变时，重置为第一页
+  currentPage.value = 1
+  // 无需重新获取数据，因为我们使用计算属性处理分页
 }
 
 const handleCurrentChange = (page) => {
   currentPage.value = page
-  if (activeTab.value === 'myBlogs') {
-    fetchMyBlogs()
-  } else {
-    searchUserBlogs()
-  }
+  // 无需重新获取数据，因为我们使用计算属性处理分页
 }
 
 // 监听标签页切换
