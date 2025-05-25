@@ -600,4 +600,37 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         userProfileVO.setRegisterTime(user.getCreatedAt());
         return Result.success(userProfileVO);
     }
+
+    @Override
+    public Result<?> updateProfile(UserProfileDTO userProfileDTO){
+        // 判断当前登录用户是否是要修改的用户
+        if (!Objects.equals(UserHolder.getUser().getId(), userProfileDTO.getId())) {
+            return Result.error("不能修改其他用户信息");
+        }
+        // 获取当前登录用户
+        Users currentUser = userMapper.selectById(UserHolder.getUser().getId());
+        if(currentUser == null){
+            // 没啥用，一般可以登录那肯定有
+            return Result.error("用户不存在");
+        }
+        // 判断用户名是否已存在
+        Users existingUser = userMapper.selectByUsername(userProfileDTO.getUsername());
+        if (existingUser != null && !existingUser.getId().equals(userProfileDTO.getId())) {
+            return Result.error("用户名已存在");
+        }
+
+        // 更新用户信息
+        Users updatedUser = new Users();
+        updatedUser.setId(userProfileDTO.getId());
+        updatedUser.setUsername(userProfileDTO.getUsername());
+        updatedUser.setBio(userProfileDTO.getDescription());
+
+        // 更新数据库
+        boolean result = userMapper.updateById(updatedUser) > 0;
+        if(result){
+            return Result.success("更新成功");
+        } else {
+            return Result.error("更新失败");
+        }
+    }
 }

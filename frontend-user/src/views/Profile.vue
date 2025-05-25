@@ -54,7 +54,7 @@
             :disabled="!isEditing"
           >
             <el-form-item label="用户名">
-              <el-input v-model="profileForm.username" disabled />
+              <el-input v-model="profileForm.username" :disabled="!isEditing" />
             </el-form-item>
             
             <el-form-item label="手机号">
@@ -105,7 +105,7 @@
                 <div class="title">登录日志</div>
                 <div class="desc">查看账号近期的登录记录</div>
               </div>
-              <el-button @click="showLoginLogs = true">查看</el-button>
+              <el-button @click="handleShowLoginLogs">查看</el-button>
             </div>
           </div>
         </el-card>
@@ -212,7 +212,8 @@ import {
   uploadAvatar as uploadAvatarApi, 
   changePassword as changePasswordApi, 
   changePhone as changePhoneApi,
-  sendPhoneCode
+  sendPhoneCode,
+  getLoginLogs
 } from '@/api/user'
 
 const router = useRouter()
@@ -284,42 +285,42 @@ const passwordFormRef = ref(null)
 const phoneFormRef = ref(null)
 
 // 登录日志
-const loginLogs = ref([
-  {
-    time: new Date().toLocaleString(),
-    ip: '192.168.1.1',
-    location: '北京',
-    device: 'Windows Chrome',
-    status: 'success'
-  },
-  {
-    time: new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleString(),
-    ip: '192.168.1.1',
-    location: '北京',
-    device: 'Windows Chrome',
-    status: 'success'
-  },
-  {
-    time: new Date(Date.now() - 48 * 60 * 60 * 1000).toLocaleString(),
-    ip: '192.168.1.2',
-    location: '上海',
-    device: 'iOS Safari',
-    status: 'success'
-  },
-  {
-    time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toLocaleString(),
-    ip: '192.168.1.3',
-    location: '广州',
-    device: 'Android Chrome',
-    status: 'failed'
+const loginLogs = ref([])
+
+// 获取登录日志
+const fetchLoginLogs = async () => {
+  try {
+    const res = await getLoginLogs()
+    if (res.code === 200 && res.data) {
+      loginLogs.value = res.data.map(log => ({
+        time: new Date(log.loginTime).toLocaleString(),
+        ip: log.ip,
+        location: log.location || '-',
+        device: log.device || '-',
+        status: log.status || 'success'
+      }))
+    } else {
+      ElMessage.error(res.message || '获取登录日志失败')
+    }
+  } catch (error) {
+    console.error('获取登录日志失败:', error)
+    ElMessage.error('获取登录日志失败')
   }
-])
+}
+
+// 显示登录日志对话框
+const handleShowLoginLogs = async () => {
+  showLoginLogs.value = true
+  await fetchLoginLogs()
+}
 
 // 保存个人资料
 const saveProfile = async () => {
   submitting.value = true
   try {
     const res = await updateProfile({
+      id: userStore.userInfo.id,
+      username: profileForm.username,
       description: profileForm.bio
     })
     

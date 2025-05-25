@@ -37,4 +37,6 @@ public interface IUsersService extends IService<Users> {
     Result<?> adminLogin(LoginDTO loginDTO, HttpServletRequest request);
 
     Result<?> getProfile();
+
+    Result<?> updateProfile(UserProfileDTO userProfileDTO);
 }

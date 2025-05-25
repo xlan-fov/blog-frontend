@@ -148,7 +148,16 @@ export const updateProfile = (data) => {
 }
 
 /**
- * 发送手机验证码
+ * 发送验证码（通用）
+ * @param {string} phone - 手机号
+ * @returns {Promise} 返回发送结果
+ */
+export const sendCode = (phone) => {
+    return post(API_PATHS.USERS.SEND_CODE, { phone })
+}
+
+/**
+ * 发送手机验证码（用于修改手机号）
  * @param {string} phone - 手机号
  * @returns {Promise} 返回发送结果
  */
@@ -262,6 +271,7 @@ export default {
     registerByPhone,
     loginByUsername,
     loginByPhone,
+    sendCode,
     sendPhoneCode,
     getCaptcha,
     getSliderImage,

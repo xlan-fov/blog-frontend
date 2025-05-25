@@ -11,6 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Objects;
 
 /**
  * <p>
@@ -114,6 +115,11 @@ public class UsersController {
         log.info("用户获取Profile详情：{}, {}", UserHolder.getUser().getId(), UserHolder.getUser().getUsername());
         // 解析token，获取用户信息
         return usersService.getProfile();
+    }
+    @PutMapping("/profile/update")
+    public Result<?> updateProfile(@RequestBody UserProfileDTO userProfileDTO) {
+        log.info("用户更新Profile：{}", userProfileDTO);
+        return usersService.updateProfile(userProfileDTO);
     }
 
 }
