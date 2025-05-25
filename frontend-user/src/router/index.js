@@ -18,6 +18,7 @@ const BlogManagement = () => import('@/views/admin/BlogManagement.vue')
 const AnomalyDetection = () => import('@/views/admin/AnomalyDetection.vue')
 const AdminProfile = () => import('@/views/admin/AdminProfile.vue')
 const SensitiveWordsManagement = () => import('@/views/admin/SensitiveWordsManagement.vue')
+const SystemOverview = () => import('@/views/admin/SystemOverview.vue') // Add this line
 
 // 获取管理员路径（从环境变量中读取，增加安全性）
 const ADMIN_AUTH_PATH = import.meta.env.ADMIN_PATH || 'senti-admin-auth'
@@ -113,7 +114,13 @@ const router = createRouter({
       children: [
         {
           path: '',
-          redirect: '/admin/blog-management'
+          redirect: '/admin/system-overview' // Change default route to system overview
+        },
+        {
+          path: 'system-overview',
+          name: 'system-overview',
+          component: SystemOverview,
+          meta: { requiresAuth: true, requiresAdmin: true }
         },
         {
           path: 'blog-management',

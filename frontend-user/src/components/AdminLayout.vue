@@ -31,6 +31,11 @@
           router
           class="el-menu-vertical"
         >
+          <el-menu-item index="/admin/system-overview">
+            <el-icon><DataAnalysis /></el-icon>
+            <span>系统概况</span>
+          </el-menu-item>
+          
           <el-menu-item index="/admin/blog-management">
             <el-icon><Document /></el-icon>
             <span>博客内容管理</span>
@@ -80,7 +85,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { Document, User, Warning, Avatar, ArrowDown } from '@element-plus/icons-vue'
+import { Document, User, Warning, Avatar, ArrowDown, DataAnalysis } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 
 const router = useRouter()
