@@ -108,6 +108,10 @@ export default {
     return post(API_PATHS.ADMIN.DELETE_SENSITIVE_WORD.replace('{sensitiveWord}', word))
   },
 
+  editSensitiveWord(word, newWord) {
+    return post(API_PATHS.ADMIN.EDIT_SENSITIVE_WORD.replace('{sensitiveWord}', word), { sensitiveWord: newWord })
+  },
+
   /**
    * 批量添加敏感词
    * @param {Array} words - 敏感词数组

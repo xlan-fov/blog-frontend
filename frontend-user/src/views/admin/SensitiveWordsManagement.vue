@@ -35,8 +35,9 @@
             {{ formatDateTime(scope.row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120">
+        <el-table-column label="操作" width="180">
           <template #default="scope">
+            <el-button type="primary" link @click="editWord(scope.row)">编辑</el-button>
             <el-button type="danger" link @click="deleteWord(scope.row)">删除</el-button>
           </template>
         </el-table-column>
@@ -109,6 +110,28 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 编辑敏感词对话框 -->
+    <el-dialog
+      v-model="editDialogVisible"
+      title="编辑敏感词"
+      width="30%"
+    >
+      <el-form :model="editForm" label-width="80px" :rules="wordRules" ref="editFormRef">
+        <el-form-item label="原敏感词">
+          <span>{{ editForm.oldWord }}</span>
+        </el-form-item>
+        <el-form-item label="新敏感词" prop="newWord">
+          <el-input v-model="editForm.newWord" placeholder="请输入新的敏感词" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="editDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="updateWord" :loading="submitting">确认</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -130,18 +153,28 @@ const pageSize = ref(10)
 const addDialogVisible = ref(false)
 const batchAddDialogVisible = ref(false)
 const batchDeleteDialogVisible = ref(false)
+const editDialogVisible = ref(false)
 
 // 表单数据
 const addForm = ref({
   word: ''
 })
 const batchAddWords = ref('')
+const editForm = ref({
+  oldWord: '',
+  newWord: ''
+})
 const addFormRef = ref(null)
+const editFormRef = ref(null)
 
 // 表单验证规则
 const wordRules = {
   word: [
     { required: true, message: '请输入敏感词', trigger: 'blur' },
+    { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' }
+  ],
+  newWord: [
+    { required: true, message: '请输入新的敏感词', trigger: 'blur' },
     { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' }
   ]
 }
@@ -337,6 +370,52 @@ const deleteBatchWords = async () => {
   } finally {
     submitting.value = false
   }
+}
+
+// 编辑敏感词
+const editWord = (row) => {
+  editForm.value.oldWord = row.word
+  editForm.value.newWord = row.word
+  editDialogVisible.value = true
+  
+  // 在下一个事件循环中聚焦输入框
+  setTimeout(() => {
+    if (editFormRef.value) {
+      editFormRef.value.clearValidate()
+    }
+  }, 0)
+}
+
+// 更新敏感词
+const updateWord = async () => {
+  if (!editFormRef.value) return
+  
+  await editFormRef.value.validate(async (valid) => {
+    if (!valid) return
+    
+    if (editForm.value.oldWord === editForm.value.newWord) {
+      editDialogVisible.value = false
+      return // 如果没有变化，直接关闭对话框
+    }
+    
+    submitting.value = true
+    try {
+      const res = await adminApi.editSensitiveWord(editForm.value.oldWord, editForm.value.newWord)
+      
+      if (res.code === 200) {
+        ElMessage.success('敏感词修改成功')
+        editDialogVisible.value = false
+        fetchSensitiveWords() // 刷新列表
+      } else {
+        ElMessage.error(res.message || '修改失败')
+      }
+    } catch (error) {
+      console.error('修改敏感词失败:', error)
+      ElMessage.error('修改失败')
+    } finally {
+      submitting.value = false
+    }
+  })
 }
 
 // 表格选择变化

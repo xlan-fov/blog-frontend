@@ -426,7 +426,7 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
 
         if (sensitiveWordsMapper.countByWord(newWord) > 0) {
             SensitiveWords existingWord = sensitiveWordsMapper.selectByWord(newWord);
-            if (existingWord.getIsDeleted() == 1) {
+            if (existingWord != null && existingWord.getIsDeleted() == 1) {
                 // 如果新敏感词已被删除，则恢复它
                 existingWord.setIsDeleted(0);
                 existingWord.setDeletedBy(null);
@@ -441,8 +441,8 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
         word.setCreatedAt(new Date());
         sensitiveWordsMapper.updateById(word);
         // 记录管理员操作
-        recordAdminActions(currentUser.getId(), "EDIT_SENSITIVE_WORD", word.getId(), "WORD", "编辑敏感词");
-        return Result.success("敏感词编辑成功");
+        //recordAdminActions(currentUser.getId(), "EDIT_SENSITIVE_WORD", word.getId(), "WORD", "编辑敏感词");
+        return Result.success("敏感词修改成功");
     }
 
     public Result<?> getFailLoginList() {

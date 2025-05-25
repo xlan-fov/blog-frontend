@@ -67,6 +67,7 @@ export const API_PATHS = {
         GET_SENSITIVE_WORDS: '/api/admin/getSensitiveWordsList',
         ADD_SENSITIVE_WORD: '/api/admin/addSensitiveWord/{sensitiveWord}',
         DELETE_SENSITIVE_WORD: '/api/admin/deleteSensitiveWord/{sensitiveWord}',
+        EDIT_SENSITIVE_WORD: '/api/admin/editSensitiveWord/{sensitiveWord}', // Fixed: Changed Edit_SENSITIVE_WORD to EDIT_SENSITIVE_WORD
         ADD_SENSITIVE_WORDS: '/api/admin/addSensitiveWords',
         DELETE_SENSITIVE_WORDS: '/api/admin/deleteSensitiveWords',
         GET_FAIL_LOGIN_LIST: '/api/admin/getFailLoginList',
