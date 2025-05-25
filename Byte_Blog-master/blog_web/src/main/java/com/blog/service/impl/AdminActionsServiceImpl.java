@@ -606,4 +606,86 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
         save(adminActions);
         return adminActions;
     }
+
+    /**
+     * 获取管理员个人资料
+     */
+    public Result<?> getAdminProfile(String username) {
+        Users admin = userMapper.selectByUsername(username);
+        if (admin == null) {
+            return Result.error("获取管理员资料失败");
+        }
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", admin.getId());
+        result.put("username", admin.getUsername());
+        result.put("email", admin.getEmail());
+        result.put("phone", admin.getPhone());
+        result.put("avatar", admin.getAvatarUrl());
+        result.put("bio", admin.getBio());
+        result.put("role", admin.getRole());
+        result.put("createdAt", admin.getCreatedAt());
+        result.put("lastLoginTime", admin.getLastLoginTime());
+        
+        return Result.success(result);
+    }
+
+    /**
+     * 更新管理员个人资料
+     */
+    public Result<?> updateAdminProfile(String username,  String phone, String bio) {
+        Users admin = userMapper.selectByUsername(username);
+        if (admin == null) {
+            return Result.error("管理员不存在");
+        }
+        
+        // 更新字段
+        if (phone != null) {
+            admin.setPhone(phone);
+        }
+        
+        if (bio != null) {
+            admin.setBio(bio);
+        }
+        
+        // 保存更新
+        int updated = userMapper.updateUserInfo(admin.getId(), admin.getPhone(), admin.getBio());
+        if (updated > 0) {
+            // 返回更新后的信息
+            Map<String, Object> result = new HashMap<>();
+            result.put("username", admin.getUsername());
+            result.put("phone", admin.getPhone());
+            result.put("bio", admin.getBio());
+            
+            return Result.success(result);
+        } else {
+            return Result.error("更新资料失败");
+        }
+    }
+
+    /**
+     * 修改管理员密码
+     */
+    public Result<?> changeAdminPassword(String username, String oldPassword, String newPassword) {
+        Users admin = userMapper.selectByUsername(username);
+        if (admin == null) {
+            return Result.error("管理员不存在");
+        }
+        
+        // 验证旧密码
+        if (!passwordEncoder.matches(oldPassword, admin.getPassword())) {
+            return Result.error("原密码不正确");
+        }
+        
+        // 设置新密码
+        admin.setPassword(passwordEncoder.encode(newPassword));
+        
+        // 保存更新
+        int updated = userMapper.updateById(admin);
+        if (updated > 0) {
+            return Result.success("密码修改成功");
+        } else {
+            return Result.error("密码修改失败");
+        }
+    }
 }

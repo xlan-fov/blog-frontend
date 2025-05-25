@@ -5,7 +5,7 @@
         <el-card class="profile-card">
           <div class="profile-header">
             <div class="avatar-wrapper">
-              <el-avatar :size="100" :src="userStore.userInfo.avatar" />
+              <el-avatar :size="100" :src="adminProfile.avatar || userStore.userInfo.avatar" />
               <div class="avatar-upload">
                 <el-upload
                   class="avatar-uploader"
@@ -18,24 +18,24 @@
                 </el-upload>
               </div>
             </div>
-            <h2 class="username">{{ userStore.userInfo.username }}</h2>
+            <h2 class="username">{{ adminProfile.username }}</h2>
             <div class="role-tag">
-              <el-tag type="danger">超级管理员</el-tag>
+              <el-tag type="danger">{{ adminProfile.role === 'admin' ? '超级管理员' : '管理员' }}</el-tag>
             </div>
           </div>
           
           <div class="profile-info">
             <div class="info-item">
               <div class="label">注册时间</div>
-              <div class="value">{{ formatDate(userStore.userInfo.registerTime) }}</div>
+              <div class="value">{{ formatDateTime(adminProfile.createdAt) }}</div>
             </div>
             <div class="info-item">
               <div class="label">最后登录</div>
-              <div class="value">{{ formatDate(new Date()) }}</div>
+              <div class="value">{{ formatDateTime(adminProfile.lastLoginTime) }}</div>
             </div>
             <div class="info-item">
               <div class="label">管理权限</div>
-              <div class="value">全部</div>
+              <div class="value">{{ adminProfile.role === 'admin' ? '全部' : '部分' }}</div>
             </div>
           </div>
         </el-card>
@@ -61,9 +61,6 @@
               <el-input v-model="profileForm.username" disabled />
             </el-form-item>
             
-            <el-form-item label="邮箱">
-              <el-input v-model="profileForm.email" :disabled="!isEditing" />
-            </el-form-item>
             
             <el-form-item label="手机号">
               <el-input v-model="profileForm.phone" :disabled="!isEditing" />
@@ -79,7 +76,7 @@
             </el-form-item>
             
             <el-form-item v-if="isEditing">
-              <el-button type="primary" @click="saveProfile">保存</el-button>
+              <el-button type="primary" @click="saveProfile" :loading="submitting">保存</el-button>
             </el-form-item>
           </el-form>
         </el-card>
@@ -213,18 +210,31 @@ import { ref, reactive, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import { Camera } from '@element-plus/icons-vue'
+import adminApi from '@/api/admin'
 
 const userStore = useUserStore()
 const isEditing = ref(false)
 const submitting = ref(false)
 const countdown = ref(0)
+const isLoading = ref(false)
+
+// 管理员资料
+const adminProfile = reactive({
+  id: 0,
+  username: '',
+  phone: '',
+  bio: '',
+  role: '',
+  avatar: '',
+  createdAt: '',
+  lastLoginTime: ''
+})
 
 // 个人资料表单
 const profileForm = reactive({
-  username: userStore.userInfo.username || 'admin',
-  email: 'admin@example.com',
-  phone: '13800138000',
-  bio: userStore.userInfo.bio || '这是管理员个人简介'
+  username: '',
+  phone: '',
+  bio: ''
 })
 
 // 密码表单
@@ -314,20 +324,68 @@ const loginLogs = ref([
   }
 ])
 
+// 获取管理员资料
+const fetchAdminProfile = async () => {
+  isLoading.value = true
+  try {
+    const res = await adminApi.getAdminProfile()
+    if (res.code === 200 && res.data) {
+      // 更新管理员资料
+      Object.assign(adminProfile, res.data)
+      
+      // 更新表单数据
+      profileForm.username = res.data.username || ''
+      profileForm.phone = res.data.phone || ''
+      profileForm.bio = res.data.bio || ''
+      
+      // 更新用户存储
+      userStore.updateProfile(res.data.avatar, res.data.bio)
+    } else {
+      ElMessage.error(res.message || '获取管理员资料失败')
+    }
+  } catch (error) {
+    console.error('获取管理员资料失败:', error)
+    ElMessage.error('获取管理员资料失败')
+  } finally {
+    isLoading.value = false
+  }
+}
+
 // 保存个人资料
 const saveProfile = async () => {
+  // 验证手机号是否合法
+  if (profileForm.phone) {
+    const phoneRegex = /^1[3-9]\d{9}$/;
+    if (!phoneRegex.test(profileForm.phone)) {
+      ElMessage.error('请输入有效的手机号码');
+      return;
+    }
+  }
+
   submitting.value = true
   try {
-    // TODO: 替换为axios请求
-    // 模拟保存
-    setTimeout(() => {
-      userStore.updateProfile(userStore.userInfo.avatar, profileForm.bio)
+    const res = await adminApi.updateAdminProfile({
+      phone: profileForm.phone,
+      bio: profileForm.bio
+    })
+    
+    if (res.code === 200) {
+      // 更新本地数据
+      adminProfile.phone = profileForm.phone
+      adminProfile.bio = profileForm.bio
+      
+      // 更新用户存储
+      userStore.updateProfile(adminProfile.avatar, profileForm.bio)
+      
       isEditing.value = false
       ElMessage.success('保存成功')
-      submitting.value = false
-    }, 500)
+    } else {
+      ElMessage.error(res.message || '保存失败')
+    }
   } catch (error) {
+    console.error('保存个人资料失败:', error)
     ElMessage.error('保存失败')
+  } finally {
     submitting.value = false
   }
 }
@@ -341,19 +399,25 @@ const changePassword = async () => {
     
     submitting.value = true
     try {
-      // TODO: 替换为axios请求
-      // 模拟修改
-      setTimeout(() => {
+      const res = await adminApi.changePassword({
+        oldPassword: passwordForm.oldPassword,
+        newPassword: passwordForm.newPassword
+      })
+      
+      if (res.code === 200) {
         showChangePassword.value = false
         ElMessage.success('密码修改成功')
         // 重置表单
         passwordForm.oldPassword = ''
         passwordForm.newPassword = ''
         passwordForm.confirmPassword = ''
-        submitting.value = false
-      }, 500)
+      } else {
+        ElMessage.error(res.message || '密码修改失败')
+      }
     } catch (error) {
+      console.error('修改密码失败:', error)
       ElMessage.error('密码修改失败')
+    } finally {
       submitting.value = false
     }
   })
@@ -445,11 +509,30 @@ const uploadAvatar = (options) => {
   }
 }
 
-// 格式化日期
-const formatDate = (dateStr) => {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  return date.toLocaleString()
+// 格式化日期时间
+const formatDateTime = (dateTime) => {
+  if (!dateTime) return '暂无记录'
+  
+  try {
+    const date = new Date(dateTime)
+    
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) return dateTime
+    
+    // 格式化为 YYYY-MM-DD HH:MM:SS
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/\//g, '-')
+  } catch (error) {
+    console.error('日期格式化错误:', error)
+    return dateTime // 出错时返回原始值
+  }
 }
 
 // 手机号脱敏
@@ -461,6 +544,7 @@ const maskPhone = (phone) => {
 // 初始化
 onMounted(() => {
   // 加载个人资料
+  fetchAdminProfile()
 })
 </script>
 
@@ -631,4 +715,4 @@ onMounted(() => {
     margin-bottom: 15px;
   }
 }
-</style> 
+</style>

@@ -61,4 +61,19 @@ public interface IAdminActionsService extends IService<AdminActions> {
     Result<?> getUsersActive(String period);
 
     Result<?> getContentsStats(String period);
+
+    /**
+     * 获取管理员个人资料
+     */
+    Result<?> getAdminProfile(String username);
+
+    /**
+     * 更新管理员个人资料
+     */
+    Result<?> updateAdminProfile(String username, String phone, String bio);
+
+    /**
+     * 修改管理员密码
+     */
+    Result<?> changeAdminPassword(String username, String oldPassword, String newPassword);
 }

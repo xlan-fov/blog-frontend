@@ -226,5 +226,32 @@ export default {
    */
   getAnomalyContents(params) {
     return get(API_PATHS.ADMIN.ANOMALY_CONTENTS, params)
-  }
+  },
+
+  /**
+   * 获取管理员个人资料
+   * @returns {Promise}
+   */
+  getAdminProfile() {
+    // 假设管理员就是从当前登录的用户中获取信息
+    return get(API_PATHS.ADMIN.USER_PROFILE)
+  },
+  
+  /**
+   * 更新管理员个人资料
+   * @param {Object} data - 个人资料数据
+   * @returns {Promise}
+   */
+  updateAdminProfile(data) {
+    return put(API_PATHS.ADMIN.UPDATE_PROFILE, data)
+  },
+
+  /**
+   * 修改管理员密码
+   * @param {Object} data - 密码数据
+   * @returns {Promise}
+   */
+  changePassword(data) {
+    return put(API_PATHS.ADMIN.CHANGE_PASSWORD, data)
+  },
 }

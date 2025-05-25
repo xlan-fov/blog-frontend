@@ -131,4 +131,10 @@ public interface UsersMapper extends BaseMapper<Users> {
      */
     @Update("UPDATE users SET is_deleted = 1 WHERE id = #{userId}")
     int markUserDeleted(@Param("userId") Integer userId);
+
+        /**
+         * 更新用户信息
+         */
+        @Update("UPDATE users SET phone = #{phone}, bio = #{bio} WHERE id = #{id}")
+        int updateUserInfo(@Param("id") Integer id,  @Param("phone") String phone, @Param("bio") String bio);
 }

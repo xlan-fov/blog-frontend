@@ -38,6 +38,11 @@ export const API_PATHS = {
         // 管理员相关接口
         LOGIN: '/api/users/adminLogin',
         
+        // 添加管理员个人资料相关接口
+        USER_PROFILE: '/api/admin/profile',
+        UPDATE_PROFILE: '/api/admin/profile/update',
+        CHANGE_PASSWORD: '/api/admin/profile/password',
+        
         // AdminActionsController 接口
         USERS: '/api/admin/users',
         USER_INFO: '/api/admin/users/{username}',

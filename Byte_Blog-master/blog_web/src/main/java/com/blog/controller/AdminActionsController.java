@@ -3,6 +3,7 @@ package com.blog.controller;
 
 import com.blog.dto.RegisterDTO;
 import com.blog.dto.UserDTO;
+import com.blog.mapper.UsersMapper;
 import com.blog.entity.SensitiveWords;
 import com.blog.result.Result;
 import com.blog.service.IAdminActionsService;
@@ -31,6 +32,9 @@ public class AdminActionsController {
 
     @Autowired
     private IAdminActionsService adminActionsService;
+    
+    @Autowired
+    private UsersMapper userMapper; // 添加UsersMapper依赖
 
     @GetMapping("/users")
     public Result<?> getUserList(
@@ -278,6 +282,67 @@ public class AdminActionsController {
             // 否则获取所有博客
             return adminActionsService.getBlogList();
         }
+    }
+
+    /**
+     * 获取管理员个人资料
+     */
+    @GetMapping("/profile")
+    public Result<?> getAdminProfile() {
+        log.info("获取管理员个人资料");
+        UserDTO currentUser = UserHolder.getUser();
+        if (currentUser == null) {
+            return Result.error("请先登录");
+        } else if (!userMapper.getRoleById(currentUser.getId()).equals("admin")) {
+            return Result.error("无权访问管理员资料");
+        }
+        
+        // 调用新增的服务方法获取管理员资料
+        return adminActionsService.getAdminProfile(currentUser.getUsername());
+    }
+    
+    /**
+     * 更新管理员个人资料
+     */
+    @PutMapping("/profile/update")
+    public Result<?> updateAdminProfile(@RequestBody Map<String, Object> profileData) {
+        log.info("更新管理员个人资料: {}", profileData);
+        UserDTO currentUser = UserHolder.getUser();
+        if (currentUser == null) {
+            return Result.error("请先登录");
+        } else if (!userMapper.getRoleById(currentUser.getId()).equals("admin")) {
+            return Result.error("无权更新管理员资料");
+        }
+        
+        String phone = (String) profileData.get("phone");
+        String bio = (String) profileData.get("bio");
+        
+        // 调用新增的服务方法更新管理员资料
+        return adminActionsService.updateAdminProfile(currentUser.getUsername(), phone, bio);
+    }
+    
+    /**
+     * 修改管理员密码
+     */
+    @PutMapping("/profile/password")
+    public Result<?> changePassword(@RequestBody Map<String, Object> passwordData) {
+        log.info("修改管理员密码");
+        UserDTO currentUser = UserHolder.getUser();
+        if (currentUser == null) {
+            return Result.error("请先登录");
+        } else if (!userMapper.getRoleById(currentUser.getId()).equals("admin")) {
+            return Result.error("无权修改管理员密码");
+        }
+        
+        String oldPassword = (String) passwordData.get("oldPassword");
+        String newPassword = (String) passwordData.get("newPassword");
+        
+        if (oldPassword == null || newPassword == null) {
+            return Result.error("密码参数不完整");
+        }
+        
+        // 调用新增的服务方法修改管理员密码
+        return adminActionsService.changeAdminPassword(currentUser.getUsername(), oldPassword, newPassword);
     }
 }
 
