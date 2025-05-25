@@ -422,7 +422,7 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
         return Result.success(failedLoginAttemptsService.list());
     }
 
-    public Result<?> getAnomalyLogins(String startDate, String endDate, String username,Integer page,Integer pageSize) {
+    public Result<?> getAnomalyLogins(String startDate, String endDate, String username) {
         UserDTO currentUser = UserHolder.getUser();
         if (currentUser == null) {
             return Result.error("请先登录");
@@ -437,7 +437,7 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
         try {
             Date start = dateFormat.parse(startDate);
             Date end = dateFormat.parse(endDate);
-            List<Map<String,Object>> list=failedLoginAttemptsMapper.getAnomalyLogins(start, end, username, page, pageSize);
+            List<Map<String,Object>> list=failedLoginAttemptsMapper.getAnomalyLogins(start, end, username);
             Map<String,Object>result = new HashMap<>();
             result.put("total", list.size());
             result.put("list", list);
@@ -458,7 +458,7 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
         return Result.success(anomaliesService.list());
     }
 
-    public Result<?> getAnomalyContents(String startDate, String endDate, String username, String reason, Integer page, Integer pageSize) {
+    public Result<?> getAnomalyContents(String startDate, String endDate, String username, String reason) {
         UserDTO currentUser = UserHolder.getUser();
         if (currentUser == null) {
             return Result.error("请先登录");
@@ -473,7 +473,7 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
         try {
             Date start = dateFormat.parse(startDate);
             Date end = dateFormat.parse(endDate);
-            List<Map<String,Object>> list=anomaliesMapper.getAnomalyContents(start, end, username, reason, page, pageSize);
+            List<Map<String,Object>> list=anomaliesMapper.getAnomalyContents(start, end, username, reason);
             Map<String,Object>result = new HashMap<>();
             result.put("total", list.size());
             result.put("list", list);

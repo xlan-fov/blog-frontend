@@ -48,11 +48,11 @@ public interface IAdminActionsService extends IService<AdminActions> {
 
     Result<?> getFailLoginList();
 
-    Result<?> getAnomalyLogins(String startDate, String endDate, String username,Integer page,Integer pageSize);
+    Result<?> getAnomalyLogins(String startDate, String endDate, String username);
 
     Result<?> getAnomaliesBlogList();
 
-    Result<?> getAnomalyContents(String startDate, String endDate, String username, String reason, Integer page, Integer pageSize);
+    Result<?> getAnomalyContents(String startDate, String endDate, String username, String reason);
 
     Result<?> getAdminActions(String startDate, String endDate, String type, String operator, Integer page, Integer pageSize);
 

@@ -23,7 +23,6 @@ public interface AnomaliesMapper extends BaseMapper<Anomalies> {
             "LEFT JOIN users u ON a.user_id = u.id " +
             "WHERE a.created_at BETWEEN #{startDate} AND #{endDate} " +
             "AND (#{username} IS NULL OR u.username = #{username}) " +
-            "AND (#{reason} IS NULL OR a.type = #{reason}) " +
-            "LIMIT #{page}, #{pageSize}")
-    List<Map<String, Object>> getAnomalyContents(Date startDate, Date endDate, String username, String reason, Integer page, Integer pageSize);
+            "AND (#{reason} IS NULL OR a.type = #{reason}) ")
+    List<Map<String, Object>> getAnomalyContents(Date startDate, Date endDate, String username, String reason);
 }

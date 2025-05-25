@@ -5,7 +5,7 @@
         <el-form-item label="账号查询">
           <el-input v-model="searchForm.username" placeholder="请输入用户名" clearable style="width: 200px;" />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item label="账号状态">
           <el-select v-model="searchForm.status" placeholder="选择状态" clearable style="width: 120px;">
             <el-option label="全部" value="" />
             <el-option label="正常" value="normal" />

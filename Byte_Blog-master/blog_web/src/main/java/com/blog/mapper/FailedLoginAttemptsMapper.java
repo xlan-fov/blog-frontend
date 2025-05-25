@@ -24,9 +24,8 @@ public interface FailedLoginAttemptsMapper extends BaseMapper<FailedLoginAttempt
             "FROM failed_login_attempts f " +
             "LEFT JOIN users u ON f.user_id = u.id " +
             "WHERE f.failure_time BETWEEN #{startDate} AND #{endDate} " +
-            "AND (#{username} IS NULL OR u.username = #{username}) " +
-            "LIMIT #{page}, #{pageSize}")
-    List<Map<String, Object>> getAnomalyLogins(Date startDate, Date endDate, String username, Integer page, Integer pageSize);
+            "AND (#{username} IS NULL OR u.username = #{username}) ")
+    List<Map<String, Object>> getAnomalyLogins(Date startDate, Date endDate, String username);
 
 
     @Select("SELECT COUNT(*) " +

@@ -192,14 +192,12 @@ public class AdminActionsController {
     public Result<?> getAnomalyLogins(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
-            @RequestParam(required = false) String username,
-            @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer pageSize) {
-        
-        log.info("获取异常登录列表：startDate={}, endDate={}, username={}, page={}, pageSize={}", 
-                startDate, endDate, username, page, pageSize);
-        
-        return adminActionsService.getAnomalyLogins(startDate, endDate, username, page-1, pageSize);
+            @RequestParam(required = false) String username
+      ) {
+
+        log.info("获取异常登录列表：startDate={}, endDate={}, username={}", 
+                startDate, endDate, username);
+        return adminActionsService.getAnomalyLogins(startDate, endDate, username);
     }
 
     @GetMapping("/getAnomaliesBlogList")
@@ -213,14 +211,12 @@ public class AdminActionsController {
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
             @RequestParam(required = false) String username,
-            @RequestParam(required = false) String reason,
-            @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer pageSize) {
-        
-        log.info("获取异常内容列表：startDate={}, endDate={}, username={}, reason={}, page={}, pageSize={}", 
-                startDate, endDate, username, reason, page, pageSize);
-        
-        return adminActionsService.getAnomalyContents(startDate, endDate, username, reason, page-1, pageSize);
+            @RequestParam(required = false) String reason) {
+
+        log.info("获取异常内容列表：startDate={}, endDate={}, username={}, reason={}", 
+                startDate, endDate, username, reason);
+
+        return adminActionsService.getAnomalyContents(startDate, endDate, username, reason);
     }
 
     @GetMapping("/logs")
