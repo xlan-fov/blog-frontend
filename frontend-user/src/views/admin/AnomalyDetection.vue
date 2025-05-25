@@ -25,7 +25,7 @@
         </el-card>
         
         <el-card>
-          <el-table :data="abnormalLogins" border style="width: 100%" v-loading="loading">
+          <el-table :data="paginatedAbnormalLogins" border style="width: 100%" v-loading="loading">
             <el-table-column prop="id" label="ID" width="80" />
             <el-table-column prop="username" label="用户名" width="120" />
             <el-table-column prop="ip" label="IP地址" width="150" />
@@ -105,7 +105,7 @@
         </el-card>
         
         <el-card>
-          <el-table :data="prohibitedContents" border style="width: 100%" v-loading="contentLoading">
+          <el-table :data="paginatedProhibitedContents" border style="width: 100%" v-loading="contentLoading">
             <el-table-column prop="id" label="ID" width="80" />
             <el-table-column prop="username" label="用户名" width="120" />
             <el-table-column prop="title" label="内容标题" show-overflow-tooltip />
@@ -241,7 +241,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import adminApi from '@/api/admin'
 
@@ -321,6 +321,20 @@ const banForm = reactive({
   source: '' // 'login' 或 'content'
 })
 
+// 计算分页后的异常登录数据
+const paginatedAbnormalLogins = computed(() => {
+  const startIndex = (currentPage.value - 1) * pageSize.value;
+  const endIndex = startIndex + pageSize.value;
+  return abnormalLogins.value.slice(startIndex, endIndex);
+});
+
+// 计算分页后的违禁内容数据
+const paginatedProhibitedContents = computed(() => {
+  const startIndex = (contentCurrentPage.value - 1) * contentPageSize.value;
+  const endIndex = startIndex + contentPageSize.value;
+  return prohibitedContents.value.slice(startIndex, endIndex);
+});
+
 // 获取异常登录记录
 const fetchAbnormalLogins = async () => {
   loading.value = true
@@ -328,14 +342,12 @@ const fetchAbnormalLogins = async () => {
     const res = await adminApi.getAnomalyLogins({
       username: searchForm.value.username || undefined,
       startDate: searchForm.value.dateRange[0] ? new Date(searchForm.value.dateRange[0]).toISOString() : undefined,
-      endDate: searchForm.value.dateRange[1] ? new Date(searchForm.value.dateRange[1]).toISOString() : undefined,
-      page: currentPage.value,
-      pageSize: pageSize.value
+      endDate: searchForm.value.dateRange[1] ? new Date(searchForm.value.dateRange[1]).toISOString() : undefined
     })
     
     if (res.code === 200 && res.data) {
       abnormalLogins.value = res.data.list || []
-      totalAbnormalLogins.value = res.data.total || 0
+      totalAbnormalLogins.value = abnormalLogins.value.length // 使用数组长度作为总数
     } else {
       ElMessage.error(res.message || '获取异常登录记录失败')
       abnormalLogins.value = []
@@ -359,14 +371,12 @@ const fetchProhibitedContents = async () => {
       username: contentSearchForm.value.username || undefined,
       reason: contentSearchForm.value.reason || undefined,
       startDate: contentSearchForm.value.dateRange[0] ? new Date(contentSearchForm.value.dateRange[0]).toISOString() : undefined,
-      endDate: contentSearchForm.value.dateRange[1] ? new Date(contentSearchForm.value.dateRange[1]).toISOString() : undefined,
-      page: contentCurrentPage.value,
-      pageSize: contentPageSize.value
+      endDate: contentSearchForm.value.dateRange[1] ? new Date(contentSearchForm.value.dateRange[1]).toISOString() : undefined
     })
     
     if (res.code === 200 && res.data) {
       prohibitedContents.value = res.data.list || []
-      totalProhibitedContents.value = res.data.total || 0
+      totalProhibitedContents.value = prohibitedContents.value.length // 使用数组长度作为总数
     } else {
       ElMessage.error(res.message || '获取违禁内容记录失败')
       prohibitedContents.value = []
@@ -506,26 +516,28 @@ const getRejectReasonText = (reason) => {
   return reasonMap[reason] || '未知'
 }
 
-// 分页处理 - 异常登录
+// 分页处理 - 异常登录（更新为客户端分页）
 const handleSizeChange = (size) => {
   pageSize.value = size
-  fetchAbnormalLogins()
+  currentPage.value = 1 // 重置为第一页
+  // 无需重新获取数据，因为我们使用计算属性处理分页
 }
 
 const handleCurrentChange = (page) => {
   currentPage.value = page
-  fetchAbnormalLogins()
+  // 无需重新获取数据，因为我们使用计算属性处理分页
 }
 
-// 分页处理 - 违禁内容
+// 分页处理 - 违禁内容（更新为客户端分页）
 const handleContentSizeChange = (size) => {
   contentPageSize.value = size
-  fetchProhibitedContents()
+  contentCurrentPage.value = 1 // 重置为第一页
+  // 无需重新获取数据，因为我们使用计算属性处理分页
 }
 
 const handleContentCurrentChange = (page) => {
   contentCurrentPage.value = page
-  fetchProhibitedContents()
+  // 无需重新获取数据，因为我们使用计算属性处理分页
 }
 
 // 监听标签切换
