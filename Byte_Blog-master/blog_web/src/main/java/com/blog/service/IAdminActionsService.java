@@ -46,6 +46,8 @@ public interface IAdminActionsService extends IService<AdminActions> {
 
     Result<?> deleteSensitiveWord(String sensitiveWord);
 
+    Result<?> editSensitiveWord(String oldWord, String newWord);
+
     Result<?> getFailLoginList();
 
     Result<?> getAnomalyLogins(String startDate, String endDate, String username);

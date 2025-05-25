@@ -411,6 +411,40 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
         return Result.success("敏感词删除成功");
     }
 
+    public Result<?> editSensitiveWord(String oldWord, String newWord) {
+        UserDTO currentUser = UserHolder.getUser();
+        if (currentUser == null) {
+            return Result.error("请先登录");
+        } else if (userMapper.getRoleById(currentUser.getId()).equals("user")) {
+            System.out.println(userMapper.getRoleById(currentUser.getId()));
+            return Result.error("没有权限");
+        }
+        SensitiveWords word = sensitiveWordsMapper.selectByWord(oldWord);
+        if (word == null) {
+            return Result.error("敏感词不存在");
+        }
+
+        if (sensitiveWordsMapper.countByWord(newWord) > 0) {
+            SensitiveWords existingWord = sensitiveWordsMapper.selectByWord(newWord);
+            if (existingWord.getIsDeleted() == 1) {
+                // 如果新敏感词已被删除，则恢复它
+                existingWord.setIsDeleted(0);
+                existingWord.setDeletedBy(null);
+                existingWord.setCreatedAt(new Date());
+                sensitiveWordsMapper.updateById(existingWord);
+                return Result.success("敏感词编辑成功");
+            }
+            return Result.error("新敏感词已存在");
+        }
+        // 修改敏感词
+        word.setWord(newWord);
+        word.setCreatedAt(new Date());
+        sensitiveWordsMapper.updateById(word);
+        // 记录管理员操作
+        recordAdminActions(currentUser.getId(), "EDIT_SENSITIVE_WORD", word.getId(), "WORD", "编辑敏感词");
+        return Result.success("敏感词编辑成功");
+    }
+
     public Result<?> getFailLoginList() {
         UserDTO currentUser = UserHolder.getUser();
         if (currentUser == null) {

@@ -156,6 +156,18 @@ public class AdminActionsController {
         return adminActionsService.deleteSensitiveWord(sensitiveWord);
     }
 
+    @PostMapping("/editSensitiveWord/{sensitiveWord}")
+    // 修改敏感词
+    public Result<?> editSensitiveWord(@PathVariable String sensitiveWord, @RequestBody Map<String, String> requestBody) {
+        String newSensitiveWord = requestBody.get("sensitiveWord");
+        if (newSensitiveWord == null || newSensitiveWord.isEmpty()) {
+            return Result.error("敏感词不能为空");
+        }
+        log.info("编辑敏感词：{}", sensitiveWord);
+        adminActionsService.editSensitiveWord(sensitiveWord, newSensitiveWord);
+        return Result.success("敏感词编辑成功");
+    }
+
     @PostMapping("/addSensitiveWords")
     public Result<?> addSensitiveWords(@RequestBody Map<String, List<String>> requestBody) {
         List<String> sensitiveWords = requestBody.get("sensitiveWord");
