@@ -619,7 +619,6 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
         Map<String, Object> result = new HashMap<>();
         result.put("id", admin.getId());
         result.put("username", admin.getUsername());
-        result.put("email", admin.getEmail());
         result.put("phone", admin.getPhone());
         result.put("avatar", admin.getAvatarUrl());
         result.put("bio", admin.getBio());
