@@ -23,6 +23,9 @@ import java.util.Map;
 @Repository
 @Mapper
 public interface UsersMapper extends BaseMapper<Users> {
+
+    @Select("SELECT id, username, password_hash AS password, phone, avatar_url AS avatarUrl, bio, role, is_banned AS isBanned, is_logged_in AS isLoggedIn, is_deleted, deleted_by, last_login_time AS lastLoginTime, created_at AS createdAt FROM users WHERE username = #{username} AND is_banned = 0 AND is_deleted = 0")
+    Users selectByUsernameNotbanned(@Param("username") String username);
     @Select("SELECT id, username, password_hash AS password, phone, avatar_url AS avatarUrl, bio, role, is_banned AS isBanned, is_logged_in AS isLoggedIn, is_deleted, deleted_by, last_login_time AS lastLoginTime, created_at AS createdAt FROM users WHERE username = #{username}  and is_deleted = 0")
     Users selectByUsername(@Param("username") String username);
 

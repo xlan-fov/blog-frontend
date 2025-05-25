@@ -192,9 +192,12 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
                 .map(Integer::parseInt)
                 .orElse(0);
 
-        Users user = userMapper.selectByUsername(username);
-        if(user == null){
+        Users user = userMapper.selectByUsernameNotbanned(username);
+        Users user2 = userMapper.selectByUsername(username);
+        if(user == null && user2 == null){
             return Result.error("用户名未注册");
+        } else if(user == null) {
+            return Result.error("用户被封禁");
         }
 
         if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
@@ -274,7 +277,6 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
 
         Users user = userMapper.selectByUsername(username);
         
-
         if(user == null){
             return Result.error("管理员未注册");
         }
