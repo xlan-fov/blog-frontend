@@ -530,6 +530,21 @@ onMounted(() => {
   justify-content: center;
 }
 
+/* 修复选择框列的居中问题 */
+:deep(.el-table .el-table-column--selection .cell) {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 0 !important;
+}
+
+:deep(.el-table .el-checkbox) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
 @media screen and (max-width: 768px) {
   .card-header {
     flex-direction: column;
