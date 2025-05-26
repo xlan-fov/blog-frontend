@@ -145,6 +145,12 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="blogEditDialogVisible = false">取消</el-button>
+          <el-button 
+            type="success" 
+            @click="exportBlogToPDF" 
+            :disabled="!blogForm.id || isCreating"
+            :loading="exportLoading"
+          >导出PDF</el-button>
           <el-button type="primary" @click="saveBlog" :loading="saveLoading">保存</el-button>
         </span>
       </template>
@@ -340,6 +346,7 @@ const currentBlog = ref({})
 const blogEditDialogVisible = ref(false)
 const editLoading = ref(false)
 const saveLoading = ref(false)
+const exportLoading = ref(false)
 const isCreating = ref(false)
 const blogForm = ref({
   id: null,
@@ -519,6 +526,64 @@ const saveBlog = async () => {
   }
 }
 
+// 导出博客为PDF
+const exportBlogToPDF = async () => {
+  if (!blogForm.value.id) {
+    ElMessage.warning('请先保存博客后再导出PDF')
+    return
+  }
+  
+  exportLoading.value = true
+  try {
+    // 直接用fetch API调用后端接口，因为需要处理二进制文件
+    const response = await fetch(`/api/export/${blogForm.value.id}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`导出失败: ${response.statusText}`)
+    }
+    
+    // 获取文件流
+    const blob = await response.blob()
+    
+    // 创建下载链接
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.style.display = 'none'
+    a.href = url
+    
+    // 从响应头获取文件名，如果没有则使用博客标题
+    const contentDisposition = response.headers.get('Content-Disposition')
+    let filename = `${blogForm.value.title || 'blog'}.pdf`
+    
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1].replace(/['"]/g, '')
+      }
+    }
+    
+    a.download = decodeURIComponent(filename)
+    document.body.appendChild(a)
+    a.click()
+    
+    // 清理
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+    
+    ElMessage.success('PDF导出成功')
+  } catch (error) {
+    console.error('导出PDF失败:', error)
+    ElMessage.error(`导出PDF失败: ${error.message || '未知错误'}`)
+  } finally {
+    exportLoading.value = false
+  }
+}
+
 // 分页处理
 const handleSizeChange = (size) => {
   pageSize.value = size
@@ -633,5 +698,10 @@ onMounted(() => {
 /* 博客编辑样式 */
 .blog-edit {
   padding: 10px;
+}
+
+/* 添加PDF按钮样式 */
+:deep(.el-button--success) {
+  margin-right: 10px;
 }
 </style>

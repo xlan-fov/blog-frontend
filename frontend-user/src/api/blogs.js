@@ -77,5 +77,18 @@ export default {
    */
   saveContent(data) {
     return post(API_PATHS.BLOGS.SAVE_CONTENT, data)
+  },
+
+  /**
+   * 导出博客为PDF
+   * @param {Number} blogId - 博客ID
+   */
+  exportBlogToPDF(blogId) {
+    return fetch(`/api/export/${blogId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    });
   }
 }
