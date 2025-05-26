@@ -21,35 +21,34 @@
     
     <el-card>
       <el-table :data="paginatedAccounts" border style="width: 100%" v-loading="loading">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="username" label="用户名" width="120" />
-        <el-table-column prop="email" label="邮箱" width="180" />
-        <el-table-column prop="phone" label="手机号" width="120" />
-        <el-table-column label="注册时间" width="180">
+        <el-table-column prop="id" label="ID" min-width="80" />
+        <el-table-column prop="username" label="用户名" min-width="120" />
+        <el-table-column prop="phone" label="手机号" min-width="120" />
+        <el-table-column label="注册时间" min-width="180">
           <template #default="scope">
             {{ formatDateTime(scope.row.registerTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="最后登录时间" width="180">
+        <el-table-column label="最后登录时间" min-width="180">
           <template #default="scope">
             {{ formatDateTime(scope.row.lastLoginTime) }}
           </template>
         </el-table-column>
-        <el-table-column prop="loginStatus" label="登录状态" width="100">
+        <el-table-column prop="loginStatus" label="登录状态" min-width="100">
           <template #default="scope">
             <el-tag :type="scope.row.loginStatus ? 'success' : 'info'">
               {{ scope.row.loginStatus ? '在线' : '离线' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="账号状态" width="100">
+        <el-table-column prop="status" label="账号状态" min-width="100">
           <template #default="scope">
             <el-tag :type="getStatusType(scope.row.status)">
               {{ getStatusText(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240">
+        <el-table-column label="操作" min-width="240">
           <template #default="scope">
             <el-button 
               v-if="scope.row.loginStatus" 
@@ -103,7 +102,6 @@
     >
       <el-descriptions :column="2" border>
         <el-descriptions-item label="用户名">{{ selectedAccount.username }}</el-descriptions-item>
-        <el-descriptions-item label="邮箱">{{ selectedAccount.email || '未设置' }}</el-descriptions-item>
         <el-descriptions-item label="手机号">{{ selectedAccount.phone || '未设置' }}</el-descriptions-item>
         <el-descriptions-item label="注册时间">{{ formatDateTime(selectedAccount.registerTime || selectedAccount.createdAt) }}</el-descriptions-item>
         <el-descriptions-item label="最后登录时间">{{ formatDateTime(selectedAccount.lastLoginTime) }}</el-descriptions-item>
@@ -391,7 +389,7 @@ const viewAccountDetail = async (account) => {
         username: 'username',
         phone: 'phone',
         status: 'status',
-        email: 'email',
+        // 删除 email 字段的映射
         articleCount: 'articleCount'
       };
       
@@ -531,5 +529,31 @@ onMounted(() => {
 .ban-content {
   color: #606266;
   line-height: 1.5;
+}
+
+/* 添加表格居中样式 */
+:deep(.el-table .cell) {
+  text-align: center;
+}
+
+:deep(.el-table th) {
+  text-align: center !important;
+}
+
+:deep(.el-table td) {
+  vertical-align: middle;
+}
+
+/* 确保标签和按钮也居中 */
+:deep(.el-table .el-tag) {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+:deep(.el-table .el-button-group),
+:deep(.el-table .el-button) {
+  display: inline-flex;
+  justify-content: center;
 }
 </style>
