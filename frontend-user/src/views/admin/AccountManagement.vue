@@ -271,20 +271,38 @@ const resetSearch = () => {
 
 // 踢出账号
 const kickAccount = (account) => {
-  ElMessageBox.confirm(`确定要踢出账号 "${account.username}" 吗?`, '提示', {
+  ElMessageBox.prompt(`请输入踢出账号 "${account.username}" 的原因:`, '踢出账号', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    try {
-      // TODO: 替换为axios请求
-      // 模拟操作
-      account.loginStatus = false
-      ElMessage.success('账号已踢出')
-    } catch (error) {
-      ElMessage.error('操作失败')
+    type: 'warning',
+    inputType: 'textarea',
+    inputPlaceholder: '请输入踢出原因',
+  }).then(async ({ value: reason }) => {
+    if (!reason || reason.trim() === '') {
+      ElMessage.warning('请填写踢出原因');
+      return;
     }
-  }).catch(() => {})
+
+    try {
+      // 调用踢出用户的API
+      const res = await adminApi.kickUser(account.id, reason);
+      
+      if (res.code === 200) {
+        // 更新本地状态
+        account.loginStatus = false;
+        ElMessage.success('账号已踢出');
+        // 重新获取用户列表以确保数据同步
+        fetchAccounts();
+      } else {
+        ElMessage.error(res.message || '踢出失败');
+      }
+    } catch (error) {
+      console.error('踢出用户失败:', error);
+      ElMessage.error('踢出操作失败');
+    }
+  }).catch(() => {
+    // 用户取消操作，不做任何处理
+  });
 }
 
 // 封禁账号

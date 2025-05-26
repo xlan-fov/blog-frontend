@@ -64,7 +64,7 @@ public class AdminActionsController {
 
     @PostMapping("/kickUser")
     public Result<?> kickUser(@RequestBody Map<String, Object> requestBody) {
-        Integer userId = Integer.valueOf((String) requestBody.get("id"));
+        Integer userId = (Integer) requestBody.get("id");
         String reason = (String) requestBody.get("reason");
         log.info("踢出用户：id={}, 原因={}", userId, reason);
         return adminActionsService.kickUser(userId, reason);
