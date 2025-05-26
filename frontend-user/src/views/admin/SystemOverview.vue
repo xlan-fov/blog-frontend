@@ -136,6 +136,8 @@
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import { User, Document, Warning, ChatDotRound } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
+import * as echarts from 'echarts';
+import adminApi from '@/api/admin';
 
 // 状态定义
 const loading = ref(false);
@@ -234,11 +236,8 @@ const fetchContentStats = async () => {
 const renderUserChart = () => {
   if (!userActivityChart.value) return;
   
-  if (!userChart && window.echarts) {
-    userChart = window.echarts.init(userActivityChart.value);
-  } else if (!window.echarts) {
-    ElMessage.warning('ECharts 加载失败，请刷新页面重试');
-    return;
+  if (!userChart) {
+    userChart = echarts.init(userActivityChart.value);
   }
 
   // 准备数据
@@ -321,11 +320,8 @@ const renderUserChart = () => {
 const renderContentChart = () => {
   if (!contentActivityChart.value) return;
   
-  if (!contentChart && window.echarts) {
-    contentChart = window.echarts.init(contentActivityChart.value);
-  } else if (!window.echarts) {
-    ElMessage.warning('ECharts 加载失败，请刷新页面重试');
-    return;
+  if (!contentChart) {
+    contentChart = echarts.init(contentActivityChart.value);
   }
 
   // 准备数据
@@ -421,20 +417,9 @@ const handleResize = () => {
 
 // 在组件挂载时获取数据
 onMounted(() => {
-  // 添加 CDN 脚本
-  const script = document.createElement('script');
-  script.src = 'https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js';
-  script.async = true;
-  script.onload = () => {
-    fetchOverviewData();
-    fetchUserStats();
-    fetchContentStats();
-  };
-  script.onerror = () => {
-    ElMessage.error('加载图表库失败，部分功能可能无法正常工作');
-    fetchOverviewData(); // 仍然获取基础数据
-  };
-  document.head.appendChild(script);
+  fetchOverviewData();
+  fetchUserStats();
+  fetchContentStats();
   
   // 监听窗口大小变化
   window.addEventListener('resize', handleResize);
