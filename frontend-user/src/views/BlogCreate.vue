@@ -95,10 +95,16 @@ const handlePublish = async () => {
   }
 
   try {
-    await ElMessageBox.confirm('确定要发布这篇博客吗？', '确认发布', {
+    // 使用ElMessageBox.alert而不是confirm，因为alert在某些情况下层级显示更可靠
+    await ElMessageBox.alert('确定要发布这篇博客吗？', '确认发布', {
       confirmButtonText: '确定发布',
+      showCancelButton: true,
       cancelButtonText: '取消',
-      type: 'info'
+      type: 'info',
+      zIndex: 10001,
+      closeOnClickModal: false,
+      appendToBody: true, // 确保添加到body以避免嵌套上下文问题
+      modalAppendToBody: true // 确保modal背景添加到body
     })
 
     console.log('准备发布博客:', {
@@ -214,5 +220,34 @@ const handleCancel = () => {
     width: 100%;
     margin-bottom: 10px;
   }
+}
+</style>
+
+<!-- 添加全局样式，确保优先级最高 -->
+<style>
+/* 确保MessageBox显示在最上层 */
+body .el-message-box__wrapper {
+  z-index: 10000 !important;
+  position: fixed !important;
+}
+
+body .el-overlay {
+  z-index: 9999 !important;
+  position: fixed !important;
+}
+
+body .v-modal {
+  z-index: 9998 !important;
+  position: fixed !important;
+}
+
+/* 禁用可能干扰弹窗的其他元素 */
+body.el-popup-parent--hidden .blog-create {
+  z-index: auto !important;
+}
+
+/* 确保wangeditor不会覆盖弹窗 */
+.w-e-toolbar, .w-e-text-container, .w-e-menu-panel {
+  z-index: 100 !important;
 }
 </style>
