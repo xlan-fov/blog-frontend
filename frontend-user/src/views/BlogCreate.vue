@@ -77,7 +77,7 @@ onMounted(() => {
   }
 
   // 配置图片上传
-  editor.config.uploadImgServer = '/api/upload/image'
+  editor.config.uploadImgServer = '/api/common/upload'
   editor.config.uploadFileName = 'file'
   editor.config.uploadImgMaxSize = 5 * 1024 * 1024
   editor.config.uploadImgAccept = ['jpg', 'jpeg', 'png', 'gif', 'webp']
@@ -92,10 +92,10 @@ onMounted(() => {
     },
     customInsert: function(insertImgFn, result) {
       console.log('图片上传结果:', result)
-      if (result.code === 200) {
+      if (result.code === 200 && result.data && result.data.url) {
         insertImgFn(result.data.url)
       } else {
-        ElMessage.error('图片上传失败：' + (result.message || '未知错误'))
+        ElMessage.error('图片上传失败：' + (result.msg || '未知错误'))
       }
     },
     fail: function(xhr, editor, resData) {

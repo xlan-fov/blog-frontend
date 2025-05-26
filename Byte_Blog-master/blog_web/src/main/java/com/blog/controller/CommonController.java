@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -32,7 +34,7 @@ public class CommonController {
      * @Description: 文件上传
      */
     @PostMapping("/upload")
-    public Result<String> upload(MultipartFile file){
+    public Result<?> upload(MultipartFile file){
         log.info("文件上传：{}",file);
 
         try {
@@ -50,8 +52,14 @@ public class CommonController {
             if(result.equals("cat") || result.equals("dog")) {
                 return Result.error("图片内容违规，请重新上传");
             }else {
-                return Result.success(filePath);
+                Map<String, Object> map = new HashMap<>();
+                map.put("url", filePath);
+                return Result.success(map);
+//                return Result.success(filePath);
             }
+//            Map<String, Object> map = new HashMap<>();
+//            map.put("url", filePath);
+//            return Result.success(map);
         } catch (IOException e) {
             log.error("文件上传失败：{}", e);
         }
