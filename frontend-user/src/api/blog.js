@@ -102,7 +102,7 @@ export default {
    */
   async deleteBlog(id) {
     try {
-      const response = await del(`${API_PATHS.BLOGS.DELETE}/${id}`)
+      const response = await del(API_PATHS.BLOGS.DELETE.replace('{id}', id))
       return response
     } catch (error) {
       console.error('删除博客失败:', error)

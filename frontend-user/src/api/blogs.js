@@ -40,6 +40,7 @@ export default {
    * @param {Number} id - 博客ID
    */
   deleteBlog(id) {
+    // Replace {id} placeholder with the actual ID
     return del(API_PATHS.BLOGS.DELETE.replace('{id}', id))
   },
 

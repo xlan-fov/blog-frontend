@@ -37,7 +37,7 @@ export const API_PATHS = {
         GET: '/api/blogs/{id}',
         CREATE: '/api/blogs/addBlog',
         UPDATE: '/api/updateBlogs/{id}',
-        DELETE: '/api/deleteBlogs/{id}',
+        DELETE: '/api/deleteBlogs/{id}', // Confirm this is the correct path format
         PUBLISH: '/api/updateBlogs/{id}',
         WITHDRAW: '/api/admin/articles/{id}/withdraw',
         USER_WITHDRAW: '/api/blogs/{id}/withdraw',
