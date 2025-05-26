@@ -15,7 +15,7 @@
     <el-tabs v-model="activeTab" class="blog-tabs" @tab-change="handleTabChange">
       <el-tab-pane label="我的博客" name="myBlogs">
         <div class="table-actions">
-          <el-button type="primary" @click="createBlog">新建博客</el-button>
+          <el-button type="primary" @click="showCreateDialog">新建博客</el-button>
         </div>
         
         <el-table :data="paginatedBlogs" border style="width: 100%" v-loading="loading">
@@ -32,8 +32,8 @@
           </el-table-column>
           <el-table-column label="操作" width="240">
             <template #default="scope">
-              <el-button type="primary" link @click="viewBlog(scope.row)">查看</el-button>
-              <el-button type="primary" link @click="editBlog(scope.row)">编辑</el-button>
+              <el-button type="primary" link @click="showBlogDetail(scope.row)">查看</el-button>
+              <el-button type="primary" link @click="showEditDialog(scope.row)">编辑</el-button>
               <el-button type="danger" link @click="deleteBlog(scope.row)">删除</el-button>
               <el-button 
                 v-if="scope.row.status !== 'published'" 
@@ -76,7 +76,7 @@
           </el-table-column>
           <el-table-column label="操作" width="160">
             <template #default="scope">
-              <el-button type="primary" link @click="viewBlog(scope.row)">查看</el-button>
+              <el-button type="primary" link @click="showBlogDetail(scope.row)">查看</el-button>
               <el-button type="danger" link @click="deleteBlog(scope.row)">删除</el-button>
             </template>
           </el-table-column>
@@ -95,6 +95,60 @@
         </div>
       </el-tab-pane>
     </el-tabs>
+    
+    <!-- 博客详情对话框 -->
+    <el-dialog
+      v-model="blogDetailDialogVisible"
+      title="博客详情"
+      width="800px"
+      :close-on-click-modal="false"
+    >
+      <div v-loading="detailLoading" class="blog-detail">
+        <h2 class="blog-title">{{ currentBlog.title }}</h2>
+        <div class="blog-meta">
+          <span>作者：{{ currentBlog.username }}</span>
+          <span>创建时间：{{ formatDateTime(currentBlog.createdAt || currentBlog.createTime) }}</span>
+          <span>状态：{{ currentBlog.status === 'published' ? '已发布' : '草稿' }}</span>
+        </div>
+        <div class="blog-content" v-html="currentBlog.content"></div>
+      </div>
+    </el-dialog>
+    
+    <!-- 博客编辑对话框 -->
+    <el-dialog
+      v-model="blogEditDialogVisible"
+      :title="isCreating ? '创建博客' : '编辑博客'"
+      width="800px"
+      :close-on-click-modal="false"
+    >
+      <div v-loading="editLoading" class="blog-edit">
+        <el-form :model="blogForm" label-width="80px">
+          <el-form-item label="标题" required>
+            <el-input v-model="blogForm.title" placeholder="请输入博客标题"/>
+          </el-form-item>
+          <el-form-item label="内容" required>
+            <el-input
+              v-model="blogForm.content"
+              type="textarea"
+              :rows="10"
+              placeholder="请输入博客内容"
+            />
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-radio-group v-model="blogForm.status">
+              <el-radio label="draft">草稿</el-radio>
+              <el-radio label="published">发布</el-radio>
+            </el-radio-group>
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="blogEditDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="saveBlog" :loading="saveLoading">保存</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -104,6 +158,7 @@ import { useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import adminApi from '@/api/admin'
+import blogsApi from '@/api/blogs'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -139,6 +194,32 @@ const paginatedUserBlogs = computed(() => {
   const endIndex = startIndex + pageSize.value;
   return userBlogs.value.slice(startIndex, endIndex);
 });
+
+// 格式化日期时间
+const formatDateTime = (dateTime) => {
+  if (!dateTime) return '暂无记录';
+  
+  try {
+    const date = new Date(dateTime);
+    
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) return dateTime;
+    
+    // 格式化为 YYYY-MM-DD HH:MM:SS
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/\//g, '-');
+  } catch (error) {
+    console.error('日期格式化错误:', error);
+    return dateTime; // 出错时返回原始值
+  }
+}
 
 // 检查后端连接状态
 const checkBackendConnection = async () => {
@@ -237,18 +318,93 @@ const resetSearch = () => {
 }
 
 // 创建博客
-const createBlog = () => {
-  router.push('/admin/blog-management/create')
+const showCreateDialog = () => {
+  isCreating.value = true
+  blogEditDialogVisible.value = true
+  
+  // 重置表单
+  blogForm.value = {
+    id: null,
+    title: '',
+    content: '',
+    status: 'draft'
+  }
 }
 
-// 查看博客
-const viewBlog = (blog) => {
-  router.push(`/admin/blog-management/view/${blog.id}`)
+// 查看博客详情
+const blogDetailDialogVisible = ref(false)
+const detailLoading = ref(false)
+const currentBlog = ref({})
+
+// 博客编辑对话框
+const blogEditDialogVisible = ref(false)
+const editLoading = ref(false)
+const saveLoading = ref(false)
+const isCreating = ref(false)
+const blogForm = ref({
+  id: null,
+  title: '',
+  content: '',
+  status: 'draft'
+})
+
+// 查看博客详情
+const showBlogDetail = async (blog) => {
+  detailLoading.value = true
+  blogDetailDialogVisible.value = true
+  currentBlog.value = { ...blog }
+  
+  try {
+    // 调用API获取完整博客内容
+    const res = await blogsApi.getBlogDetail(blog.id)
+    
+    if (res.code === 200 && res.data) {
+      // 更新博客详情
+      currentBlog.value = {
+        ...currentBlog.value,
+        ...res.data,
+        content: res.data.content || currentBlog.value.content
+      }
+    } else {
+      ElMessage.error(res.message || '获取博客详情失败')
+    }
+  } catch (error) {
+    console.error('获取博客详情失败:', error)
+    ElMessage.error('获取博客详情失败')
+  } finally {
+    detailLoading.value = false
+  }
 }
 
-// 编辑博客
-const editBlog = (blog) => {
-  router.push(`/admin/blog-management/edit/${blog.id}`)
+// 显示编辑对话框
+const showEditDialog = async (blog) => {
+  editLoading.value = true
+  isCreating.value = false
+  blogEditDialogVisible.value = true
+  
+  try {
+    // 调用API获取完整博客内容用于编辑
+    const res = await blogsApi.getBlogDetail(blog.id)
+    
+    if (res.code === 200 && res.data) {
+      // 填充表单数据
+      blogForm.value = {
+        id: res.data.id,
+        title: res.data.title || '',
+        content: res.data.content || '',
+        status: res.data.status || 'draft'
+      }
+    } else {
+      ElMessage.error(res.message || '获取博客详情失败')
+      blogEditDialogVisible.value = false
+    }
+  } catch (error) {
+    console.error('获取博客详情失败:', error)
+    ElMessage.error('获取博客详情失败')
+    blogEditDialogVisible.value = false
+  } finally {
+    editLoading.value = false
+  }
 }
 
 // 删除博客
@@ -307,6 +463,60 @@ const publishBlog = (blog) => {
       ElMessage.error('发布失败')
     }
   }).catch(() => {})
+}
+
+// 保存博客
+const saveBlog = async () => {
+  // 表单验证
+  if (!blogForm.value.title.trim()) {
+    ElMessage.warning('请输入博客标题')
+    return
+  }
+  
+  if (!blogForm.value.content.trim()) {
+    ElMessage.warning('请输入博客内容')
+    return
+  }
+  
+  saveLoading.value = true
+  try {
+    let res
+    
+    if (isCreating.value) {
+      // 创建新博客
+      res = await blogsApi.createBlog({
+        title: blogForm.value.title,
+        content: blogForm.value.content,
+        status: blogForm.value.status
+      })
+    } else {
+      // 更新现有博客
+      res = await blogsApi.updateBlog(blogForm.value.id, {
+        title: blogForm.value.title,
+        content: blogForm.value.content,
+        status: blogForm.value.status
+      })
+    }
+    
+    if (res.code === 200) {
+      ElMessage.success(isCreating.value ? '创建成功' : '更新成功')
+      blogEditDialogVisible.value = false
+      
+      // 刷新数据
+      if (activeTab.value === 'myBlogs') {
+        fetchMyBlogs()
+      } else {
+        searchUserBlogs()
+      }
+    } else {
+      ElMessage.error(res.message || (isCreating.value ? '创建失败' : '更新失败'))
+    }
+  } catch (error) {
+    console.error(isCreating.value ? '创建博客失败:' : '更新博客失败:', error)
+    ElMessage.error(isCreating.value ? '创建失败' : '更新失败')
+  } finally {
+    saveLoading.value = false
+  }
 }
 
 // 分页处理
@@ -392,5 +602,36 @@ onMounted(() => {
 :deep(.el-table .el-button) {
   display: inline-flex;
   justify-content: center;
+}
+
+/* 博客详情样式 */
+.blog-detail {
+  padding: 10px;
+}
+
+.blog-title {
+  font-size: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.blog-meta {
+  display: flex;
+  justify-content: space-between;
+  color: #909399;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #EBEEF5;
+  padding-bottom: 10px;
+}
+
+.blog-content {
+  line-height: 1.8;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* 博客编辑样式 */
+.blog-edit {
+  padding: 10px;
 }
 </style>
