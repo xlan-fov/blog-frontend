@@ -229,6 +229,9 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
 
         usersService.update(updateWrapper);
 
+        // 更新用户登录状态
+        user.setIsLoggedIn(1);
+        userMapper.updateById(user); // 更新用户信息
 
         UserDTO userDTO = new UserDTO();
         userDTO.setId(user.getId());
@@ -316,6 +319,11 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
 
         usersService.update(updateWrapper);
         */
+        //System.out.println("\n\n用户id：" + user.getId()+"\n\n");
+        user.setLastLoginTime(new Date());
+        user.setIsLoggedIn(1); // 设置为已登录状态
+        userMapper.updateById(user); // 更新用户信息
+        //System.out.println("\n\n用户登录状态 ：" + user.getIsLoggedIn()+"\n\n");
         String token = JwtUtil.generateToken(user);
 
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
