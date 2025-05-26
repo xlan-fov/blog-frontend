@@ -103,8 +103,8 @@ const handlePublish = async () => {
       type: 'info',
       zIndex: 10001,
       closeOnClickModal: false,
-      appendToBody: true, // 确保添加到body以避免嵌套上下文问题
-      modalAppendToBody: true // 确保modal背景添加到body
+      appendToBody: true,
+      modalAppendToBody: true
     })
 
     console.log('准备发布博客:', {
@@ -112,11 +112,11 @@ const handlePublish = async () => {
       content: form.content
     })
     
-    // 使用统一的发布方法
-    await blogStore.publishBlog({
+    // 直接调用createBlog方法，而不是publishBlog
+    await blogStore.createBlog({
       title: form.title.trim(),
-      content: form.content
-      // status会在publishBlog方法中自动设置为'published'
+      content: form.content,
+      status: 'published' // 直接设置状态为published
     })
     
     ElMessage.success('发布成功')
