@@ -289,14 +289,14 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
             System.out.println(userMapper.getRoleById(currentUser.getId()));
             return Result.error("没有权限");
         }
-        Blogs blog = blogsService.getById(blogId);
+        Blogs blog = blogsMapper.selectById(blogId);
         if (blog == null) {
             return Result.error("博客不存在");
         }
         // 发布博客
         blog.setStatus("published");
         blog.setPublishedAt(new Date());
-        blogsService.updateById(blog);
+        blogsMapper.updateById(blog);
         // 记录管理员操作
         Map<String,Object> result = new HashMap<>();
         result.put("blogId", blog.getId());
@@ -313,13 +313,13 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
             System.out.println(userMapper.getRoleById(currentUser.getId()));
             return Result.error("没有权限");
         }
-        Blogs blog = blogsService.getById(blogId);
+        Blogs blog = blogsMapper.selectById(blogId);
         if (blog == null) {
             return Result.error("博客不存在");
         }
         // 撤回博客
         blog.setStatus("draft");
-        blogsService.updateById(blog);
+        blogsMapper.updateById(blog);
         // 记录管理员操作
         recordAdminActions(currentUser.getId(), "WITHDRAW_BLOG", blogId, "BLOG", reason);
         Map<String,Object> result = new HashMap<>();
@@ -336,7 +336,7 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
             System.out.println(userMapper.getRoleById(currentUser.getId()));
             return Result.error("没有权限");
         }
-        Blogs blog = blogsService.getById(blogId);
+        Blogs blog = blogsMapper.selectById(blogId);
         if (blog == null) {
             return Result.error("博客不存在");
         }
@@ -344,7 +344,7 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
         blog.setIsDeleted(1);
         blog.setDeletedBy(currentUser.getId());
         blog.setStatus("removed");
-        blogsService.updateById(blog);
+        blogsMapper.updateById(blog);
         // 记录管理员操作
         recordAdminActions(currentUser.getId(), "DELETE_BLOG", blogId, "BLOG", reason);
         Map<String,Object> result = new HashMap<>();
