@@ -66,6 +66,17 @@ service.interceptors.response.use(
   response => {
     console.log(`DEBUG: 响应URL: ${response.config.url}, 状态: ${response.status}, 数据:`, response.data);
 
+    // 处理未登录的情况
+    if (response.data?.code === 500 && response.data?.msg === '用户未登录，请先登录') {
+      console.warn('用户未登录，清理登录状态并跳转到登录页');
+      // 清理本地存储
+      localStorage.removeItem('token');
+      localStorage.removeItem('userState');
+      // 跳转到登录页面
+      window.location.href = '/login';
+      return Promise.reject(new Error('用户未登录'));
+    }
+
     // 标准化响应格式，将code=0转换为code=200，保持前端一致性
     if (response.data && response.data.code === 0 && response.data.msg === 'success') {
       return {
@@ -90,8 +101,8 @@ service.interceptors.response.use(
       // 清理本地存储
       localStorage.removeItem('token');
       localStorage.removeItem('userState');
-      // 可以在这里跳转到登录页面
-      // window.location.href = '/login';
+      // 跳转到登录页面
+      window.location.href = '/login';
     }
 
     // 增强错误处理，提供更具体的错误信息
