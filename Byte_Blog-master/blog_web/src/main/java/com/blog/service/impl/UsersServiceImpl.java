@@ -223,13 +223,8 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         String token = JwtUtil.generateToken(user);
         log.info("为用户 {} 生成新token: {}", username, token.substring(0, 20) + "...");
 
-        LambdaUpdateWrapper<Users> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(Users::getId, user.getId())
-                .set(Users::getLastLoginTime, new Date());
-
-        usersService.update(updateWrapper);
-
         // 更新用户登录状态
+        user.setLastLoginTime(new Date());
         user.setIsLoggedIn(1);
         userMapper.updateById(user); // 更新用户信息
 
