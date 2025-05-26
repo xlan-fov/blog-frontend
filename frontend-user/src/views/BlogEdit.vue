@@ -79,11 +79,114 @@ watch(() => form.content, (newContent) => {
 onMounted(async () => {
   // 初始化编辑器
   editor = new E('#editor')
+  
+  // 基础配置
   editor.config.height = 350
   editor.config.placeholder = '请输入博客内容'
+  editor.config.zIndex = 100
+  
+  // 配置菜单栏
+  editor.config.menus = [
+    'head',
+    'bold',
+    'fontSize',
+    'fontName',
+    'italic',
+    'underline',
+    'strikeThrough',
+    'foreColor',
+    'backColor',
+    'link',
+    'list',
+    'justify',
+    'quote',
+    'emoticon',
+    'image',
+    'table',
+    'code',
+    'undo',
+    'redo'
+  ]
+
+  // 配置编辑器样式
+  editor.config.styleWithCSS = true  // 使用 style 标签
+  editor.config.pasteFilterStyle = false  // 不过滤粘贴内容的样式
+  editor.config.pasteIgnoreImg = false  // 允许粘贴图片
+  editor.config.pasteTextHandle = function(content) {
+    return content
+  }
+
+  // 配置图片上传
+  editor.config.uploadImgServer = '/api/upload/image'
+  editor.config.uploadFileName = 'file'
+  editor.config.uploadImgMaxSize = 5 * 1024 * 1024
+  editor.config.uploadImgAccept = ['jpg', 'jpeg', 'png', 'gif', 'webp']
+  editor.config.uploadImgHeaders = {
+    Authorization: localStorage.getItem('token') || ''
+  }
+  
+  // 配置图片上传钩子
+  editor.config.uploadImgHooks = {
+    before: function(xhr) {
+      console.log('准备上传图片')
+    },
+    customInsert: function(insertImgFn, result) {
+      console.log('图片上传结果:', result)
+      if (result.code === 200) {
+        insertImgFn(result.data.url)
+      } else {
+        ElMessage.error('图片上传失败：' + (result.message || '未知错误'))
+      }
+    },
+    fail: function(xhr, editor, resData) {
+      console.error('图片上传失败:', resData)
+      ElMessage.error('图片上传失败')
+    },
+    error: function(xhr, editor, resData) {
+      console.error('图片上传错误:', resData)
+      ElMessage.error('图片上传错误')
+    },
+    timeout: function(xhr, editor, resData) {
+      console.error('图片上传超时:', resData)
+      ElMessage.error('图片上传超时')
+    }
+  }
+
+  // 禁用网络图片功能
+  editor.config.showLinkImg = false
+  editor.config.showLinkImgAlt = false
+  editor.config.showLinkImgHref = false
+  editor.config.showLinkImgSize = false
+  editor.config.showLinkImgTitle = false
+  editor.config.showLinkImgType = false
+  editor.config.showLinkImgUrl = false
+  editor.config.showLinkImgWidth = false
+  editor.config.showLinkImgHeight = false
+  editor.config.showLinkImgBorder = false
+  editor.config.showLinkImgMargin = false
+  editor.config.showLinkImgPadding = false
+  editor.config.showLinkImgFloat = false
+  editor.config.showLinkImgAlign = false
+  editor.config.showLinkImgAlt = false
+  editor.config.showLinkImgHref = false
+  editor.config.showLinkImgSize = false
+  editor.config.showLinkImgTitle = false
+  editor.config.showLinkImgType = false
+  editor.config.showLinkImgUrl = false
+  editor.config.showLinkImgWidth = false
+  editor.config.showLinkImgHeight = false
+  editor.config.showLinkImgBorder = false
+  editor.config.showLinkImgMargin = false
+  editor.config.showLinkImgPadding = false
+  editor.config.showLinkImgFloat = false
+  editor.config.showLinkImgAlign = false
+
+  // 配置编辑器事件
   editor.config.onchange = (html) => {
     form.content = html
   }
+
+  // 创建编辑器
   editor.create()
 
   // 如果是编辑模式，加载博客数据
@@ -300,6 +403,11 @@ const confirmPublish = async () => {
   justify-content: center;
 }
 
+/* 确保wangeditor的弹窗显示在最上层 */
+:deep(.w-e-menu-panel) {
+  z-index: 10000 !important;
+}
+
 :deep(.w-e-text-container) {
   height: 350px !important;
   border-radius: 4px;
@@ -314,6 +422,33 @@ const confirmPublish = async () => {
   border-radius: 4px 4px 0 0;
   border: 1px solid #dcdfe6;
   border-bottom: none;
+}
+
+/* 编辑器内容样式 */
+:deep(.w-e-text) {
+  padding: 10px;
+}
+
+:deep(.w-e-text p) {
+  margin: 1em 0;
+}
+
+:deep(.w-e-text strong),
+:deep(.w-e-text b) {
+  font-weight: bold !important;
+}
+
+:deep(.w-e-text em),
+:deep(.w-e-text i) {
+  font-style: italic !important;
+}
+
+:deep(.w-e-text u) {
+  text-decoration: underline !important;
+}
+
+:deep(.w-e-text s) {
+  text-decoration: line-through !important;
 }
 
 /* 移动端适配 */
@@ -340,5 +475,64 @@ const confirmPublish = async () => {
   :deep(.w-e-text-container) {
     height: 300px !important;
   }
+}
+</style>
+
+<!-- 添加全局样式 -->
+<style>
+/* 确保wangeditor的弹窗显示在最上层 */
+.w-e-menu-panel {
+  z-index: 10000 !important;
+}
+
+.w-e-text-container {
+  z-index: 1 !important;
+}
+
+.w-e-toolbar {
+  z-index: 2 !important;
+}
+
+/* 编辑器内容样式 */
+.w-e-text {
+  padding: 10px;
+}
+
+.w-e-text p {
+  margin: 1em 0;
+}
+
+.w-e-text strong,
+.w-e-text b {
+  font-weight: bold !important;
+}
+
+.w-e-text em,
+.w-e-text i {
+  font-style: italic !important;
+}
+
+.w-e-text u {
+  text-decoration: underline !important;
+}
+
+.w-e-text s {
+  text-decoration: line-through !important;
+}
+
+/* 确保MessageBox显示在最上层 */
+body .el-message-box__wrapper {
+  z-index: 10001 !important;
+  position: fixed !important;
+}
+
+body .el-overlay {
+  z-index: 10000 !important;
+  position: fixed !important;
+}
+
+body .v-modal {
+  z-index: 9999 !important;
+  position: fixed !important;
 }
 </style>

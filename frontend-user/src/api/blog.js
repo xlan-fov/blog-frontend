@@ -50,7 +50,7 @@ export default {
    */
   async getBlogById(id) {
     try {
-      const response = await get(`${API_PATHS.BLOGS.DETAIL}/${id}`)
+      const response = await get(API_PATHS.BLOGS.GET.replace('{id}', id))
       return response
     } catch (error) {
       console.error('获取博客详情失败:', error)
