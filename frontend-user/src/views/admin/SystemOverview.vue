@@ -232,6 +232,71 @@ const fetchContentStats = async () => {
   }
 };
 
+// 根据选择的时间周期格式化日期显示
+const formatTimeByPeriod = (timeStr, period) => {
+  if (!timeStr) return '';
+  
+  try {
+    // 处理可能包含日期范围的情况，如"2023-01-01 to 2023-01-07"
+    let originalDate = timeStr;
+    if (timeStr.includes(' to ')) {
+      originalDate = timeStr.split(' to ')[0];
+    }
+    
+    const date = new Date(originalDate);
+    if (isNaN(date.getTime())) return timeStr; // 无效日期直接返回原字符串
+    
+    // 根据不同周期返回适当的格式
+    switch (period) {
+      case 'day':
+        return `${date.getMonth() + 1}-${date.getDate()}`; // 月份从0开始，所以+1
+      case 'week':
+        // 对于周，返回原始字符串，排序已通过originalDate处理
+        return timeStr;
+      case 'month':
+        // 对于月，返回原始字符串，排序已通过originalDate处理
+        return timeStr;
+      case 'year':
+        // 对于年，返回原始字符串，排序已通过originalDate处理
+        return timeStr;
+      default:
+        return timeStr;
+    }
+  } catch (error) {
+    console.error('日期格式化错误:', error);
+    return timeStr;
+  }
+};
+
+// 解析日期字符串，处理各种格式以获取有效的日期对象
+const parseTimeString = (timeStr) => {
+  if (!timeStr) return null;
+  
+  try {
+    // 如果是日期范围（格式如"2023-01-01 to 2023-01-07"），取第一个日期
+    if (timeStr.includes(' to ')) {
+      timeStr = timeStr.split(' to ')[0];
+    }
+    
+    // 处理年份格式（如"2023"）
+    if (/^\d{4}$/.test(timeStr)) {
+      return new Date(parseInt(timeStr), 0, 1); // 以该年的1月1日作为日期
+    }
+    
+    // 处理月份格式（如"2023-01"）
+    if (/^\d{4}-\d{2}$/.test(timeStr)) {
+      const [year, month] = timeStr.split('-');
+      return new Date(parseInt(year), parseInt(month) - 1, 1); // 以该月的1日作为日期
+    }
+    
+    // 其他格式，尝试标准解析
+    return new Date(timeStr);
+  } catch (error) {
+    console.error('日期解析错误:', error);
+    return null;
+  }
+};
+
 // 渲染用户活跃度图表
 const renderUserChart = () => {
   if (!userActivityChart.value) return;
@@ -240,60 +305,60 @@ const renderUserChart = () => {
     userChart = echarts.init(userActivityChart.value);
   }
 
-  // 准备数据
-  let times = [];
-  let activeUserData = [];
-  let newUserData = [];
-  
-  // 对数据进行排序，确保按时间顺序显示
-  const sortedActiveUsers = [...userStats.activeUsers].sort((a, b) => new Date(a.time) - new Date(b.time));
-  const sortedNewUsers = [...userStats.newUsers].sort((a, b) => new Date(a.time) - new Date(b.time));
-  
-  // 使用一个临时Map来存储日期和数据的映射，用于后续排序
+  // 使用一个临时Map来存储日期和数据的映射
   const dateMap = new Map();
   
-  sortedActiveUsers.forEach(item => {
+  // 处理活跃用户数据
+  userStats.activeUsers.forEach(item => {
     const displayTime = formatTimeByPeriod(item.time, userPeriod.value);
-    // 使用原始日期作为key来确保后续可以正确排序
-    const originalDate = new Date(item.time);
+    const originalDate = parseTimeString(item.time);
     
-    if (!dateMap.has(displayTime)) {
-      dateMap.set(displayTime, {
-        originalDate,
+    if (!originalDate) return; // 跳过无效日期
+    
+    const sortKey = originalDate.getTime(); // 使用时间戳作为排序键
+    
+    if (!dateMap.has(sortKey)) {
+      dateMap.set(sortKey, {
+        sortKey,
         displayTime,
-        activeUserCount: item.activeUserCount,
+        activeUserCount: item.activeUserCount || 0,
         newUserCount: 0
       });
     } else {
-      const data = dateMap.get(displayTime);
-      data.activeUserCount = item.activeUserCount;
+      const existing = dateMap.get(sortKey);
+      existing.activeUserCount = item.activeUserCount || 0;
     }
   });
   
-  sortedNewUsers.forEach(item => {
+  // 处理新用户数据
+  userStats.newUsers.forEach(item => {
     const displayTime = formatTimeByPeriod(item.time, userPeriod.value);
-    const originalDate = new Date(item.time);
+    const originalDate = parseTimeString(item.time);
     
-    if (!dateMap.has(displayTime)) {
-      dateMap.set(displayTime, {
-        originalDate,
+    if (!originalDate) return; // 跳过无效日期
+    
+    const sortKey = originalDate.getTime(); // 使用时间戳作为排序键
+    
+    if (!dateMap.has(sortKey)) {
+      dateMap.set(sortKey, {
+        sortKey,
         displayTime,
         activeUserCount: 0,
-        newUserCount: item.newUserCount
+        newUserCount: item.newUserCount || 0
       });
     } else {
-      const data = dateMap.get(displayTime);
-      data.newUserCount = item.newUserCount;
+      const existing = dateMap.get(sortKey);
+      existing.newUserCount = item.newUserCount || 0;
     }
   });
   
-  // 将Map转为数组并按原始日期排序
-  const sortedData = Array.from(dateMap.values()).sort((a, b) => a.originalDate - b.originalDate);
+  // 将Map转为数组并按时间顺序排序
+  const sortedData = Array.from(dateMap.values()).sort((a, b) => a.sortKey - b.sortKey);
   
-  // 提取排序后的数据到对应数组
-  times = sortedData.map(item => item.displayTime);
-  activeUserData = sortedData.map(item => item.activeUserCount);
-  newUserData = sortedData.map(item => item.newUserCount);
+  // 提取排序后的数据
+  const times = sortedData.map(item => item.displayTime);
+  const activeUserData = sortedData.map(item => item.activeUserCount);
+  const newUserData = sortedData.map(item => item.newUserCount);
   
   // 设置图表选项
   const option = {
@@ -363,59 +428,60 @@ const renderContentChart = () => {
     contentChart = echarts.init(contentActivityChart.value);
   }
 
-  // 准备数据
-  let times = [];
-  let newBlogData = [];
-  let publishedBlogData = [];
-  
-  // 对数据进行排序，确保按时间顺序显示
-  const sortedNewBlogs = [...contentStats.newBlogs].sort((a, b) => new Date(a.time) - new Date(b.time));
-  const sortedPublishedBlogs = [...contentStats.publishedBlogs].sort((a, b) => new Date(a.time) - new Date(b.time));
-  
-  // 使用一个临时Map来存储日期和数据的映射，用于后续排序
+  // 使用一个临时Map来存储日期和数据的映射
   const dateMap = new Map();
   
-  sortedNewBlogs.forEach(item => {
+  // 处理新增博客数据
+  contentStats.newBlogs.forEach(item => {
     const displayTime = formatTimeByPeriod(item.time, contentPeriod.value);
-    const originalDate = new Date(item.time);
+    const originalDate = parseTimeString(item.time);
     
-    if (!dateMap.has(displayTime)) {
-      dateMap.set(displayTime, {
-        originalDate,
+    if (!originalDate) return; // 跳过无效日期
+    
+    const sortKey = originalDate.getTime(); // 使用时间戳作为排序键
+    
+    if (!dateMap.has(sortKey)) {
+      dateMap.set(sortKey, {
+        sortKey,
         displayTime,
-        newBlogCount: item.newBlogCount,
+        newBlogCount: item.newBlogCount || 0,
         publishedBlogCount: 0
       });
     } else {
-      const data = dateMap.get(displayTime);
-      data.newBlogCount = item.newBlogCount;
+      const existing = dateMap.get(sortKey);
+      existing.newBlogCount = item.newBlogCount || 0;
     }
   });
   
-  sortedPublishedBlogs.forEach(item => {
+  // 处理已发布博客数据
+  contentStats.publishedBlogs.forEach(item => {
     const displayTime = formatTimeByPeriod(item.time, contentPeriod.value);
-    const originalDate = new Date(item.time);
+    const originalDate = parseTimeString(item.time);
     
-    if (!dateMap.has(displayTime)) {
-      dateMap.set(displayTime, {
-        originalDate,
+    if (!originalDate) return; // 跳过无效日期
+    
+    const sortKey = originalDate.getTime(); // 使用时间戳作为排序键
+    
+    if (!dateMap.has(sortKey)) {
+      dateMap.set(sortKey, {
+        sortKey,
         displayTime,
         newBlogCount: 0,
-        publishedBlogCount: item.publishedBlogCount
+        publishedBlogCount: item.publishedBlogCount || 0
       });
     } else {
-      const data = dateMap.get(displayTime);
-      data.publishedBlogCount = item.publishedBlogCount;
+      const existing = dateMap.get(sortKey);
+      existing.publishedBlogCount = item.publishedBlogCount || 0;
     }
   });
   
-  // 将Map转为数组并按原始日期排序
-  const sortedData = Array.from(dateMap.values()).sort((a, b) => a.originalDate - b.originalDate);
+  // 将Map转为数组并按时间顺序排序
+  const sortedData = Array.from(dateMap.values()).sort((a, b) => a.sortKey - b.sortKey);
   
-  // 提取排序后的数据到对应数组
-  times = sortedData.map(item => item.displayTime);
-  newBlogData = sortedData.map(item => item.newBlogCount);
-  publishedBlogData = sortedData.map(item => item.publishedBlogCount);
+  // 提取排序后的数据
+  const times = sortedData.map(item => item.displayTime);
+  const newBlogData = sortedData.map(item => item.newBlogCount);
+  const publishedBlogData = sortedData.map(item => item.publishedBlogCount);
   
   // 设置图表选项
   const option = {
@@ -475,27 +541,6 @@ const renderContentChart = () => {
   
   // 设置图表
   contentChart.setOption(option);
-};
-
-// 根据选择的时间周期格式化日期显示
-const formatTimeByPeriod = (timeStr, period) => {
-  if (!timeStr) return '';
-  
-  try {
-    const date = new Date(timeStr);
-    if (isNaN(date.getTime())) return timeStr; // 无效日期直接返回原字符串
-    
-    // 对于日统计只显示月-日
-    if (period === 'day') {
-      return `${date.getMonth() + 1}-${date.getDate()}`; // 月份从0开始，所以+1
-    }
-    
-    // 其他周期保持原样
-    return timeStr;
-  } catch (error) {
-    console.error('日期格式化错误:', error);
-    return timeStr;
-  }
 };
 
 // 刷新数据
