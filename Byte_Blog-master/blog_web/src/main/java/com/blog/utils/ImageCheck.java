@@ -28,7 +28,7 @@ public class ImageCheck {
         public double inference_time_ms;
     }
 
-    private static final String API_URL = "http://1.92.78.100:8001/image_predict ";
+    private static final String API_URL = "http://1.92.78.100:8001/image_predict";
 
     /**
      * 获取图像分类结果中的最大标签（支持远程 URL）
@@ -38,7 +38,8 @@ public class ImageCheck {
      */
     public static String imageTag(String imagePath) throws IOException {
         Gson gson = new Gson();
-
+        System.out.println("API URL: " + API_URL);  // http://1.92.78.100:8001/image_predict
+        System.out.println("Image Path: " + imagePath);
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpPost uploadRequest = new HttpPost(API_URL);
 
