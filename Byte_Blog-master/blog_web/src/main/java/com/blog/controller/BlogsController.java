@@ -199,10 +199,21 @@ public class BlogsController {
         builder.withHtmlContent(htmlContent, null);
         builder.toStream(baos);
         // 注册中文字体
-        try (InputStream fontStream = new ClassPathResource("static/fonts/NotoSansSC-Regular.ttf").getInputStream()) {
-            builder.useFont(() -> fontStream, "Noto Sans SC");
+        InputStream fontStream = null;
+        try {
+            ClassPathResource fontResource = new ClassPathResource("static/fonts/NotoSansSC-VariableFont_wght.ttf");
+            File fontFile = fontResource.getFile();
+            builder.useFont(fontFile, "NotoSansSC");
         } catch (IOException e) {
             throw new RuntimeException("加载字体失败", e);
+        } finally {
+            if (fontStream != null) {
+                try {
+                    fontStream.close(); // 在builder.run()之后关闭
+                } catch (IOException e) {
+                    log.error("关闭字体流失败", e);
+                }
+            }
         }
         builder.run();
         byte[] pdfBytes = baos.toByteArray();

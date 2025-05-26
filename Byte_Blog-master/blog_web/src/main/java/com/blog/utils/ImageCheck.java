@@ -28,7 +28,7 @@ public class ImageCheck {
         public double inference_time_ms;
     }
 
-    private static final String API_URL = "http://localhost:8000/predict/";
+    private static final String API_URL = "http://1.92.78.100:8001/image_predict ";
 
     /**
      * 获取图像分类结果中的最大标签（支持远程 URL）

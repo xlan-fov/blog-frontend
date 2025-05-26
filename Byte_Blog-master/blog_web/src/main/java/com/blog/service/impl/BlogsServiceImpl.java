@@ -87,24 +87,24 @@ public class BlogsServiceImpl extends ServiceImpl<BlogsMapper, Blogs> implements
 
         // TODO: 基于测试环境，暂时不进行内容检测
         // 如果是要发布，需要对内容进行检测
-//        if("published".equals(blogs.getStatus())) {
-//            // 1,提取内容，去除标签
-//            String html = blogs.getContent();
-//            String text = Jsoup.parse(html).text();
-//            // 2，传递内容进行检测，接收返回值进行判断，如果是消极的话返回报错信息
-//            try {
-//                String res = TextCheck.textTag(text);
-//                if ("Negative".equals(res)) {
-//                    return Result.error("文章内容包含不当信息，请修改后再发布");
-//                }else if("请求失败".equals(res)) {
-//                    return Result.error("内容检测失败，请稍后重试");
-//                }
-//            } catch (Exception e) {
-//                // 记录日志或返回错误信息
-//                log.warn("内容检测异常: {}", e.getMessage());
-//                return Result.error("内容检测失败，请稍后重试");
-//            }
-//        }
+        if("published".equals(blogs.getStatus())) {
+            // 1,提取内容，去除标签
+            String html = blogs.getContent();
+            String text = Jsoup.parse(html).text();
+            // 2，传递内容进行检测，接收返回值进行判断，如果是消极的话返回报错信息
+            try {
+                String res = TextCheck.textTag(text);
+                if ("Negative".equals(res)) {
+                    return Result.error("文章内容包含不当信息，请修改后再发布");
+                }else if("请求失败".equals(res)) {
+                    return Result.error("内容检测失败，请稍后重试");
+                }
+            } catch (Exception e) {
+                // 记录日志或返回错误信息
+                log.warn("内容检测异常: {}", e.getMessage());
+                return Result.error("内容检测失败，请稍后重试");
+            }
+        }
         
         // 上面没有返回说明内容合规
         blogs.setCreatedAt(DateTime.now());

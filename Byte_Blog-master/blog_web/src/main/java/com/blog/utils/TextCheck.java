@@ -37,7 +37,7 @@ public class TextCheck {
     }
 
     public static String textTag(String text) throws Exception {
-        String apiUrl = "http://localhost:8000/predict";
+        String apiUrl = "http://1.92.78.100:8001/text_predict";
 
         // 使用 Map 替代不可实例化的 Request 类
         Map<String, String> requestPayload = new HashMap<>();
