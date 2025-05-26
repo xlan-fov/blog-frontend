@@ -504,6 +504,32 @@ onMounted(() => {
   margin-bottom: 10px;
 }
 
+/* 添加表格居中样式 */
+:deep(.el-table .cell) {
+  text-align: center;
+}
+
+:deep(.el-table th) {
+  text-align: center !important;
+}
+
+:deep(.el-table td) {
+  vertical-align: middle;
+}
+
+/* 确保标签和按钮也居中 */
+:deep(.el-table .el-tag) {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+:deep(.el-table .el-button-group),
+:deep(.el-table .el-button) {
+  display: inline-flex;
+  justify-content: center;
+}
+
 @media screen and (max-width: 768px) {
   .card-header {
     flex-direction: column;
