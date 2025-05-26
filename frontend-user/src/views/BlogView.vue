@@ -4,7 +4,7 @@
       <div v-if="blog" class="blog-content">
         <h1 class="blog-title">{{ blog.title }}</h1>
         <div class="blog-meta">
-          <span class="update-time">更新时间：{{ blog.updatedAt }}</span>
+          <span class="update-time">更新时间：{{ formatDateTime(blog.updatedAt) }}</span>
           <el-tag :type="blog.status === 'published' ? 'success' : 'warning'" class="status-tag">
             {{ blog.status === 'published' ? '已发布' : '未发布' }}
           </el-tag>
@@ -44,6 +44,32 @@ const fetchBlog = async () => {
     ElMessage.error('获取博客详情失败')
   } finally {
     loading.value = false
+  }
+}
+
+// 格式化日期时间
+const formatDateTime = (dateTime) => {
+  if (!dateTime) return '暂无记录';
+  
+  try {
+    const date = new Date(dateTime);
+    
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) return dateTime;
+    
+    // 格式化为 YYYY-MM-DD HH:MM:SS
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/\//g, '-');
+  } catch (error) {
+    console.error('日期格式化错误:', error);
+    return dateTime; // 出错时返回原始值
   }
 }
 

@@ -39,7 +39,11 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="updatedAt" label="修改时间" width="180" />
+      <el-table-column label="修改时间" width="180">
+        <template #default="{ row }">
+          {{ formatDateTime(row.updatedAt) }}
+        </template>
+      </el-table-column>
       <el-table-column label="操作" :width="isMobile ? 80 : 240" fixed="right">
         <template #header>
           <div class="operation-header">操作</div>
@@ -272,6 +276,32 @@ const displayBlogs = computed(() => {
   const end = start + pageSize.value
   return filteredBlogs.slice(start, end)
 })
+
+// 格式化日期时间
+const formatDateTime = (dateTime) => {
+  if (!dateTime) return '暂无记录';
+  
+  try {
+    const date = new Date(dateTime);
+    
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) return dateTime;
+    
+    // 格式化为 YYYY-MM-DD HH:MM:SS
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/\//g, '-');
+  } catch (error) {
+    console.error('日期格式化错误:', error);
+    return dateTime; // 出错时返回原始值
+  }
+}
 </script>
 
 <style scoped>
