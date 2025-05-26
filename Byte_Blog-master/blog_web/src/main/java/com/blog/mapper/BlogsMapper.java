@@ -132,4 +132,7 @@ public interface BlogsMapper extends BaseMapper<Blogs> {
                                             @Param("status") String status,
                                             @Param("page") Integer page,
                                             @Param("pageSize") Integer pageSize);
+
+    @Select("SELECT COUNT(*) FROM blogs WHERE is_deleted = 0")
+    Integer getNotDeletedCount();
 }

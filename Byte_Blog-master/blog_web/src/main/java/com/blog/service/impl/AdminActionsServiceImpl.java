@@ -554,7 +554,7 @@ public class AdminActionsServiceImpl extends ServiceImpl<AdminActionsMapper, Adm
         }
         Map<String,Object> result = new HashMap<>();
         result.put("totalUsers", userMapper.selectCount(null));
-        result.put("totalBlogs", blogsMapper.selectCount(null));
+        result.put("totalBlogs", blogsMapper.getNotDeletedCount());
         result.put("totalSensitiveWords", sensitiveWordsMapper.selectCount(null));
         result.put("todayNewUsers", userMapper.getTodayNewUsers());
         result.put("todayNewBlogs", blogsMapper.getTodayNewBlogs());
