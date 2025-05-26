@@ -113,12 +113,12 @@ public class BlogsServiceImpl extends ServiceImpl<BlogsMapper, Blogs> implements
         int id = blogsMapper.addBlog(blogs);
         
         BlogsSucessVO blogsSucessVO = new BlogsSucessVO();
-        blogsSucessVO.setId(id);
+        blogsSucessVO.setId(blogs.getId());
         blogsSucessVO.setTitle(blogs.getTitle());
         blogsSucessVO.setCreateTime(blogs.getCreatedAt());
         
         log.debug("博客创建成功，返回结果: {}", blogsSucessVO);
-        return Result.success(blogsSucessVO);
+        return Result.success(200, "博客创建成功", blogsSucessVO);
     }
 
     /*

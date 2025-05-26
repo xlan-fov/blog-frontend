@@ -161,6 +161,7 @@ const confirmPublish = async () => {
 
     // 获取创建的博客ID
     const blogId = createRes.data.id
+    console.log('博客data :', createRes.data)
     console.log('博客创建成功，ID:', blogId)
 
     // 使用管理员专用接口发布博客
