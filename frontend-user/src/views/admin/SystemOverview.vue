@@ -241,31 +241,59 @@ const renderUserChart = () => {
   }
 
   // 准备数据
-  const times = [];
-  const activeUserData = [];
-  const newUserData = [];
+  let times = [];
+  let activeUserData = [];
+  let newUserData = [];
   
   // 对数据进行排序，确保按时间顺序显示
   const sortedActiveUsers = [...userStats.activeUsers].sort((a, b) => new Date(a.time) - new Date(b.time));
   const sortedNewUsers = [...userStats.newUsers].sort((a, b) => new Date(a.time) - new Date(b.time));
   
+  // 使用一个临时Map来存储日期和数据的映射，用于后续排序
+  const dateMap = new Map();
+  
   sortedActiveUsers.forEach(item => {
-    times.push(item.time);
-    activeUserData.push(item.activeUserCount);
+    const displayTime = formatTimeByPeriod(item.time, userPeriod.value);
+    // 使用原始日期作为key来确保后续可以正确排序
+    const originalDate = new Date(item.time);
+    
+    if (!dateMap.has(displayTime)) {
+      dateMap.set(displayTime, {
+        originalDate,
+        displayTime,
+        activeUserCount: item.activeUserCount,
+        newUserCount: 0
+      });
+    } else {
+      const data = dateMap.get(displayTime);
+      data.activeUserCount = item.activeUserCount;
+    }
   });
   
   sortedNewUsers.forEach(item => {
-    // 只添加新用户数据，因为时间轴已经添加过了
-    const index = times.indexOf(item.time);
-    if (index !== -1) {
-      newUserData[index] = item.newUserCount;
+    const displayTime = formatTimeByPeriod(item.time, userPeriod.value);
+    const originalDate = new Date(item.time);
+    
+    if (!dateMap.has(displayTime)) {
+      dateMap.set(displayTime, {
+        originalDate,
+        displayTime,
+        activeUserCount: 0,
+        newUserCount: item.newUserCount
+      });
     } else {
-      times.push(item.time);
-      // 填充可能缺失的活跃用户数据
-      activeUserData.push(0);
-      newUserData.push(item.newUserCount);
+      const data = dateMap.get(displayTime);
+      data.newUserCount = item.newUserCount;
     }
   });
+  
+  // 将Map转为数组并按原始日期排序
+  const sortedData = Array.from(dateMap.values()).sort((a, b) => a.originalDate - b.originalDate);
+  
+  // 提取排序后的数据到对应数组
+  times = sortedData.map(item => item.displayTime);
+  activeUserData = sortedData.map(item => item.activeUserCount);
+  newUserData = sortedData.map(item => item.newUserCount);
   
   // 设置图表选项
   const option = {
@@ -279,14 +307,25 @@ const renderUserChart = () => {
       }
     },
     legend: {
+      // 将图例移到右上角
+      right: '10%',
+      top: '4%',
       data: ['活跃用户', '新增用户']
+    },
+    grid: {
+      // 调整网格布局，为下方标签提供足够空间
+      left: '3%',
+      right: '4%',
+      bottom: '20%',
+      containLabel: true
     },
     xAxis: {
       type: 'category',
       data: times,
       axisLabel: {
-        interval: 0,
-        rotate: 30
+        interval: 0,  // 显示全部标签
+        rotate: 0,    // 水平显示，不旋转
+        fontSize: 10  // 字体稍微小一些
       }
     },
     yAxis: {
@@ -325,29 +364,58 @@ const renderContentChart = () => {
   }
 
   // 准备数据
-  const times = [];
-  const newBlogData = [];
-  const publishedBlogData = [];
+  let times = [];
+  let newBlogData = [];
+  let publishedBlogData = [];
   
   // 对数据进行排序，确保按时间顺序显示
   const sortedNewBlogs = [...contentStats.newBlogs].sort((a, b) => new Date(a.time) - new Date(b.time));
   const sortedPublishedBlogs = [...contentStats.publishedBlogs].sort((a, b) => new Date(a.time) - new Date(b.time));
   
+  // 使用一个临时Map来存储日期和数据的映射，用于后续排序
+  const dateMap = new Map();
+  
   sortedNewBlogs.forEach(item => {
-    times.push(item.time);
-    newBlogData.push(item.newBlogCount);
+    const displayTime = formatTimeByPeriod(item.time, contentPeriod.value);
+    const originalDate = new Date(item.time);
+    
+    if (!dateMap.has(displayTime)) {
+      dateMap.set(displayTime, {
+        originalDate,
+        displayTime,
+        newBlogCount: item.newBlogCount,
+        publishedBlogCount: 0
+      });
+    } else {
+      const data = dateMap.get(displayTime);
+      data.newBlogCount = item.newBlogCount;
+    }
   });
   
   sortedPublishedBlogs.forEach(item => {
-    const index = times.indexOf(item.time);
-    if (index !== -1) {
-      publishedBlogData[index] = item.publishedBlogCount;
+    const displayTime = formatTimeByPeriod(item.time, contentPeriod.value);
+    const originalDate = new Date(item.time);
+    
+    if (!dateMap.has(displayTime)) {
+      dateMap.set(displayTime, {
+        originalDate,
+        displayTime,
+        newBlogCount: 0,
+        publishedBlogCount: item.publishedBlogCount
+      });
     } else {
-      times.push(item.time);
-      newBlogData.push(0); // 填充可能缺失的新博客数据
-      publishedBlogData.push(item.publishedBlogCount);
+      const data = dateMap.get(displayTime);
+      data.publishedBlogCount = item.publishedBlogCount;
     }
   });
+  
+  // 将Map转为数组并按原始日期排序
+  const sortedData = Array.from(dateMap.values()).sort((a, b) => a.originalDate - b.originalDate);
+  
+  // 提取排序后的数据到对应数组
+  times = sortedData.map(item => item.displayTime);
+  newBlogData = sortedData.map(item => item.newBlogCount);
+  publishedBlogData = sortedData.map(item => item.publishedBlogCount);
   
   // 设置图表选项
   const option = {
@@ -361,14 +429,25 @@ const renderContentChart = () => {
       }
     },
     legend: {
+      // 将图例移到右上角
+      right: '10%',
+      top: '4%',
       data: ['新增博客', '已发布博客']
+    },
+    grid: {
+      // 调整网格布局，为下方标签提供足够空间
+      left: '3%',
+      right: '4%',
+      bottom: '20%',
+      containLabel: true
     },
     xAxis: {
       type: 'category',
       data: times,
       axisLabel: {
-        interval: 0,
-        rotate: 30
+        interval: 0,  // 显示全部标签
+        rotate: 0,    // 水平显示，不旋转
+        fontSize: 10  // 字体稍微小一些
       }
     },
     yAxis: {
@@ -396,6 +475,27 @@ const renderContentChart = () => {
   
   // 设置图表
   contentChart.setOption(option);
+};
+
+// 根据选择的时间周期格式化日期显示
+const formatTimeByPeriod = (timeStr, period) => {
+  if (!timeStr) return '';
+  
+  try {
+    const date = new Date(timeStr);
+    if (isNaN(date.getTime())) return timeStr; // 无效日期直接返回原字符串
+    
+    // 对于日统计只显示月-日
+    if (period === 'day') {
+      return `${date.getMonth() + 1}-${date.getDate()}`; // 月份从0开始，所以+1
+    }
+    
+    // 其他周期保持原样
+    return timeStr;
+  } catch (error) {
+    console.error('日期格式化错误:', error);
+    return timeStr;
+  }
 };
 
 // 刷新数据
