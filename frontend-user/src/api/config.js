@@ -34,12 +34,13 @@ export const API_PATHS = {
     BLOGS: {
         // 博客相关接口 - 修复路径
         LIST: '/api/blogs',
-        GET: '/api/blogs/{id}', // 修复：从 /api/getBlogs/{id} 改为 /api/blogs/{id}
+        GET: '/api/blogs/{id}',
         CREATE: '/api/blogs/addBlog',
-        UPDATE: '/api/updateBlogs/{id}', // 修复：添加 {id} 参数
+        UPDATE: '/api/updateBlogs/{id}',
         DELETE: '/api/deleteBlogs/{id}',
-        PUBLISH: '/api/updateBlogs/{id}', // 修复：添加 {id} 参数
+        PUBLISH: '/api/updateBlogs/{id}',
         WITHDRAW: '/api/admin/articles/{id}/withdraw',
+        USER_WITHDRAW: '/api/blogs/{id}/withdraw',
         GET_DRAFT: '/api/getDraft',
         SAVE_CONTENT: '/api/saveBlogContent'
     },

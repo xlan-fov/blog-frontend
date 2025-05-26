@@ -9,12 +9,11 @@ export default {
   async getBlogs(params) {
     try {
       const response = await get(API_PATHS.BLOGS.LIST, params)
-      
-      // 确保返回正确的数据格式
-      if (response && response.data) {
-        // 如果后端返回的是分页数据
+
+      if (response?.code === 200 && response.data) {
         if (response.data.records) {
           return {
+            code: 200,
             data: {
               records: Array.isArray(response.data.records) ? response.data.records : [],
               total: response.data.total || 0,
@@ -22,134 +21,112 @@ export default {
               size: response.data.size || 10
             }
           }
-        }
-        // 如果后端直接返回数组
-        else if (Array.isArray(response.data)) {
+        } else if (Array.isArray(response.data)) {
           return {
+            code: 200,
             data: response.data
           }
         }
       }
-      
-      // 默认返回空数组
+
       return {
+        code: response?.code || 500,
+        message: response?.message || '获取博客列表失败',
         data: []
       }
     } catch (error) {
       console.error('获取博客列表失败:', error)
       return {
+        code: 500,
+        message: error.message || '获取博客列表失败',
         data: []
       }
     }
   },
 
   /**
-   * 获取博客详情
-   * @param {string|number} id - 博客ID
+   * 获取单个博客
+   * @param {number|string} id - 博客ID
    */
   async getBlogById(id) {
     try {
-      console.log('正在请求博客详情，ID:', id, '路径:', API_PATHS.BLOGS.GET.replace('{id}', id))
-      const response = await get(API_PATHS.BLOGS.GET.replace('{id}', id))
+      const response = await get(`${API_PATHS.BLOGS.DETAIL}/${id}`)
       return response
     } catch (error) {
       console.error('获取博客详情失败:', error)
-      throw error
+      return {
+        code: 500,
+        message: error.message || '获取博客详情失败'
+      }
     }
   },
 
   /**
    * 创建博客
-   * @param {Object} blogData - 博客数据
+   * @param {Object} data - 博客数据
    */
-  async createBlog(blogData) {
+  async createBlog(data) {
     try {
-      const response = await post(API_PATHS.BLOGS.CREATE, blogData)
+      const response = await post(API_PATHS.BLOGS.CREATE, data)
       return response
     } catch (error) {
       console.error('创建博客失败:', error)
-      throw error
+      return {
+        code: 500,
+        message: error.message || '创建博客失败'
+      }
     }
   },
 
   /**
    * 更新博客
-   * @param {string|number} id - 博客ID
-   * @param {Object} data - 博客数据
+   * @param {number|string} id - 博客ID
+   * @param {Object} data - 更新的博客数据
    */
   async updateBlog(id, data) {
     try {
-      console.log('正在更新博客，ID:', id, '数据:', data)
-      
-      // 构建完整的博客数据，包含ID
-      const blogData = {
-        id: parseInt(id),
-        title: data.title,
-        content: data.content,
-        status: data.status || 'draft'
-      }
-      
-      console.log('发送到后端的数据:', blogData)
-      const response = await put(API_PATHS.BLOGS.UPDATE.replace('{id}', id), blogData)
+      const response = await put(API_PATHS.BLOGS.UPDATE.replace('{id}', id), data)
       return response
     } catch (error) {
       console.error('更新博客失败:', error)
-      throw error
+      return {
+        code: 500,
+        message: error.message || '更新博客失败'
+      }
     }
   },
 
   /**
    * 删除博客
-   * @param {string|number} id - 博客ID
+   * @param {number|string} id - 博客ID
    */
   async deleteBlog(id) {
     try {
-      const response = await del(API_PATHS.BLOGS.DELETE.replace('{id}', id))
+      const response = await del(`${API_PATHS.BLOGS.DELETE}/${id}`)
       return response
     } catch (error) {
       console.error('删除博客失败:', error)
-      throw error
-    }
-  },
-
-  /**
-   * 发布博客 - 单独的接口方法
-   * @param {Object} blogData - 博客数据，包含status='published'
-   */
-  async publishBlog(blogData) {
-    try {
-      console.log('API层 - 发布博客请求数据:', blogData)
-      // 确保状态为已发布
-      const data = {
-        ...blogData,
-        status: 'published' 
+      return {
+        code: 500,
+        message: error.message || '删除博客失败'
       }
-      
-      // 对于新博客使用创建接口
-      if (!data.id) {
-        return await post(API_PATHS.BLOGS.CREATE, data)
-      } 
-      // 对于现有博客使用更新接口
-      else {
-        return await put(API_PATHS.BLOGS.UPDATE, data)
-      }
-    } catch (error) {
-      console.error('API层 - 发布博客失败:', error)
-      throw error
     }
   },
 
   /**
    * 撤回博客
-   * @param {string|number} id - 博客ID
+   * @param {number|string} id - 博客ID
    */
   async withdrawBlog(id) {
     try {
-      const response = await post(API_PATHS.BLOGS.WITHDRAW.replace('{id}', id), {})
+      const response = await put(API_PATHS.BLOGS.USER_WITHDRAW.replace('{id}', id))
       return response
     } catch (error) {
       console.error('撤回博客失败:', error)
-      throw error
+      return {
+        code: 500,
+        message: error.message || '撤回博客失败'
+      }
     }
   }
 }

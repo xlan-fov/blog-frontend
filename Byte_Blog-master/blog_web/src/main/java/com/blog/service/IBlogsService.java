@@ -87,4 +87,6 @@ public interface IBlogsService extends IService<Blogs> {
      * @Description: 删除博客
      */
     Result<?> deleteBlog(Integer id);
+
+    Result<?> withdraw(Integer id);
 }

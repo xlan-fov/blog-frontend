@@ -1,33 +1,57 @@
 <template>
   <div class="blog-edit">
+    <div class="page-header">
+      <h2>编辑博客</h2>
+      <el-button @click="goBack">返回列表</el-button>
+    </div>
+    
     <el-form :model="form" label-width="80px" class="blog-form">
-      <el-form-item label="标题">
+      <el-form-item label="标题" required>
         <el-input v-model="form.title" placeholder="请输入博客标题" />
       </el-form-item>
-      <el-form-item label="内容" class="editor-wrapper">
+
+      <el-form-item label="内容" class="editor-wrapper" required>
         <div id="editor"></div>
       </el-form-item>
+
       <div class="button-wrapper">
-      <el-form-item>
-        <el-button type="primary" @click="handleSubmit">保存</el-button>
-        <el-button @click="handleCancel">取消</el-button>
-        <el-button type="success" @click="handlePublish">发布</el-button>
-      </el-form-item>
+        <el-form-item>
+          <el-button type="info" @click="handleSaveDraft" :loading="saving">保存草稿</el-button>
+          <el-button type="primary" @click="handleSave" :loading="saving">保存</el-button>
+          <el-button type="success" @click="handlePublish" :loading="publishing">发布</el-button>
+          <el-button @click="goBack">取消</el-button>
+        </el-form-item>
       </div>
     </el-form>
+
+    <!-- 自定义确认对话框 -->
+    <div v-if="showConfirm" class="confirm-dialog">
+      <div class="confirm-content">
+        <h3>确认发布</h3>
+        <p>确定要发布这篇博客吗？</p>
+        <div class="confirm-buttons">
+          <el-button @click="cancelPublish">取消</el-button>
+          <el-button type="primary" @click="confirmPublish" :loading="publishing">
+            {{ publishing ? '发布中...' : '确定发布' }}
+          </el-button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { reactive, onMounted, onBeforeUnmount } from 'vue'
+import { reactive, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { useBlogStore } from '@/stores/blog'
+import { useUserStore } from '@/stores/user'
 import E from 'wangeditor'
 
 const router = useRouter()
 const route = useRoute()
 const blogStore = useBlogStore()
+const userStore = useUserStore()
 
 const form = reactive({
   title: '',
@@ -36,7 +60,24 @@ const form = reactive({
 
 let editor = null
 
+// 状态变量
+const saving = ref(false)
+const publishing = ref(false)
+const showConfirm = ref(false)
+
+// 监听内容变化，触发自动保存
+watch(() => form.content, (newContent) => {
+  if (newContent) {
+    blogStore.startAutoSave({
+      id: route.params.id,
+      title: form.title,
+      content: newContent
+    })
+  }
+})
+
 onMounted(async () => {
+  // 初始化编辑器
   editor = new E('#editor')
   editor.config.height = 350
   editor.config.placeholder = '请输入博客内容'
@@ -45,21 +86,24 @@ onMounted(async () => {
   }
   editor.create()
 
+  // 如果是编辑模式，加载博客数据
   const blogId = route.params.id
-  try {
-    const blog = await blogStore.getBlogById(blogId)
-    if (blog) {
-      form.title = blog.title
-      form.content = blog.content
-      editor.txt.html(blog.content)
-    } else {
-      ElMessage.error('博客不存在')
-      router.push('/dashboard/blog')
+  if (blogId) {
+    try {
+      const blog = await blogStore.getBlogById(blogId)
+      if (blog) {
+        form.title = blog.title
+        form.content = blog.content
+        editor.txt.html(blog.content)
+      } else {
+        ElMessage.error('博客不存在')
+        goBack()
+      }
+    } catch (error) {
+      console.error('获取博客失败:', error)
+      ElMessage.error('获取博客失败')
+      goBack()
     }
-  } catch (error) {
-    console.error('获取博客失败:', error)
-    ElMessage.error('获取博客失败')
-    router.push('/dashboard/blog')
   }
 })
 
@@ -67,60 +111,99 @@ onBeforeUnmount(() => {
   if (editor) {
     editor.destroy()
   }
+  blogStore.stopAutoSave()
 })
 
-const handleSubmit = async () => {
+const goBack = () => {
+  router.push('/dashboard/blog')
+}
+
+const validateForm = () => {
   if (!form.title || !form.content) {
     ElMessage.warning('请填写完整信息')
-    return
+    return false
   }
 
+  if (!userStore.userInfo || !userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    router.push('/login')
+    return false
+  }
+
+  return true
+}
+
+const handleSaveDraft = async () => {
+  if (!validateForm()) return
+
+  saving.value = true
+  try {
+    await blogStore.saveDraft({
+      id: route.params.id,
+      title: form.title.trim(),
+      content: form.content,
+      status: 'draft'
+    })
+    ElMessage.success('草稿保存成功')
+  } catch (error) {
+    console.error('保存草稿失败:', error)
+    ElMessage.error('保存草稿失败: ' + (error.message || '未知错误'))
+  } finally {
+    saving.value = false
+  }
+}
+
+const handleSave = async () => {
+  if (!validateForm()) return
+
+  saving.value = true
   try {
     await blogStore.updateBlog(route.params.id, {
-      title: form.title,
+      title: form.title.trim(),
       content: form.content,
-      status: 'draft' // 编辑时默认保存为草稿
+      status: 'draft'
     })
-    ElMessage.success('更新成功')
-    router.push('/dashboard/blog')
+    ElMessage.success('保存成功')
+    goBack()
   } catch (error) {
-    ElMessage.error('更新失败: ' + (error.message || '未知错误'))
+    console.error('保存失败:', error)
+    ElMessage.error('保存失败: ' + (error.message || '未知错误'))
+  } finally {
+    saving.value = false
   }
 }
 
-// 添加发布功能
-const handlePublish = async () => {
-  if (!form.title || !form.content) {
-    ElMessage.warning('请填写完整信息')
-    return
-  }
+const handlePublish = () => {
+  if (!validateForm()) return
+  showConfirm.value = true
+}
 
+const cancelPublish = () => {
+  showConfirm.value = false
+}
+
+const confirmPublish = async () => {
   try {
-    await ElMessageBox.confirm('确定要发布这篇博客吗？', '确认发布', {
-      confirmButtonText: '确定发布',
-      cancelButtonText: '取消',
-      type: 'info'
-    })
-
-    // 使用专门的发布方法
+    publishing.value = true
+    
+    const blogId = route.params.id
     await blogStore.publishBlog({
-      id: route.params.id,
-      title: form.title,
+      id: blogId,
+      title: form.title.trim(),
       content: form.content
-      // status会在publishBlog方法中自动设置为'published'
     })
     
-    ElMessage.success('发布成功')
-    router.push('/dashboard/blog')
+    showConfirm.value = false
+    ElMessage.success('博客发布成功')
+    setTimeout(() => {
+      goBack()
+    }, 1000)
   } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('发布失败: ' + (error.message || '未知错误'))
-    }
+    console.error('发布失败:', error)
+    ElMessage.error(`发布失败: ${error.message || '未知错误'}`)
+  } finally {
+    publishing.value = false
   }
-}
-
-const handleCancel = () => {
-  router.push('/dashboard/blog')
 }
 </script>
 
@@ -128,32 +211,31 @@ const handleCancel = () => {
 .blog-edit {
   padding: 20px;
   background-color: #fff;
-  border-radius: 8px;
+  border-radius: 4px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   position: relative;
-  min-height: calc(100vh - 100px);
-  margin: 20px;
+  min-height: 100vh;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+.page-header h2 {
+  margin: 0;
+  color: #303133;
 }
 
 .blog-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   max-width: 1200px;
-  margin: 0 auto;
-}
-
-.blog-form :deep(.el-form-item__label) {
-  font-weight: 500;
-  color: #303133;
-}
-
-.blog-form :deep(.el-input__wrapper) {
-  box-shadow: 0 0 0 1px #dcdfe6 inset;
-}
-
-.blog-form :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px #409EFF inset;
 }
 
 .editor-wrapper {
@@ -168,7 +250,7 @@ const handleCancel = () => {
   left: 0;
   right: 0;
   background-color: #fff;
-  padding: 16px 20px;
+  padding: 15px 20px;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
   z-index: 100;
   display: flex;
@@ -178,6 +260,44 @@ const handleCancel = () => {
 
 .button-wrapper .el-button {
   min-width: 100px;
+}
+
+.confirm-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-content {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  min-width: 300px;
+  text-align: center;
+}
+
+.confirm-content h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+}
+
+.confirm-content p {
+  margin: 0 0 30px 0;
+  color: #666;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }
 
 :deep(.w-e-text-container) {
@@ -196,47 +316,16 @@ const handleCancel = () => {
   border-bottom: none;
 }
 
-:deep(.w-e-bar) {
-  border-bottom: 1px solid #dcdfe6;
-}
-
-:deep(.w-e-bar-item) {
-  border-radius: 4px;
-}
-
-:deep(.w-e-bar-item:hover) {
-  background-color: #f5f7fa;
-}
-
-/* 2K分辨率 */
-@media screen and (min-width: 1920px) {
-  .blog-edit {
-    max-width: 1800px;
-    margin: 20px auto;
-  }
-
-  :deep(.w-e-text-container) {
-    height: 450px !important;
-  }
-}
-
-/* 1080P分辨率 */
-@media screen and (max-width: 1919px) {
-  .blog-edit {
-    max-width: 1200px;
-    margin: 20px auto;
-  }
-
-  :deep(.w-e-text-container) {
-    height: 350px !important;
-  }
-}
-
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   .blog-edit {
     padding: 10px;
-    margin: 10px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
   }
 
   .button-wrapper {

@@ -139,9 +139,16 @@ public class BlogsController {
      * @Date: 2025-5-6
      * @Description: 管理员下架Blog
      */
+    @PutMapping("/blogs/{Id}/withdraw")
+    public Result<?> withdrawBlog(@PathVariable Integer Id){
+        log.info("下架Blog，ID: {}", Id);
+        Result<?> result = blogsService.withdraw(Id);
+        return result;
+    }
+
     @PutMapping("/admin/articles/{Id}/withdraw")
-    public Result<?> removeBlog(@PathVariable Integer Id , @RequestParam String reason){
-        log.info("下架Blog");
+    public Result<?> removeBlog(@PathVariable Integer Id , @RequestParam String reason, Reader reader){
+        log.info("下架Blog，ID: {}, 下架原因：{}", Id, reason);
         Result<?> result = blogsService.removeBlog(Id);
         return result;
     }

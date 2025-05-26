@@ -99,11 +99,13 @@
 import { computed, onMounted, onBeforeUnmount, ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBlogStore } from '@/stores/blog'
+import { useUserStore } from '@/stores/user'
 import { Search, Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const blogStore = useBlogStore()
+const userStore = useUserStore()
 
 // 添加 loading 响应式变量
 const loading = ref(false)
@@ -139,18 +141,19 @@ onBeforeUnmount(() => {
 // 加载博客列表数据
 const loadBlogsData = async () => {
   try {
-    loading.value = true // 现在可以使用 loading 变量
+    loading.value = true
     await blogStore.getBlogs({
       page: currentPage.value,
       pageSize: pageSize.value,
       title: searchForm.title,
-      status: searchForm.status
+      status: searchForm.status,
+      userId: userStore.userInfo?.id
     })
-    loading.value = false // 加载完成后设置为 false
+    loading.value = false
   } catch (error) {
     console.error('加载博客列表失败:', error)
     ElMessage.error('获取博客列表失败')
-    loading.value = false // 确保错误情况下也设置为 false
+    loading.value = false
   }
 }
 
@@ -208,11 +211,14 @@ const handleWithdraw = async (row) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
+    
     await blogStore.withdrawBlog(row.id)
     ElMessage.success('撤回成功')
+    loadBlogsData() // 刷新列表
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('撤回失败')
+      console.error('撤回失败:', error)
+      ElMessage.error('撤回失败: ' + (error.message || '未知错误'))
     }
   }
 }

@@ -14,6 +14,7 @@ import com.blog.utils.TextCheck;
 import com.blog.utils.UserHolder;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import org.apache.catalina.User;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,26 +84,27 @@ public class BlogsServiceImpl extends ServiceImpl<BlogsMapper, Blogs> implements
         blogs.setUsername(currentUser.getUsername());
         
         log.debug("设置博客用户信息: userId={}, username={}", blogs.getUserId(), blogs.getUsername());
-        
+
+        // TODO: 基于测试环境，暂时不进行内容检测
         // 如果是要发布，需要对内容进行检测
-        if("published".equals(blogs.getStatus())) {
-            // 1,提取内容，去除标签
-            String html = blogs.getContent();
-            String text = Jsoup.parse(html).text();
-            // 2，传递内容进行检测，接收返回值进行判断，如果是消极的话返回报错信息
-            try {
-                String res = TextCheck.textTag(text);
-                if ("Negative".equals(res)) {
-                    return Result.error("文章内容包含不当信息，请修改后再发布");
-                }else if("请求失败".equals(res)) {
-                    return Result.error("内容检测失败，请稍后重试");
-                }
-            } catch (Exception e) {
-                // 记录日志或返回错误信息
-                log.warn("内容检测异常: {}", e.getMessage());
-                return Result.error("内容检测失败，请稍后重试");
-            }
-        }
+//        if("published".equals(blogs.getStatus())) {
+//            // 1,提取内容，去除标签
+//            String html = blogs.getContent();
+//            String text = Jsoup.parse(html).text();
+//            // 2，传递内容进行检测，接收返回值进行判断，如果是消极的话返回报错信息
+//            try {
+//                String res = TextCheck.textTag(text);
+//                if ("Negative".equals(res)) {
+//                    return Result.error("文章内容包含不当信息，请修改后再发布");
+//                }else if("请求失败".equals(res)) {
+//                    return Result.error("内容检测失败，请稍后重试");
+//                }
+//            } catch (Exception e) {
+//                // 记录日志或返回错误信息
+//                log.warn("内容检测异常: {}", e.getMessage());
+//                return Result.error("内容检测失败，请稍后重试");
+//            }
+//        }
         
         // 上面没有返回说明内容合规
         blogs.setCreatedAt(DateTime.now());
@@ -139,22 +141,23 @@ public class BlogsServiceImpl extends ServiceImpl<BlogsMapper, Blogs> implements
      */
     @Override
     public Result<?> updateBlogs(Blogs blogs) {
+        // TODO: 基于测试环境，暂时不进行内容检测
         // 如果blog要修改为发布状态，则需要进行审核
         if(blogs.getStatus().equals("published")) {
-            // 1,提取内容，去除标签
-            String text = Jsoup.parse(blogs.getContent()).text();
-            // 2，传递内容进行检测，接收返回值进行判断，如果是消极的话返回报错信息
-            try {
-                String res = TextCheck.textTag(text);
-                if ("Negative".equals(res)) {
-                    return Result.error("文章内容包含不当信息，请修改后再发布");
-                }else if("请求失败".equals(res)) {
-                    return Result.error("内容检测失败，请稍后重试");
-                }
-            } catch (Exception e) {
-                // 记录日志或返回错误信息
-                return Result.error("内容检测失败，请稍后重试");
-            }
+//            // 1,提取内容，去除标签
+//            String text = Jsoup.parse(blogs.getContent()).text();
+//            // 2，传递内容进行检测，接收返回值进行判断，如果是消极的话返回报错信息
+//            try {
+//                String res = TextCheck.textTag(text);
+//                if ("Negative".equals(res)) {
+//                    return Result.error("文章内容包含不当信息，请修改后再发布");
+//                }else if("请求失败".equals(res)) {
+//                    return Result.error("内容检测失败，请稍后重试");
+//                }
+//            } catch (Exception e) {
+//                // 记录日志或返回错误信息
+//                return Result.error("内容检测失败，请稍后重试");
+//            }
             blogs.setPublishedAt(DateTime.now());
         }
         // 内容合法或不需要发布
@@ -200,7 +203,15 @@ public class BlogsServiceImpl extends ServiceImpl<BlogsMapper, Blogs> implements
         if(blogsPageQueryDTO.getPageSize() == null) {
             blogsPageQueryDTO.setPageSize(10);
         }
+        // 修复分页查询时没有设置用户ID的问题
+        UserDTO currentUser = UserHolder.getUser();
+        System.out.println("当前用户信息: " + currentUser);
+        Integer userId = currentUser.getId();
+        System.out.println("当前用户ID: " + userId);
+        blogsPageQueryDTO.setUserId(userId);
+
         PageHelper.startPage(blogsPageQueryDTO.getPage(),blogsPageQueryDTO.getPageSize());
+
         Page<Blogs> page = blogsMapper.pageQuery(blogsPageQueryDTO);
 //        List<Blogs> blogs = page.getResult();
 //        List<Blogs> result = new ArrayList<>();
@@ -296,5 +307,23 @@ public class BlogsServiceImpl extends ServiceImpl<BlogsMapper, Blogs> implements
         removeVO.setId(id);
         removeVO.setStatus("removed");
         return Result.success(removeVO);
+    }
+    @Override
+    public Result<?> withdraw(Integer id){
+        // 首先判断id是否存在，以及是否是当前用户的博客
+        Blogs blogs = blogsMapper.getBlog(id);
+        if (blogs == null) {
+            return Result.error("博客不存在或已被删除");
+        }
+        UserDTO currentUser = UserHolder.getUser();
+        // 检查当前用户是否有权限撤回博客
+        if (currentUser == null || (!blogs.getUserId().equals(currentUser.getId()) && !"admin".equals(currentUser.getRole()))) {
+            return Result.error("您没有权限撤回此博客");
+        }
+        // 撤回操作则是将状态改为草稿
+        blogs.setStatus("draft");
+        blogs.setUpdatedAt(DateTime.now());
+        blogsMapper.updateBlogs(blogs);
+        return Result.success("博客已成功撤回");
     }
 }
