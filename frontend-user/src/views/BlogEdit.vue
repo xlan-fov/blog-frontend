@@ -16,7 +16,7 @@
 
       <div class="button-wrapper">
         <el-form-item>
-          <el-button type="info" @click="handleSaveDraft" :loading="saving">保存草稿</el-button>
+          <el-button type="info" @click="handleExportPDF" :loading="exporting" :disabled="!route.params.id">导出PDF</el-button>
           <el-button type="primary" @click="handleSave" :loading="saving">保存</el-button>
           <el-button type="success" @click="handlePublish" :loading="publishing">发布</el-button>
           <el-button @click="goBack">取消</el-button>
@@ -64,6 +64,7 @@ let editor = null
 const saving = ref(false)
 const publishing = ref(false)
 const showConfirm = ref(false)
+const exporting = ref(false) // 新增：PDF导出状态
 
 // 监听内容变化，触发自动保存
 watch(() => form.content, (newContent) => {
@@ -203,6 +204,66 @@ const confirmPublish = async () => {
     ElMessage.error(`发布失败: ${error.message || '未知错误'}`)
   } finally {
     publishing.value = false
+  }
+}
+
+// 新增：导出PDF功能
+const handleExportPDF = async () => {
+  // 检查是否有有效的博客ID
+  const blogId = route.params.id
+  if (!blogId) {
+    ElMessage.warning('请先保存博客后再导出PDF')
+    return
+  }
+
+  exporting.value = true
+  try {
+    // 使用fetch API直接调用后端接口以处理二进制文件流
+    const response = await fetch(`/api/export/${blogId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`导出失败: ${response.statusText}`)
+    }
+    
+    // 获取文件流
+    const blob = await response.blob()
+    
+    // 创建下载链接
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.style.display = 'none'
+    a.href = url
+    
+    // 从响应头获取文件名，如果没有则使用博客标题
+    const contentDisposition = response.headers.get('Content-Disposition')
+    let filename = `${form.title || 'blog'}.pdf`
+    
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1].replace(/['"]/g, '')
+      }
+    }
+    
+    a.download = decodeURIComponent(filename)
+    document.body.appendChild(a)
+    a.click()
+    
+    // 清理
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+    
+    ElMessage.success('PDF导出成功')
+  } catch (error) {
+    console.error('导出PDF失败:', error)
+    ElMessage.error(`导出PDF失败: ${error.message || '未知错误'}`)
+  } finally {
+    exporting.value = false
   }
 }
 </script>
